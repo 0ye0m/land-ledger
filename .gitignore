@@ -1,0 +1,10 @@
+skills/
+node_modules/
+.runtime/
+.pgdata/
+*.log
+.env
+.env.local
+npm-debug.log*
+dist-cloud/
+.DS_Store

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Slide 04 — Proposed Solution</title>
+<link rel="stylesheet" href="global.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body style="margin:0">
+<div class="slide">
+
+  <div class="rl-hdr">
+    <div>
+      <div style="font-family:var(--font-heading);font-size:var(--fs-h1);font-weight:800;text-transform:uppercase;color:var(--navy);letter-spacing:.5px;line-height:1.15;">PROPOSED SOLUTION</div>
+      <div class="rl-hdr-rule"></div>
+    </div>
+    <img src="logo.png" class="rl-logo" alt="Ramdeobaba University">
+  </div>
+
+  <div class="rl-body" style="display:flex;flex-direction:column;gap:13px;">
+
+    <!-- KEY MESSAGE BAND -->
+    <div style="flex:none;background:var(--panel-navy);border:1px solid var(--line);border-left:4px solid var(--navy);border-radius:10px;padding:15px 24px;">
+      <p style="font-family:var(--font-heading);font-size:17px;font-weight:700;color:var(--navy);line-height:1.5;">LAND LEDGER — a role-based web registry where every property, document and ownership transfer is cryptographically verifiable and settled on a blockchain ledger.</p>
+    </div>
+
+    <!-- FOUR FEATURE ROWS -->
+    <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:11px;">
+
+      <div class="card-white" style="flex:1;min-height:0;display:flex;align-items:center;gap:16px;padding:10px 20px;">
+        <div style="width:40px;height:40px;flex:none;background:var(--accent);border-radius:9px;display:flex;align-items:center;justify-content:center;">
+          <span style="font-family:var(--font-num);font-size:16px;font-weight:800;color:#FFFFFF;">01</span>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:9px;">
+            <span class="material-icons" style="font-size:20px;color:var(--accent);">lightbulb</span>
+            <span style="font-family:var(--font-heading);font-size:15.5px;font-weight:700;color:var(--navy);">Project idea</span>
+          </div>
+          <p style="margin-top:4px;font-size:12.5px;line-height:1.52;color:var(--ink);">One integrated platform for citizens and registrars: register properties, upload deed documents, initiate transfers and trace provenance — with fraud screening built into the workflow itself.</p>
+        </div>
+      </div>
+
+      <div class="card-white" style="flex:1;min-height:0;display:flex;align-items:center;gap:16px;padding:10px 20px;">
+        <div style="width:40px;height:40px;flex:none;background:var(--accent);border-radius:9px;display:flex;align-items:center;justify-content:center;">
+          <span style="font-family:var(--font-num);font-size:16px;font-weight:800;color:#FFFFFF;">02</span>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:9px;">
+            <span class="material-icons" style="font-size:20px;color:var(--accent);">account_tree</span>
+            <span style="font-family:var(--font-heading);font-size:15.5px;font-weight:700;color:var(--navy);">Proposed approach</span>
+          </div>
+          <p style="margin-top:4px;font-size:12.5px;line-height:1.52;color:var(--ink);">React SPA talks to an Express REST API; MongoDB Atlas stores users, properties, documents and transfers, while a Solidity smart contract (LandRegistry.sol) holds on-chain ownership truth. Documents are SHA-256 hashed at upload; every transfer is scored by a 9-check fraud engine before approval.</p>
+        </div>
+      </div>
+
+      <div class="card-white" style="flex:1;min-height:0;display:flex;align-items:center;gap:16px;padding:10px 20px;">
+        <div style="width:40px;height:40px;flex:none;background:var(--accent);border-radius:9px;display:flex;align-items:center;justify-content:center;">
+          <span style="font-family:var(--font-num);font-size:16px;font-weight:800;color:#FFFFFF;">03</span>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:9px;">
+            <span class="material-icons" style="font-size:20px;color:var(--accent);">auto_awesome</span>
+            <span style="font-family:var(--font-heading);font-size:15.5px;font-weight:700;color:var(--navy);">Key innovation</span>
+          </div>
+          <p style="margin-top:4px;font-size:12.5px;line-height:1.52;color:var(--ink);">The smart contract itself rejects provenance mismatches — ownership can only move along the chain of legitimate owners. Fraud is screened at submission, not after the dispute, and every API action appends to an immutable audit stream streamed live to the dashboard.</p>
+        </div>
+      </div>
+
+      <div class="card-white" style="flex:1;min-height:0;display:flex;align-items:center;gap:16px;padding:10px 20px;">
+        <div style="width:40px;height:40px;flex:none;background:var(--accent);border-radius:9px;display:flex;align-items:center;justify-content:center;">
+          <span style="font-family:var(--font-num);font-size:16px;font-weight:800;color:#FFFFFF;">04</span>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:9px;">
+            <span class="material-icons" style="font-size:20px;color:var(--accent);">flag</span>
+            <span style="font-family:var(--font-heading);font-size:15.5px;font-weight:700;color:var(--navy);">Expected outcome</span>
+          </div>
+          <p style="margin-top:4px;font-size:12.5px;line-height:1.52;color:var(--ink);">A single trusted source of property truth, buyer-verifiable provenance, fraud blocked before settlement, and 24/7 availability from MongoDB Atlas cloud — no local database to keep running.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="rl-foot">
+    <div class="rl-foot-navy"><span style="font-size:var(--fs-micro);line-height:1.2;display:inline-block;">September 2026</span></div>
+    <div class="rl-foot-orange"><span style="font-size:var(--fs-micro);line-height:1.2;display:inline-block;">Slide 4 of 10</span></div>
+  </div>
+</div>
+</body>
+</html>

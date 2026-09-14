@@ -1,0 +1,136 @@
+///////////////////////////////////////////////////////////////////////////////
+// LAND LEDGER — CI pipeline (declarative Jenkins)
+//
+// Real, sequential stages: install -> lint -> tests (backend + contracts) ->
+// builds -> docker images -> image validation -> gated deploy echo.
+// Any failing test/build fails the pipeline (sh steps propagate exit codes).
+//
+// Notes:
+// - No `tools` block: node is expected to be available in the agent PATH.
+// - Docker is expected to be available on the agent for stages 7-9.
+///////////////////////////////////////////////////////////////////////////////
+
+pipeline {
+
+    agent any
+
+    environment {
+        CI = 'true'
+    }
+
+    options {
+        timestamps()
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+        disableConcurrentBuilds()
+    }
+
+    stages {
+
+        // 1 -------------------------------------------------------------------
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        // 2 -------------------------------------------------------------------
+        stage('Install dependencies') {
+            steps {
+                dir('backend') {
+                    sh 'npm ci'
+                }
+                dir('frontend') {
+                    sh 'npm ci'
+                }
+                dir('blockchain') {
+                    sh 'npm ci'
+                }
+            }
+        }
+
+        // 3 -------------------------------------------------------------------
+        stage('Lint') {
+            steps {
+                dir('backend') {
+                    sh 'node --check src/server.js'
+                }
+                dir('frontend') {
+                    sh 'npm run lint --if-present'
+                }
+            }
+        }
+
+        // 4 -------------------------------------------------------------------
+        stage('Backend tests') {
+            steps {
+                dir('backend') {
+                    sh 'npm test'
+                }
+            }
+        }
+
+        // 5 -------------------------------------------------------------------
+        stage('Smart contract tests') {
+            steps {
+                dir('blockchain') {
+                    sh 'npx hardhat test'
+                }
+            }
+        }
+
+        // 6 -------------------------------------------------------------------
+        stage('Frontend build') {
+            steps {
+                dir('frontend') {
+                    sh 'npm run build'
+                }
+            }
+        }
+
+        // 7 -------------------------------------------------------------------
+        stage('Backend build') {
+            steps {
+                sh 'docker build -t land-ledger-backend:latest ./backend'
+            }
+        }
+
+        // 8 -------------------------------------------------------------------
+        stage('Docker build frontend + blockchain') {
+            steps {
+                sh 'docker build -t land-ledger-frontend:latest ./frontend'
+                sh 'docker build -t land-ledger-blockchain:latest ./blockchain'
+            }
+        }
+
+        // 9 -------------------------------------------------------------------
+        stage('Image validation') {
+            steps {
+                sh 'docker images | grep land-ledger || (echo "ERROR: expected land-ledger images missing" && exit 1)'
+                sh '''docker run --rm land-ledger-backend:latest node -e "console.log('image ok')"'''
+            }
+        }
+
+        // 10 ------------------------------------------------------------------
+        stage('Deployment') {
+            when { branch 'main' }
+            steps {
+                sh 'echo "Deploy stage: wire your CD hook here (kubectl apply -f k8s/)"'
+            }
+        }
+    }
+
+    post {
+        always {
+            // Optional reports: no-op (allowed to be empty) if not generated
+            junit allowEmptyResults: true, testResults: '**/junit*.xml'
+            archiveArtifacts artifacts: 'backend/coverage/**, frontend/dist/**', allowEmptyArchive: true
+            echo "Pipeline finished with status: ${currentBuild.currentResult}"
+        }
+        failure {
+            echo "Pipeline FAILED at stage: ${currentBuild.description ?: 'see log above'} — check the failing stage output."
+        }
+        success {
+            echo 'LAND LEDGER pipeline SUCCEEDED.'
+        }
+    }
+}

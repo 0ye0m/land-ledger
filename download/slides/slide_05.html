@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Slide 05 — Objectives</title>
+<link rel="stylesheet" href="global.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body style="margin:0">
+<div class="slide">
+
+  <div class="rl-hdr">
+    <div>
+      <div style="font-family:var(--font-heading);font-size:var(--fs-h1);font-weight:800;text-transform:uppercase;color:var(--navy);letter-spacing:.5px;line-height:1.15;">OBJECTIVES</div>
+      <div class="rl-hdr-rule"></div>
+    </div>
+    <img src="logo.png" class="rl-logo" alt="Ramdeobaba University">
+  </div>
+
+  <div class="rl-body" style="display:flex;flex-direction:column;gap:13px;">
+
+    <!-- FIVE NUMBERED OBJECTIVES -->
+    <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:9px;">
+
+      <div class="card-white" style="flex:1;min-height:0;display:flex;align-items:center;gap:16px;padding:8px 20px;">
+        <div style="width:44px;height:44px;flex:none;background:var(--accent-soft);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+          <span style="font-family:var(--font-num);font-size:20px;font-weight:800;color:var(--navy);">1</span>
+        </div>
+        <p style="flex:1;font-size:14px;line-height:1.55;color:var(--ink);">Digitize the land registry behind secure, role-based access — separate registrar and citizen portals with JWT + bcrypt authentication.</p>
+      </div>
+
+      <div class="card-white" style="flex:1;min-height:0;display:flex;align-items:center;gap:16px;padding:8px 20px;">
+        <div style="width:44px;height:44px;flex:none;background:var(--accent-soft);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+          <span style="font-family:var(--font-num);font-size:20px;font-weight:800;color:var(--navy);">2</span>
+        </div>
+        <p style="flex:1;font-size:14px;line-height:1.55;color:var(--ink);">Anchor every ownership change on an immutable EVM ledger through the LandRegistry.sol smart contract with on-chain provenance enforcement.</p>
+      </div>
+
+      <div class="card-white" style="flex:1;min-height:0;display:flex;align-items:center;gap:16px;padding:8px 20px;">
+        <div style="width:44px;height:44px;flex:none;background:var(--accent-soft);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+          <span style="font-family:var(--font-num);font-size:20px;font-weight:800;color:var(--navy);">3</span>
+        </div>
+        <p style="flex:1;font-size:14px;line-height:1.55;color:var(--ink);">Guarantee document integrity using SHA-256 hashing at upload with independent re-verification on demand.</p>
+      </div>
+
+      <div class="card-white" style="flex:1;min-height:0;display:flex;align-items:center;gap:16px;padding:8px 20px;">
+        <div style="width:44px;height:44px;flex:none;background:var(--accent-soft);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+          <span style="font-family:var(--font-num);font-size:20px;font-weight:800;color:var(--navy);">4</span>
+        </div>
+        <p style="flex:1;font-size:14px;line-height:1.55;color:var(--ink);">Automate transfer risk screening with a deterministic 9-check fraud engine (PASS / WARN / FAIL) before registrar approval.</p>
+      </div>
+
+      <div class="card-white" style="flex:1;min-height:0;display:flex;align-items:center;gap:16px;padding:8px 20px;">
+        <div style="width:44px;height:44px;flex:none;background:var(--accent-soft);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+          <span style="font-family:var(--font-num);font-size:20px;font-weight:800;color:var(--navy);">5</span>
+        </div>
+        <p style="flex:1;font-size:14px;line-height:1.55;color:var(--ink);">Ship a production-grade platform with CI/CD pipelines, Prometheus + Grafana observability and 24/7 MongoDB Atlas cloud storage.</p>
+      </div>
+
+    </div>
+
+    <!-- MEASURABLE TARGETS STRIP -->
+    <div style="flex:none;height:104px;background:var(--navy-deep);border-radius:10px;display:flex;overflow:hidden;">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 12px;">
+        <div style="font-family:var(--font-num);font-size:21px;font-weight:700;color:var(--accent);line-height:1.2;">100%</div>
+        <div style="margin-top:5px;font-size:10.5px;line-height:1.35;color:#FFFFFF;">transfers settled on-chain</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 12px;border-left:1px solid rgba(255,255,255,.14);">
+        <div style="font-family:var(--font-num);font-size:21px;font-weight:700;color:var(--accent);line-height:1.2;">0</div>
+        <div style="margin-top:5px;font-size:10.5px;line-height:1.35;color:#FFFFFF;">unverified documents accepted</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 12px;border-left:1px solid rgba(255,255,255,.14);">
+        <div style="font-family:var(--font-num);font-size:21px;font-weight:700;color:var(--accent);line-height:1.2;">1</div>
+        <div style="margin-top:5px;font-size:10.5px;line-height:1.35;color:#FFFFFF;">audit event per API action</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 12px;border-left:1px solid rgba(255,255,255,.14);">
+        <div style="font-family:var(--font-num);font-size:21px;font-weight:700;color:var(--accent);line-height:1.2;">29/29</div>
+        <div style="margin-top:5px;font-size:10.5px;line-height:1.35;color:#FFFFFF;">API · 20/20 contract tests</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 12px;border-left:1px solid rgba(255,255,255,.14);">
+        <div style="font-family:var(--font-num);font-size:21px;font-weight:700;color:var(--accent);line-height:1.2;">0</div>
+        <div style="margin-top:5px;font-size:10.5px;line-height:1.35;color:#FFFFFF;">local DB dependency (Atlas M0)</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="rl-foot">
+    <div class="rl-foot-navy"><span style="font-size:var(--fs-micro);line-height:1.2;display:inline-block;">September 2026</span></div>
+    <div class="rl-foot-orange"><span style="font-size:var(--fs-micro);line-height:1.2;display:inline-block;">Slide 5 of 10</span></div>
+  </div>
+</div>
+</body>
+</html>

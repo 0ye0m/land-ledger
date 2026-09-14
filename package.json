@@ -1,0 +1,15 @@
+{
+  "name": "land-ledger-cloud",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LAND LEDGER - secure digital property registry (cloud deployment entry point). Runs the Express API with the integrated built SPA on a single port (default 3000), optionally boots a local Hardhat chain.",
+  "scripts": {
+    "postinstall": "npm install --no-audit --no-fund --prefix land-ledger/backend",
+    "build": "node land-ledger/scripts/build-frontend.js",
+    "start": "node land-ledger/scripts/start-cloud.js",
+    "dev": "node land-ledger/scripts/start-cloud.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

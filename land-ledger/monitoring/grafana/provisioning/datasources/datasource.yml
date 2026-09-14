@@ -1,0 +1,13 @@
+# LAND LEDGER — Grafana datasource provisioning
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus          # dashboard JSON references this uid explicitly
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+    jsonData:
+      timeInterval: 15s     # match prometheus scrape_interval

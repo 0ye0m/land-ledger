@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build output
+dist/
+build/
+coverage/
+cache/
+artifacts/
+deployments/local.json
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Runtime data
+.pgdata/
+data/pgdata/
+backend/uploads/
+*.log
+dev.log
+nohup.out
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/

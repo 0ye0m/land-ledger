@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LAND LEDGER — Slide 7 · Implementation</title>
+<link rel="stylesheet" href="global.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<style>
+  .tech-card{padding:16px 18px;display:flex;flex-direction:column;justify-content:center;min-height:0;}
+  .tech-head{display:flex;align-items:center;gap:11px;}
+  .tech-icon{width:40px;height:40px;border-radius:9px;background:var(--navy);color:#FFFFFF;display:flex;align-items:center;justify-content:center;flex:none;}
+  .tech-title{font-family:var(--font-heading);font-size:var(--fs-body);font-weight:700;color:var(--navy);}
+  .tech-detail{font-size:11.5px;color:var(--muted);line-height:1.7;margin-top:10px;}
+</style>
+</head>
+<body style="margin:0">
+<div class="slide">
+
+  <div class="rl-hdr">
+    <div>
+      <div style="font-family:var(--font-heading);font-size:var(--fs-h1);font-weight:800;text-transform:uppercase;color:var(--navy);letter-spacing:.5px;line-height:1.15;">IMPLEMENTATION</div>
+      <div class="rl-hdr-rule"></div>
+    </div>
+    <img src="logo.png" class="rl-logo" alt="Ramdeobaba University">
+  </div>
+
+  <div class="rl-body" style="display:grid;grid-template-columns:58fr 42fr;gap:20px;min-height:0;padding:18px 56px 14px 56px;">
+
+    <!-- LEFT: 2x3 tech grid -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr 1fr;gap:12px;min-height:0;">
+      <div class="card tech-card">
+        <div class="tech-head"><div class="tech-icon"><span class="material-icons" style="font-size:20px;">web</span></div><div class="tech-title">Frontend</div></div>
+        <div class="tech-detail">React 18 · Vite · Tailwind CSS · light/dark themes · responsive to 360 px</div>
+      </div>
+      <div class="card tech-card">
+        <div class="tech-head"><div class="tech-icon"><span class="material-icons" style="font-size:20px;">dns</span></div><div class="tech-title">Backend</div></div>
+        <div class="tech-detail">Node.js · Express · Helmet · JWT + bcrypt · Multer uploads</div>
+      </div>
+      <div class="card tech-card">
+        <div class="tech-head"><div class="tech-icon"><span class="material-icons" style="font-size:20px;">storage</span></div><div class="tech-title">Database</div></div>
+        <div class="tech-detail">MongoDB Atlas M0 · Mongoose 8 · atomic counters · 8 collections</div>
+      </div>
+      <div class="card tech-card">
+        <div class="tech-head"><div class="tech-icon"><span class="material-icons" style="font-size:20px;">token</span></div><div class="tech-title">Blockchain</div></div>
+        <div class="tech-detail">Solidity 0.8.24 · LandRegistry.sol · Hardhat · ethers v6</div>
+      </div>
+      <div class="card tech-card">
+        <div class="tech-head"><div class="tech-icon"><span class="material-icons" style="font-size:20px;">engineering</span></div><div class="tech-title">DevOps</div></div>
+        <div class="tech-detail">Docker · docker-compose · Jenkins (10-stage) · Kubernetes · Prometheus + Grafana</div>
+      </div>
+      <div class="card tech-card">
+        <div class="tech-head"><div class="tech-icon"><span class="material-icons" style="font-size:20px;">bug_report</span></div><div class="tech-title">Testing</div></div>
+        <div class="tech-detail">supertest (29 API tests) · Hardhat toolbox (20 contract tests) · browser E2E sweep</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: framed live screenshot -->
+    <div style="display:flex;flex-direction:column;min-height:0;">
+      <div class="shot" style="flex:1;min-height:0;">
+        <img src="shot-registrar.png" alt="Live registrar console" style="object-position:top;">
+      </div>
+      <div style="flex:none;margin-top:12px;background:var(--navy-deep);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:9px;">
+        <span class="material-icons" style="font-size:16px;color:var(--accent);flex:none;">terminal</span>
+        <div style="font-size:11px;color:#FFFFFF;line-height:1.5;">Live registrar console — real ownership-transfer settlements on the local chain (block 15, tx 0x9c706cbe…)</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="rl-foot">
+    <div class="rl-foot-navy"><span style="font-size:var(--fs-micro);line-height:1.2;display:inline-block;">September 2026</span></div>
+    <div class="rl-foot-orange"><span style="font-size:var(--fs-micro);line-height:1.2;display:inline-block;">Slide 7 of 10</span></div>
+  </div>
+
+</div>
+</body>
+</html>

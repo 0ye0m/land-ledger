@@ -1,0 +1,39 @@
+# LAND LEDGER — ingress (nginx ingress class)
+#
+# Routing:
+#   /            -> frontend:80   (SPA + static assets)
+#   /api         -> backend:3000  (REST API)
+#
+# /metrics is intentionally NOT exposed through the ingress — Prometheus scrapes
+# the in-cluster "backend-metrics" Service (see 08-monitoring.yaml). Publishing
+# metrics publicly would leak operational details.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: land-ledger
+  namespace: land-ledger
+  labels:
+    app.kubernetes.io/name: land-ledger
+  annotations:
+    # mirrors client_max_body_size 12m from frontend/nginx.conf
+    nginx.ingress.kubernetes.io/proxy-body-size: "12m"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: landledger.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 3000

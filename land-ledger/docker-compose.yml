@@ -1,0 +1,81 @@
+###############################################################################
+# LAND LEDGER — local/self-hosted stack
+#
+#   frontend(nginx :8080) ──> /api/ ──> backend(:3000) ──> MongoDB Atlas (cloud)
+#                                        backend ──────> blockchain(:8545)
+#   prometheus(:9090) scrapes backend:3000/metrics ; grafana(:3001) reads prometheus
+#
+# Database: MongoDB Atlas (free M0 is fine) - set MONGODB_URI in your shell/env.
+#   Atlas Network Access must allow this machine's IP.
+#
+# Secrets: reference environment variables with dev-only fallbacks.
+# NEVER commit real production credentials — export them in your shell/CI instead.
+###############################################################################
+
+name: land-ledger
+
+services:
+
+  blockchain:
+    build: ./blockchain
+    healthcheck:
+      # Hardhat answers JSON-RPC POSTs; a bare GET is not a reliable probe.
+      test: ["CMD-SHELL", "wget -qO- --header='Content-Type: application/json' --post-data='{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"eth_blockNumber\",\"params\":[]}' http://localhost:8545 >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s   # first start compiles contracts
+    ports:
+      - "8545:8545"
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      JWT_SECRET: ${JWT_SECRET:-dev_only_jwt_secret_change_me}
+      MONGODB_URI: ${MONGODB_URI:?set MONGODB_URI to your MongoDB Atlas connection string}
+      MONGODB_DB_NAME: ${MONGODB_DB_NAME:-land_ledger}
+      BLOCKCHAIN_RPC_URL: http://blockchain:8545
+      BLOCKCHAIN_OPERATOR_PRIVATE_KEY: ${BLOCKCHAIN_OPERATOR_PRIVATE_KEY:-0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80}
+      CORS_ORIGIN: http://localhost:8080
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      - blockchain
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+    depends_on:
+      - prometheus
+    ports:
+      - "3001:3000"
+    restart: unless-stopped
+
+volumes:
+  uploads:

@@ -1,0 +1,3076 @@
+You are the lead product engineer and full-stack architect responsible for BUILDING the complete LAND LEDGER web platform.
+
+You are responsible for:
+
+- frontend architecture
+- UI/UX implementation
+- backend architecture
+- PostgreSQL database
+- authentication and authorization
+- document management
+- ownership workflows
+- fraud/conflict detection
+- Solidity smart contracts
+- Hardhat blockchain
+- ethers.js integration
+- API design
+- DevOps
+- testing
+- observability
+- deployment configuration
+- performance
+- security
+- responsive design
+
+DO NOT merely describe the implementation.
+
+ACTUALLY BUILD THE APPLICATION.
+
+The final result must be a complete, polished, functional website and application where the major workflows work end-to-end.
+
+============================================================
+1. PRODUCT
+============================================================
+
+PRODUCT NAME:
+
+LAND LEDGER
+
+PRODUCT POSITIONING:
+
+A secure digital property registry platform that brings together:
+
+- property records
+- ownership information
+- supporting documents
+- document integrity verification
+- ownership transfers
+- transfer risk checks
+- registrar review
+- blockchain-backed ownership history
+- auditability
+- transaction traceability
+
+The product should solve the core problem of fragmented, difficult-to-verify property ownership records by creating a structured, traceable workflow from property registration through verification and ownership settlement.
+
+The product must feel like a serious real-world software product.
+
+The UI must NOT look like:
+
+- a college project
+- a generic admin template
+- a dashboard template downloaded from the internet
+- a crypto trading dashboard
+- a generic SaaS starter
+- a futuristic Web3 landing page
+- a gaming UI
+
+The product should communicate:
+
+TRUST
+ACCOUNTABILITY
+VERIFICATION
+OWNERSHIP
+TRACEABILITY
+SECURITY
+DOCUMENT INTEGRITY
+REGISTRY OPERATIONS
+
+============================================================
+2. ABSOLUTE TECHNOLOGY STACK
+============================================================
+
+THIS IS STRICT.
+
+FRONTEND:
+
+- React.js
+- Vite
+- JavaScript
+- JSX
+- Tailwind CSS
+
+Use React.js with Vite.
+
+DO NOT USE:
+
+- Next.js
+- Nuxt
+- Remix
+- Astro
+- Angular
+- Vue
+- Svelte
+- TanStack Start
+- TanStack Router
+- TanStack Query
+- any TanStack framework/package for application architecture
+- NextAuth
+- any full-stack React framework
+- any meta-framework
+
+Use:
+
+react-router-dom
+
+for routing.
+
+Use the native browser:
+
+fetch()
+
+for API calls unless a very small dedicated HTTP utility is required.
+
+Do NOT add unnecessary state-management libraries.
+
+React Context + hooks are sufficient for authentication/application state where required.
+
+BACKEND:
+
+- Node.js
+- Express.js
+- REST APIs
+
+DO NOT USE:
+
+- NestJS
+- Fastify
+- Hono
+- Django
+- Flask
+- Spring Boot
+- Laravel
+- any framework replacing Express
+
+DATABASE:
+
+- PostgreSQL
+
+BLOCKCHAIN:
+
+- Solidity
+- Hardhat
+- local Ethereum-compatible Hardhat network
+- ethers.js
+
+AUTHENTICATION:
+
+- JWT
+- bcrypt
+
+DEVOPS:
+
+- Docker
+- Docker Compose
+- Kubernetes
+- Jenkins
+
+MONITORING:
+
+- Prometheus
+- Grafana
+
+VERSION CONTROL:
+
+- Git
+- GitHub
+
+Do not replace these technologies with unrelated alternatives.
+
+Do not add technologies simply because they are popular.
+
+Keep the stack clean and understandable.
+
+============================================================
+3. DESIGN SOURCE OF TRUTH
+============================================================
+
+I am providing multiple screenshots/design images for LAND LEDGER.
+
+YOU MUST STUDY THEM CAREFULLY.
+
+The screenshots are the visual source of truth for the frontend.
+
+Do not ignore them.
+
+Do not create an unrelated visual system.
+
+Do not redesign the brand.
+
+Do not switch to generic SaaS styling.
+
+The provided screens establish:
+
+- color palette
+- typography
+- spacing
+- layout
+- navigation
+- button appearance
+- card style
+- information density
+- border treatment
+- icon treatment
+- authentication layouts
+- homepage structure
+- dashboard shell
+- citizen navigation
+- registrar navigation
+- paper texture
+- section headings
+- status presentation
+- visual hierarchy
+
+For every screen not explicitly shown in the screenshots, EXTEND THIS EXACT DESIGN SYSTEM.
+
+The missing screens must look as though they were designed at the same time as the provided screenshots.
+
+============================================================
+4. OVERALL DESIGN DIRECTION
+============================================================
+
+Design language:
+
+INSTITUTIONAL REGISTRY
++
+PREMIUM DIGITAL PRODUCT
++
+EDITORIAL DOCUMENT SYSTEM
+
+The interface should feel:
+
+- trustworthy
+- premium
+- structured
+- calm
+- authoritative
+- highly organized
+- information-rich
+- modern
+- technically sophisticated
+- restrained
+
+The design should have:
+
+- warm paper backgrounds
+- dark ink typography
+- deep coral registry accent
+- green verification/success accent
+- blue informational accent
+- amber warning accent
+- subtle borders
+- subtle dotted paper texture
+- strong editorial headings
+- compact labels
+- square registry marks
+- structured data tables
+- clear state indicators
+- restrained shadows
+- modest radius
+
+Avoid decorative UI that adds no meaning.
+
+============================================================
+5. COLOR SYSTEM
+============================================================
+
+Use semantic CSS variables.
+
+Do not invent random colors for individual screens.
+
+LIGHT THEME:
+
+Background:
+warm paper / ivory
+
+Foreground:
+dark navy ink
+
+Card:
+very light warm paper
+
+Primary:
+deep coral / registry red
+
+Primary foreground:
+warm white
+
+Secondary:
+warm beige
+
+Muted:
+warm neutral
+
+Muted foreground:
+blue-gray
+
+Accent:
+soft green
+
+Accent foreground:
+deep green
+
+Destructive:
+red
+
+Destructive foreground:
+warm white
+
+Border:
+warm beige-gray
+
+Input:
+warm beige-gray
+
+Ring:
+coral
+
+Sidebar:
+slightly darker warm paper
+
+Sidebar border:
+warm muted border
+
+Preserve the supplied semantic theme values from the existing CSS.
+
+DARK THEME:
+
+Create a complete dark version of the exact same design language.
+
+Use:
+
+- dark navy background
+- warm white foreground
+- coral/orange primary
+- dark slate cards
+- subtle green verification
+- blue information
+- amber warning
+- dark borders
+
+Dark mode must feel like LAND LEDGER in a dark environment.
+
+It must not become a completely different design.
+
+============================================================
+6. TYPOGRAPHY
+============================================================
+
+Use premium, highly readable typography.
+
+Display direction:
+
+Avenir Next / Trebuchet MS style / clean system sans-serif fallback.
+
+The supplied design uses:
+
+"Trebuchet MS", "Avenir Next", sans-serif
+
+Preserve this editorial/display direction.
+
+Body typography:
+
+clean sans-serif.
+
+Headings:
+
+- bold
+- large
+- dark ink
+- compact line height
+- strong hierarchy
+
+Hero headings should feel editorial and confident.
+
+Section kickers:
+
+- uppercase
+- small
+- bold
+- letter spacing
+- coral
+
+Body:
+
+- muted blue-gray
+- readable
+- generous line-height
+
+Do not use:
+
+- decorative fonts
+- gaming fonts
+- futuristic fonts
+- overly rounded novelty fonts
+
+============================================================
+7. BORDER + RADIUS SYSTEM
+============================================================
+
+Use restrained shapes.
+
+Base radius should remain modest.
+
+Use rounded:
+
+- inputs
+- buttons
+- compact controls
+- pills
+
+Use square or nearly-square:
+
+- registry marks
+- information panels
+- data blocks
+
+Do not make every component heavily rounded.
+
+Do not use giant 24px/32px rounded rectangles everywhere.
+
+Use thin borders throughout the interface.
+
+============================================================
+8. PAPER TEXTURE
+============================================================
+
+Use the subtle dotted paper texture from the supplied design.
+
+It should be:
+
+- extremely subtle
+- low contrast
+- non-distracting
+- visually consistent
+- responsive
+
+The texture should resemble fine registry/document paper.
+
+Do not use:
+
+- photographic textures
+- dramatic noise
+- obvious grain
+- intense gradients
+
+The paper texture should sit quietly behind the content.
+
+============================================================
+9. BRAND
+============================================================
+
+Brand:
+
+LAND LEDGER
+
+Secondary line:
+
+PROPERTY REGISTRY
+
+For application shell:
+
+REGISTRY OPERATIONS
+
+Use the provided rotated square registry mark.
+
+The mark should resemble:
+
+- property record marker
+- registry stamp
+- document identifier
+- ownership record symbol
+
+Keep it minimal.
+
+Use a fine coral border with the appropriate internal icon.
+
+Do not create a massive logo.
+
+============================================================
+10. PUBLIC HOMEPAGE
+============================================================
+
+Recreate the supplied LAND LEDGER homepage design.
+
+HEADER:
+
+Left:
+
+LAND LEDGER
+
+Right:
+
+Sign in
+
+Create account →
+
+Header styling:
+
+- warm paper
+- generous horizontal padding
+- thin bottom border
+- clean alignment
+- no excessive effects
+
+============================================================
+11. HERO
+============================================================
+
+LEFT SIDE:
+
+Section kicker:
+
+TRUSTED PROPERTY RECORDS
+
+Use a short coral line followed by the text.
+
+Main headline:
+
+A clearer chain of
+ownership.
+
+Use dark ink for the primary wording.
+
+Use coral for:
+
+ownership.
+
+Supporting copy:
+
+Land Ledger brings property records, verified documents, transfer reviews, and ledger settlement into one accountable registry.
+
+Primary CTA:
+
+Register your account →
+
+Secondary CTA:
+
+Access the registry
+
+Below CTA:
+
+Role-protected access
+End-to-end audit trail
+Integrity verification
+
+Each item should use a small outlined verification/check icon.
+
+============================================================
+12. HERO FEATURE GRID
+============================================================
+
+RIGHT SIDE:
+
+Create the same structured 2x2 grid shown in the screenshot.
+
+FEATURE 1:
+
+Verified ownership
+
+A single property record connects ownership, survey details, status, and supporting evidence.
+
+FEATURE 2:
+
+Document integrity
+
+Every uploaded record receives a SHA-256 fingerprint for repeatable integrity checks.
+
+FEATURE 3:
+
+Protected transfers
+
+Structured risk checks surface duplicate requests, missing documents, and valuation anomalies.
+
+FEATURE 4:
+
+Traceable settlement
+
+Confirmed ownership changes are mirrored to an append-only ledger for independent reconciliation.
+
+Each panel:
+
+- fine border
+- appropriate accent icon
+- title
+- supporting description
+- structured spacing
+
+Do not turn these into floating marketing cards.
+
+============================================================
+13. HOMEPAGE PROCESS SECTION
+============================================================
+
+Use the supplied second homepage screen as design reference.
+
+Section kicker:
+
+01
+EVERY STEP ACCOUNTED FOR
+
+Heading:
+
+From record to settlement.
+
+Three stages:
+
+01
+Register
+
+Create an authoritative property record.
+
+02
+Verify
+
+Check documents and transfer risk.
+
+03
+Settle
+
+Confirm ownership and preserve history.
+
+Use thin vertical separators.
+
+Do not use generic circular stepper graphics.
+
+Use an editorial registry-process layout.
+
+============================================================
+14. HOMEPAGE FOOTER
+============================================================
+
+Footer:
+
+Land Ledger — accountable property registry operations.
+
+Right:
+
+Secure by design
+
+Use:
+
+- warm paper
+- subtle border
+- restrained typography
+- small shield/check icon
+
+============================================================
+15. REGISTRATION SCREEN
+============================================================
+
+Reproduce the supplied registration screenshot.
+
+Desktop:
+
+split two-column layout.
+
+LEFT SIDE:
+
+Brand:
+
+LAND LEDGER
+
+Section kicker:
+
+CITIZEN REGISTRATION
+
+Large heading:
+
+Bring every
+property record
+into one clear
+view.
+
+Supporting copy:
+
+Create your account to access holdings, submit supporting records, and initiate verified ownership transfers.
+
+Bottom:
+
+Already registered?
+Sign in
+
+RIGHT SIDE:
+
+Section kicker:
+
+01
+YOUR DETAILS
+
+Heading:
+
+Create citizen account
+
+Form:
+
+Full name
+Email address
+Phone number
+District
+State
+Wallet address
+Password
+
+Wallet helper:
+
+Used for ledger-backed ownership settlement.
+
+Password helper:
+
+Use at least 8 characters.
+
+Primary CTA:
+
+Create account →
+
+Functional requirements:
+
+- client-side validation
+- backend validation
+- loading state
+- success state
+- API errors
+- duplicate email handling
+- password visibility
+- proper field errors
+- disabled state while submitting
+
+============================================================
+16. LOGIN SCREEN
+============================================================
+
+Reproduce the supplied login screenshot.
+
+LEFT:
+
+LAND LEDGER
+
+Kicker:
+
+SECURE REGISTRY ACCESS
+
+Heading:
+
+Ownership
+records you can
+trace and trust.
+
+Supporting copy:
+
+Review property records, verify document integrity, and follow every ownership transfer from submission to settlement.
+
+Bottom:
+
+Protected role-based access
+
+RIGHT:
+
+Kicker:
+
+01
+ACCOUNT ACCESS
+
+Heading:
+
+Welcome back
+
+Text:
+
+Enter your registered account details.
+
+Inputs:
+
+Email address
+Password
+
+Password must have show/hide control.
+
+Primary button:
+
+Sign in →
+
+Divider.
+
+Section:
+
+PREVIEW AN ACCOUNT
+
+Buttons:
+
+Citizen
+
+Registrar
+
+These may be convenient development/demo login controls but MUST still use the same backend authentication system.
+
+Bottom:
+
+New to Land Ledger?
+Create an account
+
+============================================================
+17. AUTHENTICATION SYSTEM
+============================================================
+
+Implement real authentication.
+
+Endpoints:
+
+POST /api/auth/register
+POST /api/auth/login
+GET /api/auth/me
+
+Use:
+
+JWT
+bcrypt
+
+Persist authenticated session appropriately.
+
+On login:
+
+- authenticate credentials
+- return token/session information
+- load current user
+- redirect based on role
+
+Implement logout properly.
+
+Do not rely on frontend-only authentication.
+
+============================================================
+18. ROLE-BASED ACCESS CONTROL
+============================================================
+
+Roles:
+
+CITIZEN
+
+REGISTRAR
+
+Never trust a role supplied directly from the client.
+
+The backend must determine the authenticated user and role from trusted server-side information.
+
+CITIZEN CAN:
+
+- register
+- login
+- view own dashboard
+- view profile
+- view properties
+- search properties
+- view property ownership
+- register property where permitted
+- upload documents
+- submit transfer
+- view own transfer requests
+- view document verification status
+- view blockchain history associated with accessible properties
+
+CITIZEN CANNOT:
+
+- approve transfers
+- approve property registrations
+- change their role
+- call registrar-only endpoints
+- modify blockchain ownership directly
+
+REGISTRAR CAN:
+
+- login
+- dashboard
+- review property registrations
+- verify documents
+- approve/reject property requests
+- review transfers
+- inspect fraud results
+- detect conflicts
+- approve/reject transfers
+- trigger valid blockchain ownership settlement
+- view blockchain transactions
+- view audit logs
+
+Registrar also cannot bypass smart-contract authorization.
+
+============================================================
+19. APPLICATION SHELL
+============================================================
+
+The dashboard shell MUST match the provided screenshots.
+
+Desktop:
+
+LEFT SIDEBAR
+
+Brand:
+
+LAND LEDGER
+REGISTRY OPERATIONS
+
+Thin divider.
+
+Top system status:
+
+green dot
+Registry synchronized
+
+Top right:
+
+User name
+ROLE
+initials avatar
+
+Sidebar navigation.
+
+Citizen:
+
+Overview
+Properties
+Documents
+Transfers
+Profile
+
+Registrar:
+
+Overview
+Properties
+Documents
+Transfers
+Review queue
+Ledger
+Profile
+
+Active item:
+
+- subtle warm tinted background
+- coral left border
+- coral icon
+- coral/dark text
+
+Inactive:
+
+blue-gray
+
+Hover:
+
+subtle background change
+
+Sidebar footer:
+
+user name
+role
+Sign out
+
+DO NOT use a generic dark dashboard sidebar.
+
+Preserve the supplied warm registry appearance.
+
+============================================================
+20. CITIZEN DASHBOARD
+============================================================
+
+Design as a natural extension of the supplied application shell.
+
+Page kicker:
+
+REGISTRY OVERVIEW
+
+Heading:
+
+Your property registry.
+
+Metrics:
+
+Owned properties
+Pending transfers
+Completed transfers
+Documents awaiting verification
+
+Then:
+
+Recent properties
+
+Recent transfer activity
+
+Document verification
+
+Recent blockchain activity
+
+Use compact information blocks.
+
+Avoid huge colorful dashboard cards.
+
+Use real API data.
+
+Do not hardcode production UI data.
+
+============================================================
+21. REGISTRAR DASHBOARD
+============================================================
+
+Page kicker:
+
+REGISTRY OPERATIONS
+
+Heading:
+
+Registry operations
+
+Metrics:
+
+Pending registrations
+Pending transfers
+Fraud alerts
+Verified documents
+Rejected requests
+Completed transfers
+
+Also:
+
+Recent blockchain transactions
+Recent review activity
+High-risk transfers
+Document verification activity
+
+Use a clear operational hierarchy.
+
+The most actionable items should visually stand out.
+
+============================================================
+22. PROPERTY MANAGEMENT
+============================================================
+
+Implement complete property functionality.
+
+PROPERTY LIST:
+
+Searchable registry table.
+
+Fields:
+
+Property ID
+Reference
+Location
+Property Type
+Area
+Current Owner
+Status
+Updated
+Actions
+
+Filters:
+
+- keyword
+- status
+- property type
+- district/state where useful
+
+Search must use the backend.
+
+Support:
+
+- loading
+- empty
+- error
+- pagination where appropriate
+
+Mobile:
+
+Convert table into structured record rows.
+
+============================================================
+23. PROPERTY DETAIL
+============================================================
+
+Property detail page:
+
+Property ID
+Reference number
+Address
+City
+District
+State
+Area
+Property Type
+Description
+Current owner
+Wallet address
+Status
+Created
+Updated
+
+Then:
+
+Supporting Documents
+Transfer History
+Ownership History
+Blockchain History
+Audit Information where authorized
+
+Clearly label:
+
+OFF-CHAIN APPLICATION RECORD
+
+and:
+
+ON-CHAIN OWNERSHIP RECORD
+
+Do not make them visually indistinguishable.
+
+============================================================
+24. PROPERTY REGISTRATION
+============================================================
+
+Create property registration workflow.
+
+Form:
+
+Property reference/title
+Address
+City
+District
+State
+Area
+Property type
+Description
+Owner information
+Wallet address
+Supporting documents
+
+Submit request.
+
+Request enters:
+
+PENDING REGISTRAR REVIEW
+
+Registrar reviews:
+
+- property data
+- documents
+- document integrity
+- ownership information
+
+Registrar:
+
+APPROVE
+
+or:
+
+REJECT
+
+Only after required approval should blockchain property registration occur.
+
+============================================================
+25. DOCUMENT MANAGEMENT
+============================================================
+
+Documents remain off-chain.
+
+Upload flow:
+
+React
+↓
+Express
+↓
+file storage
+↓
+SHA-256 calculation
+↓
+PostgreSQL metadata/hash
+
+Store:
+
+document ID
+property ID
+user ID
+document type
+file name
+file size
+storage reference
+SHA-256 hash
+upload timestamp
+verification status
+verified by
+verified timestamp
+
+When a document is checked:
+
+1. read file
+2. recalculate SHA-256
+3. compare with stored hash
+4. return result
+
+UI status:
+
+VALID
+
+or:
+
+TAMPERED / HASH MISMATCH
+
+Important:
+
+The hash verifies file integrity relative to the stored fingerprint.
+
+Do not represent hash matching alone as proof of legal authenticity.
+
+Registrar verification remains part of the workflow.
+
+============================================================
+26. DOCUMENT UI
+============================================================
+
+Create a polished document registry.
+
+Columns:
+
+Document
+Property
+Type
+Uploaded
+Hash status
+Verification
+Uploaded by
+Actions
+
+Document detail:
+
+File information
+Hash
+Integrity result
+Verification status
+Verifier
+Verification timestamp
+
+Actions:
+
+View
+Download where permitted
+Verify integrity
+Re-check
+
+File validation:
+
+- allowed extensions
+- content type
+- size limit
+- upload errors
+
+============================================================
+27. FRAUD / CONFLICT ENGINE
+============================================================
+
+Implement a dedicated RULE-BASED FRAUD AND CONFLICT CHECKING ENGINE.
+
+Do not label it AI unless an actual ML model exists.
+
+Required checks:
+
+1. Multiple active transfer requests for the same property.
+
+2. Transfer requested while another transfer remains pending.
+
+3. Requested seller is not current owner.
+
+4. Property does not exist.
+
+5. Property is in conflicting/invalid state.
+
+6. Document hash mismatch.
+
+7. Transfer requested after ownership already changed.
+
+8. Any additional deterministic consistency checks that are directly relevant to ownership transfer.
+
+Return:
+
+isFraudulent
+riskLevel
+reasons
+checksPerformed
+
+Example:
+
+{
+  "isFraudulent": true,
+  "riskLevel": "HIGH",
+  "reasons": [
+    "Another transfer request already exists for this property",
+    "Requested seller is not the current owner"
+  ]
+}
+
+Risk levels:
+
+LOW
+MEDIUM
+HIGH
+
+============================================================
+28. TRANSFER WORKFLOW
+============================================================
+
+Implement:
+
+Citizen A
+↓
+Create transfer request
+↓
+Backend validation
+↓
+Current ownership verification
+↓
+Duplicate/conflict check
+↓
+Document verification
+↓
+SHA-256 verification
+↓
+Fraud checks
+↓
+PENDING REGISTRAR REVIEW
+↓
+Registrar review
+↓
+APPROVE / REJECT
+
+REJECT:
+
+Status:
+REJECTED
+
+APPROVE:
+
+Backend starts blockchain settlement.
+
+Then:
+
+Smart contract transaction
+↓
+confirmation
+↓
+transaction hash
+↓
+PostgreSQL update
+↓
+audit log
+↓
+COMPLETED
+
+DO NOT update ownership before blockchain confirmation.
+
+============================================================
+29. TRANSFER LIST
+============================================================
+
+Columns:
+
+Transfer ID
+Property
+From
+To
+Requested
+Risk
+Status
+Actions
+
+Filters:
+
+Status
+Risk
+Date
+Property
+Applicant
+
+============================================================
+30. TRANSFER DETAIL
+============================================================
+
+Create a premium registry timeline.
+
+REQUEST CREATED
+↓
+OWNERSHIP CHECK
+↓
+DOCUMENT CHECK
+↓
+CONFLICT CHECK
+↓
+FRAUD CHECK
+↓
+REGISTRAR REVIEW
+↓
+APPROVED / REJECTED
+↓
+BLOCKCHAIN TRANSACTION
+↓
+CONFIRMED
+↓
+OWNERSHIP UPDATED
+
+Display:
+
+Transfer ID
+Property
+Seller
+Buyer
+Requested date
+Documents
+Fraud results
+Approval information
+Blockchain result
+Audit history
+
+Completed transfer:
+
+Transaction hash
+Block number
+Timestamp
+Network
+Previous owner
+New owner
+
+Failed transfer:
+
+FAILED
+with meaningful error state.
+
+Never show fake hashes.
+
+============================================================
+31. REGISTRAR REVIEW QUEUE
+============================================================
+
+This screen is not directly shown in the screenshots.
+
+EXTEND THE DESIGN SYSTEM.
+
+Page kicker:
+
+REGISTRY REVIEW
+
+Heading:
+
+Review queue
+
+Main interface:
+
+structured registry table.
+
+Columns:
+
+Request
+Property
+Applicant
+Submitted
+Risk
+Documents
+Status
+Action
+
+High-risk records should be identifiable without making the entire page red.
+
+Review page:
+
+- property information
+- applicant information
+- document evidence
+- hash verification
+- ownership state
+- previous transfers
+- fraud results
+- blockchain state where relevant
+- approval controls
+- rejection reason
+
+Buttons:
+
+Approve
+Reject
+
+Reject requires a reason.
+
+============================================================
+32. LEDGER PAGE
+============================================================
+
+Registrar-only.
+
+Page kicker:
+
+LEDGER OPERATIONS
+
+Heading:
+
+Blockchain ledger
+
+Summary:
+
+Network
+Connection
+Contract address
+Latest block
+Transaction count
+Successful operations
+Failed operations
+
+Transaction table:
+
+Transaction ID
+Property ID
+Operation
+Previous owner
+New owner
+Transaction hash
+Block
+Status
+Timestamp
+
+Transaction details:
+
+Hash
+Block
+Timestamp
+Contract
+Property
+Previous owner
+New owner
+Operation
+Status
+Network
+
+If blockchain is unavailable:
+
+show:
+
+Blockchain unavailable
+
+Do not pretend synchronization exists.
+
+============================================================
+33. OWNERSHIP HISTORY
+============================================================
+
+Property ownership history page/section.
+
+Show chronological ownership changes.
+
+Each record:
+
+previous owner
+new owner
+property ID
+transaction hash
+timestamp
+block
+settlement status
+
+Use the same timeline/registry language.
+
+Make the distinction between:
+
+application history
+
+and:
+
+blockchain ownership history
+
+clear.
+
+============================================================
+34. AUDIT LOG
+============================================================
+
+Registrar-only.
+
+Record important events:
+
+- user registration
+- login where appropriate
+- property creation
+- property modification
+- document upload
+- document verification
+- transfer request
+- fraud check
+- registrar approval
+- registrar rejection
+- blockchain transaction
+- blockchain failure
+- ownership change
+
+Columns:
+
+Timestamp
+Actor
+Role
+Action
+Entity
+Entity ID
+Result
+
+Audit detail should show relevant metadata.
+
+Never log:
+
+- passwords
+- JWT secrets
+- private keys
+- credentials
+
+============================================================
+35. PROFILE
+============================================================
+
+Profile design should follow the supplied registry aesthetic.
+
+Show:
+
+Full name
+Email
+Phone
+District
+State
+Role
+Wallet address
+Account created
+Last activity
+
+Use structured data blocks.
+
+Do not turn the profile into a social-media-style profile card.
+
+============================================================
+36. REST API
+============================================================
+
+AUTH:
+
+POST /api/auth/register
+POST /api/auth/login
+GET /api/auth/me
+
+PROPERTIES:
+
+POST /api/properties
+GET /api/properties
+GET /api/properties/:id
+GET /api/properties/search
+PUT /api/properties/:id
+
+DOCUMENTS:
+
+POST /api/documents/upload
+GET /api/documents/:id
+POST /api/documents/:id/verify
+
+TRANSFERS:
+
+POST /api/transfers
+GET /api/transfers
+GET /api/transfers/:id
+POST /api/transfers/:id/approve
+POST /api/transfers/:id/reject
+
+FRAUD:
+
+POST /api/fraud/check
+GET /api/fraud/:transferId
+
+BLOCKCHAIN:
+
+GET /api/blockchain/transactions
+GET /api/blockchain/transactions/:id
+GET /api/properties/:id/ownership-history
+
+REGISTRAR:
+
+GET /api/registrar/dashboard
+GET /api/registrar/pending-properties
+GET /api/registrar/pending-transfers
+
+PROFILE:
+
+GET /api/users/me
+PUT /api/users/me
+
+Use consistent REST conventions.
+
+Every protected API must use authentication middleware.
+
+Every role-sensitive API must use authorization middleware.
+
+============================================================
+37. FRONTEND ROUTES
+============================================================
+
+PUBLIC:
+
+/
+ /login
+ /register
+
+CITIZEN:
+
+/citizen
+/citizen/properties
+/citizen/properties/:id
+/citizen/properties/register
+/citizen/documents
+/citizen/transfers
+/citizen/transfers/new
+/citizen/transfers/:id
+/citizen/blockchain
+/citizen/profile
+
+REGISTRAR:
+
+/registrar
+/registrar/properties
+/registrar/properties/:id
+/registrar/documents
+/registrar/transfers
+/registrar/transfers/:id
+/registrar/review
+/registrar/ledger
+/registrar/audit
+/registrar/profile
+
+Protect all routes appropriately.
+
+============================================================
+38. FRONTEND COMPONENT SYSTEM
+============================================================
+
+Create reusable components such as:
+
+Button
+Input
+Textarea
+Select
+Checkbox
+Modal
+ConfirmDialog
+Badge
+StatusBadge
+PageHeader
+SectionKicker
+MetricBlock
+RegistryPanel
+DataTable
+Timeline
+EmptyState
+LoadingState
+ErrorState
+Toast
+SearchBar
+FilterBar
+Pagination
+BrandMark
+Sidebar
+Topbar
+Avatar
+DocumentRow
+TransferTimeline
+PropertySummary
+
+These must all follow the supplied Land Ledger design system.
+
+Do not duplicate styling unnecessarily.
+
+============================================================
+39. DESIGN SYSTEM UTILITIES
+============================================================
+
+Create reusable patterns equivalent to:
+
+font-display
+site-noise
+brand-mark
+status-dot
+section-kicker
+eyebrow
+pill
+pill-primary
+nav-link
+metric-block
+status-badge
+data-table
+detail-grid
+detail-cell
+
+Preserve the visual behavior of the supplied CSS theme.
+
+============================================================
+40. BUTTON DESIGN
+============================================================
+
+PRIMARY:
+
+deep coral
+warm white text
+subtle elevation
+modest radius
+
+SECONDARY:
+
+warm paper
+thin border
+dark text
+
+OUTLINE:
+
+transparent/warm background
+thin border
+
+GHOST:
+
+minimal
+
+DESTRUCTIVE:
+
+red
+
+DISABLED:
+
+muted and clearly inactive
+
+Never use:
+
+- gradients
+- neon glow
+- excessive shadows
+- bouncing animation
+- oversized pill buttons everywhere
+
+============================================================
+41. STATUS DESIGN
+============================================================
+
+Statuses:
+
+PENDING
+APPROVED
+REJECTED
+COMPLETED
+FAILED
+VERIFIED
+TAMPERED
+FRAUD ALERT
+
+Risk:
+
+LOW
+MEDIUM
+HIGH
+
+Status styling must combine:
+
+- text
+- icon where appropriate
+- border/background
+- semantic color
+
+Do not rely exclusively on color.
+
+============================================================
+42. TABLE DESIGN
+============================================================
+
+Tables are central to the product.
+
+Use:
+
+- thin borders
+- compact typography
+- uppercase small headers
+- muted headers
+- structured spacing
+- subtle row hover
+
+Do not use huge rounded table containers.
+
+Do not over-decorate.
+
+For mobile:
+
+turn records into stacked information blocks.
+
+============================================================
+43. MOBILE RESPONSIVENESS
+============================================================
+
+Must work at:
+
+- desktop
+- laptop
+- tablet
+- mobile
+
+Mobile behavior:
+
+- sidebar becomes mobile drawer/navigation
+- auth layout stacks
+- hero becomes single-column
+- 2x2 feature grid becomes single column
+- tables become records
+- form columns collapse
+- filters wrap
+- buttons stack where needed
+
+No horizontal overflow.
+
+No clipped content.
+
+No inaccessible controls.
+
+============================================================
+44. UX STATES
+============================================================
+
+Every important workflow must include:
+
+loading
+empty
+error
+success
+confirmation
+disabled
+
+Examples:
+
+No properties found.
+
+No documents uploaded.
+
+No pending transfers.
+
+No blockchain transactions.
+
+Blockchain unavailable.
+
+Hash mismatch detected.
+
+Transfer rejected.
+
+Transfer successfully completed.
+
+Use the same design language.
+
+Never leave unexplained blank screens.
+
+============================================================
+45. DATABASE
+============================================================
+
+Use PostgreSQL.
+
+Minimum tables:
+
+users
+properties
+documents
+transfer_requests
+fraud_checks
+blockchain_transactions
+audit_logs
+
+Use normalized relationships.
+
+Use:
+
+- UUID/appropriate primary keys
+- unique constraints
+- foreign keys
+- indexes
+- created_at
+- updated_at
+
+Important uniqueness:
+
+user email
+property ID
+
+Maintain ownership consistency.
+
+============================================================
+46. PROPERTY DATA MODEL
+============================================================
+
+Property should support:
+
+id
+propertyId
+referenceNumber
+address
+city
+district
+state
+area
+propertyType
+description
+currentOwnerId
+currentOwnerWallet
+status
+createdAt
+updatedAt
+
+Maintain a unique property identifier.
+
+Example:
+
+PROP-2026-0001
+
+============================================================
+47. DOCUMENT DATA MODEL
+============================================================
+
+Document should support:
+
+id
+propertyId
+uploadedBy
+documentType
+fileName
+fileSize
+mimeType
+storagePath/reference
+sha256Hash
+verificationStatus
+verifiedBy
+verifiedAt
+createdAt
+updatedAt
+
+============================================================
+48. TRANSFER DATA MODEL
+============================================================
+
+Transfer should support:
+
+id
+propertyId
+sellerId
+sellerWallet
+buyerId
+buyerWallet
+status
+riskLevel
+requestReason/details
+approvalReason
+rejectionReason
+approvedBy
+approvedAt
+blockchainTransactionId
+createdAt
+updatedAt
+
+============================================================
+49. FRAUD DATA MODEL
+============================================================
+
+Fraud check:
+
+id
+transferId
+isFraudulent
+riskLevel
+reasons
+checksPerformed
+createdAt
+
+============================================================
+50. BLOCKCHAIN TRANSACTION MODEL
+============================================================
+
+Store:
+
+id
+propertyId
+transferId
+transactionHash
+blockNumber
+network
+contractAddress
+operation
+fromAddress
+toAddress
+status
+timestamp
+createdAt
+
+Do not fabricate blockchain records.
+
+============================================================
+51. SMART CONTRACT
+============================================================
+
+Create Solidity ownership contract.
+
+State:
+
+property ID
+owner address
+registered state
+
+Functions conceptually:
+
+registerProperty()
+getPropertyOwner()
+verifyOwnership()
+transferOwnership()
+
+Rules:
+
+- property cannot register twice
+- restricted operations require authorization
+- current owner must match expected owner
+- nonexistent property transfer fails
+- invalid states revert
+- successful ownership transfer updates blockchain state
+- events emitted for major changes
+
+Events:
+
+PropertyRegistered
+
+OwnershipTransferred
+
+Do not store private citizen information on-chain.
+
+Do not store uploaded files on-chain.
+
+============================================================
+52. SMART CONTRACT ACCESS CONTROL
+============================================================
+
+Use appropriate access control.
+
+Only authorized backend/blockchain operator accounts may perform restricted registry operations.
+
+Do not permit arbitrary wallets to modify registry ownership.
+
+Registrar functionality must still pass through backend authorization AND smart-contract rules.
+
+============================================================
+53. BLOCKCHAIN WORKFLOW
+============================================================
+
+For property registration:
+
+Backend validation
+↓
+Registrar approval
+↓
+ethers.js
+↓
+smart contract
+↓
+Hardhat network
+↓
+confirmation
+↓
+transaction hash
+↓
+database transaction record
+
+For ownership transfer:
+
+Transfer validation
+↓
+Registrar approval
+↓
+Smart contract transfer
+↓
+confirmation
+↓
+real transaction hash
+↓
+PostgreSQL update
+↓
+audit record
+↓
+COMPLETED
+
+If blockchain transaction fails:
+
+- do not change current owner
+- do not mark completed
+- store failed transaction state
+- record failure
+- show meaningful error
+
+============================================================
+54. SECURITY
+============================================================
+
+Implement:
+
+- bcrypt password hashing
+- JWT authentication
+- role middleware
+- protected routes
+- request validation
+- parameterized database queries
+- file validation
+- size restrictions
+- CORS
+- safe error handling
+- environment variables
+- duplicate request prevention
+- secure authorization
+
+Never hardcode:
+
+- JWT secret
+- DB password
+- private key
+- API keys
+
+Use:
+
+.env.example
+
+Never log passwords or private keys.
+
+============================================================
+55. FILE UPLOAD SECURITY
+============================================================
+
+Validate:
+
+- extension
+- MIME type
+- file size
+- upload destination
+- filename handling
+
+Do not trust only the client-provided MIME type.
+
+Reject invalid uploads.
+
+============================================================
+56. ERROR HANDLING
+============================================================
+
+Use standardized API responses.
+
+Success:
+
+{
+  "success": true,
+  "message": "Transfer request created successfully",
+  "data": {}
+}
+
+Error:
+
+{
+  "success": false,
+  "message": "Transfer rejected",
+  "errorCode": "DUPLICATE_TRANSFER"
+}
+
+Use correct HTTP status codes.
+
+Never expose stack traces to users.
+
+============================================================
+57. DEVOPS
+============================================================
+
+Create:
+
+Dockerfile for frontend
+
+Dockerfile for backend
+
+Docker Compose containing:
+
+frontend
+backend
+postgres
+blockchain
+
+Where practical, keep blockchain local-network setup simple and reproducible.
+
+============================================================
+58. KUBERNETES
+============================================================
+
+Create Kubernetes manifests.
+
+Include:
+
+Deployments
+Services
+ConfigMaps
+Secret templates
+
+for required services.
+
+Never hardcode production secrets.
+
+============================================================
+59. JENKINS
+============================================================
+
+Create real Jenkinsfile.
+
+Stages:
+
+1. Checkout
+2. Install dependencies
+3. Lint
+4. Backend tests
+5. Smart contract tests
+6. Frontend build
+7. Backend build
+8. Docker build
+9. Image validation/push where applicable
+10. Deployment where applicable
+
+Pipeline must fail when tests fail.
+
+Do not create an echo-only fake pipeline.
+
+============================================================
+60. PROMETHEUS
+============================================================
+
+Backend must expose:
+
+/metrics
+
+Metrics:
+
+- request count
+- request latency
+- HTTP errors
+- health
+- active requests where practical
+
+Create Prometheus configuration.
+
+============================================================
+61. GRAFANA
+============================================================
+
+Create Grafana dashboard configuration.
+
+Show:
+
+- request rate
+- request count
+- error rate
+- response latency
+- backend availability
+
+Prometheus must be the datasource.
+
+============================================================
+62. PROJECT STRUCTURE
+============================================================
+
+Use clean separation:
+
+land-ledger/
+
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── layouts/
+│   │   ├── routes/
+│   │   ├── services/
+│   │   ├── context/
+│   │   ├── hooks/
+│   │   ├── types/
+│   │   ├── utils/
+│   │   └── assets/
+│   ├── package.json
+│   └── Dockerfile
+│
+├── backend/
+│   ├── src/
+│   │   ├── controllers/
+│   │   ├── routes/
+│   │   ├── middleware/
+│   │   ├── services/
+│   │   ├── models/
+│   │   ├── validators/
+│   │   ├── utils/
+│   │   └── config/
+│   ├── tests/
+│   ├── package.json
+│   └── Dockerfile
+│
+├── blockchain/
+│   ├── contracts/
+│   ├── scripts/
+│   ├── test/
+│   ├── hardhat.config.js
+│   └── package.json
+│
+├── database/
+│   ├── migrations/
+│   └── seed/
+│
+├── k8s/
+│
+├── monitoring/
+│   ├── prometheus/
+│   └── grafana/
+│
+├── Jenkinsfile
+├── docker-compose.yml
+├── .env.example
+├── .gitignore
+└── README.md
+
+Keep logical separation.
+
+============================================================
+63. PAGE-SPECIFIC DESIGN EXTENSION RULE
+============================================================
+
+For pages shown in screenshots:
+
+Match the screenshots closely.
+
+For pages NOT shown:
+
+Extend the same visual grammar.
+
+PROPERTY:
+
+Editorial heading
+section kicker
+registry table
+fine borders
+structured filters
+
+DOCUMENTS:
+
+document registry
+verification badges
+hash visibility
+structured evidence information
+
+TRANSFERS:
+
+registry table
+risk status
+timeline
+review controls
+
+REVIEW QUEUE:
+
+dense operational work queue
+minimal decoration
+clear priority
+
+LEDGER:
+
+transaction-focused data interface
+blockchain information
+network status
+
+AUDIT:
+
+chronological event register
+
+PROFILE:
+
+structured account record
+
+SETTINGS:
+
+same paper/registry design
+not generic SaaS settings panels
+
+============================================================
+64. NAVIGATION BEHAVIOR
+============================================================
+
+Desktop:
+
+fixed sidebar
+
+Mobile:
+
+mobile drawer/menu
+
+Navigation state must be driven by route.
+
+Active state must persist correctly.
+
+Support browser back/forward navigation.
+
+Do not reload the page unnecessarily.
+
+Use React Router.
+
+============================================================
+65. PAGE METADATA
+============================================================
+
+Every major route must have meaningful:
+
+title
+
+and, where appropriate:
+
+description
+
+Examples:
+
+Land Ledger | Property Registry
+Land Ledger | Properties
+Land Ledger | Transfers
+Land Ledger | Blockchain Ledger
+Land Ledger | Review Queue
+
+============================================================
+66. ACCESSIBILITY
+============================================================
+
+Implement:
+
+- keyboard-accessible controls
+- visible focus states
+- proper labels
+- semantic buttons
+- accessible dialogs
+- accessible form errors
+- readable contrast
+- screen-reader-friendly status text
+
+Do not use color as the only status indicator.
+
+============================================================
+67. PERFORMANCE
+============================================================
+
+Keep the frontend lightweight.
+
+Do not add unnecessary dependencies.
+
+Use:
+
+- lazy-loaded routes where appropriate
+- reusable components
+- efficient API calls
+- sensible rendering
+- optimized tables
+- properly sized assets
+
+Do not introduce over-engineered frontend architecture.
+
+============================================================
+68. NO FAKE FUNCTIONALITY
+============================================================
+
+ABSOLUTELY DO NOT:
+
+- fake blockchain transactions
+- fake transaction hashes
+- fake blocks
+- fake confirmations
+- fake API responses
+- fake dashboard functionality
+- fake success messages
+- buttons that do nothing
+- frontend-only security
+- frontend-only role checks
+- hardcoded ownership changes
+- static screens pretending to be functional
+
+Every major workflow must actually operate.
+
+============================================================
+69. DEVELOPMENT ORDER
+============================================================
+
+Implement incrementally.
+
+PHASE 1:
+Project architecture
+
+PHASE 2:
+Database schema
+
+PHASE 3:
+Migrations + seed
+
+PHASE 4:
+Express backend foundation
+
+PHASE 5:
+Authentication + JWT
+
+PHASE 6:
+RBAC
+
+PHASE 7:
+Property APIs
+
+PHASE 8:
+Document upload + SHA-256
+
+PHASE 9:
+Fraud/conflict engine
+
+PHASE 10:
+Solidity contract
+
+PHASE 11:
+Hardhat deployment + tests
+
+PHASE 12:
+ethers.js integration
+
+PHASE 13:
+React + Vite foundation
+
+PHASE 14:
+Land Ledger design system
+
+PHASE 15:
+Landing page
+
+PHASE 16:
+Login
+
+PHASE 17:
+Registration
+
+PHASE 18:
+Citizen shell
+
+PHASE 19:
+Citizen dashboard
+
+PHASE 20:
+Property management
+
+PHASE 21:
+Document management
+
+PHASE 22:
+Transfers
+
+PHASE 23:
+Registrar shell
+
+PHASE 24:
+Registrar dashboard
+
+PHASE 25:
+Review queue
+
+PHASE 26:
+Ledger
+
+PHASE 27:
+Audit
+
+PHASE 28:
+Blockchain history
+
+PHASE 29:
+Integration testing
+
+PHASE 30:
+Docker
+
+PHASE 31:
+Kubernetes
+
+PHASE 32:
+Jenkins
+
+PHASE 33:
+Prometheus
+
+PHASE 34:
+Grafana
+
+PHASE 35:
+Final QA
+
+After every phase:
+
+- run build
+- run tests
+- inspect errors
+- fix broken imports
+- fix API errors
+- fix routing
+- fix console errors
+- verify database operations
+- verify authentication
+- do not continue with knowingly broken code
+
+============================================================
+70. REQUIRED DEMONSTRATION FLOW
+============================================================
+
+The completed website must support this complete flow:
+
+1. Create Citizen A.
+2. Create Citizen B.
+3. Login as Citizen A.
+4. Create/register a property.
+5. Upload supporting document.
+6. Generate SHA-256 hash.
+7. Login as Registrar.
+8. Verify document.
+9. Approve property registration.
+10. Register property through smart contract.
+11. Login as Citizen A.
+12. Create transfer to Citizen B.
+13. Execute ownership validation.
+14. Execute duplicate/conflict checks.
+15. Verify required documents.
+16. Execute hash verification.
+17. Execute fraud checks.
+18. Send transfer to registrar.
+19. Registrar reviews.
+20. Registrar approves.
+21. Execute blockchain ownership transfer.
+22. Wait for actual blockchain confirmation.
+23. Store real transaction hash.
+24. Update PostgreSQL.
+25. Create audit log.
+26. Mark transfer COMPLETED.
+27. Login as Citizen B.
+28. Citizen B sees the updated property ownership.
+29. Property ownership history displays the completed blockchain transaction.
+30. Attempt another conflicting transfer.
+31. System rejects the conflicting transfer.
+
+============================================================
+71. SMART CONTRACT TESTS
+============================================================
+
+Test:
+
+- property registration success
+- duplicate property registration failure
+- owner retrieval
+- ownership verification
+- valid transfer
+- wrong-owner transfer failure
+- nonexistent property transfer failure
+- unauthorized restricted operation
+- PropertyRegistered event
+- OwnershipTransferred event
+
+============================================================
+72. BACKEND TESTS
+============================================================
+
+AUTH:
+
+- registration
+- duplicate registration
+- login
+- invalid password
+- protected route
+- role authorization
+
+PROPERTY:
+
+- creation
+- duplicate property
+- detail retrieval
+- search
+
+DOCUMENT:
+
+- upload
+- SHA-256 generation
+- valid hash check
+- modified document detection
+
+TRANSFER:
+
+- valid transfer
+- unauthorized transfer
+- incorrect owner
+- duplicate transfer
+- conflicting transfer
+- pending transfer
+
+FRAUD:
+
+- duplicate sale
+- conflict
+- ownership mismatch
+- document mismatch
+
+INTEGRATION:
+
+- database + Express
+- Express + blockchain
+- complete transfer
+- confirmation
+- database synchronization
+
+============================================================
+73. SEED DATA
+============================================================
+
+Create useful development/demo seed records.
+
+Include:
+
+- multiple users
+- citizens
+- registrar
+- multiple properties
+- documents
+- transfer requests
+- audit logs
+- blockchain transaction records where actually generated
+
+Make the application immediately understandable when opened.
+
+Use believable fictional data.
+
+============================================================
+74. README
+============================================================
+
+Create a complete README covering:
+
+- product overview
+- problem being solved
+- system architecture
+- feature overview
+- technology stack
+- folder structure
+- authentication
+- RBAC
+- PostgreSQL schema
+- document hashing
+- fraud detection
+- ownership transfer
+- Solidity contract
+- Hardhat
+- ethers.js
+- API documentation
+- environment variables
+- frontend setup
+- backend setup
+- database setup
+- blockchain setup
+- Docker
+- Kubernetes
+- Jenkins
+- Prometheus
+- Grafana
+- testing
+- end-to-end workflow
+- deployment instructions
+- troubleshooting
+
+============================================================
+75. FINAL UI QUALITY STANDARD
+============================================================
+
+The final UI must visually resemble the supplied LAND LEDGER screenshots.
+
+It must preserve:
+
+- warm paper background
+- dark navy ink
+- coral primary
+- green verification
+- blue informational states
+- amber warning states
+- subtle dotted texture
+- fine borders
+- square registry marks
+- editorial typography
+- section kickers
+- restrained cards
+- clean tables
+- structured forms
+- clean auth split-layout
+- role-specific sidebar
+- premium spacing
+- low visual noise
+
+The final result must feel cohesive across every route.
+
+============================================================
+76. WHAT NOT TO DO VISUALLY
+============================================================
+
+DO NOT introduce:
+
+- purple gradients
+- blue gradient SaaS dashboards
+- neon green
+- glassmorphism
+- glowing cards
+- giant rounded cards
+- excessive shadows
+- floating decorative blobs
+- random illustrations
+- excessive animation
+- generic Material-style dashboard
+- generic Bootstrap-style UI
+- crypto exchange appearance
+
+Do not copy a generic admin template.
+
+============================================================
+77. MOTION
+============================================================
+
+Use restrained motion.
+
+Transitions:
+
+150–200ms range where appropriate.
+
+Use motion for:
+
+- navigation
+- hover
+- modals
+- dropdowns
+- success/error feedback
+
+Do not use animation as decoration.
+
+Respect:
+
+prefers-reduced-motion
+
+============================================================
+78. FINAL SECURITY CHECK
+============================================================
+
+Verify:
+
+- no plaintext passwords
+- no hardcoded JWT secrets
+- no hardcoded DB credentials
+- no leaked private keys
+- no client-only authorization
+- no role escalation
+- no unrestricted registrar endpoints
+- no arbitrary ownership modification
+- no unauthorized blockchain calls
+- no unsafe file uploads
+- no SQL injection vulnerability from user input
+- no sensitive credentials in logs
+
+============================================================
+79. FINAL FUNCTIONAL CHECKLIST
+============================================================
+
+Before declaring the implementation complete:
+
+[ ] frontend runs
+[ ] Vite build works
+[ ] React routes work
+[ ] backend starts
+[ ] PostgreSQL connects
+[ ] migrations work
+[ ] seed works
+[ ] registration works
+[ ] login works
+[ ] logout works
+[ ] JWT works
+[ ] RBAC works
+[ ] citizen restriction works
+[ ] registrar restriction works
+[ ] property creation works
+[ ] property search works
+[ ] property details work
+[ ] property registration works
+[ ] document upload works
+[ ] SHA-256 works
+[ ] document integrity verification works
+[ ] tampering detection works
+[ ] transfer creation works
+[ ] ownership validation works
+[ ] duplicate transfer detection works
+[ ] conflict detection works
+[ ] fraud engine works
+[ ] registrar review works
+[ ] registrar approval works
+[ ] registrar rejection works
+[ ] Solidity compiles
+[ ] smart contract tests pass
+[ ] Hardhat deploys
+[ ] ethers.js integration works
+[ ] property registration reaches blockchain
+[ ] ownership transfer reaches blockchain
+[ ] real transaction hash is stored
+[ ] blockchain confirmation is verified
+[ ] PostgreSQL updates only after confirmation
+[ ] blockchain failures are handled
+[ ] ownership history works
+[ ] ledger page works
+[ ] audit logging works
+[ ] dashboard data is dynamic
+[ ] Docker build works
+[ ] Docker Compose works
+[ ] Kubernetes manifests are valid
+[ ] Jenkins pipeline is functional
+[ ] Prometheus /metrics works
+[ ] Grafana dashboard works
+[ ] mobile UI works
+[ ] desktop UI matches design
+[ ] dark mode works
+[ ] no major console errors
+[ ] no broken imports
+[ ] no broken routes
+[ ] no fake functionality
+[ ] README is complete
+
+============================================================
+80. FINAL IMPLEMENTATION RULE
+============================================================
+
+THE PROVIDED IMAGES DEFINE THE VISUAL LANGUAGE.
+
+THE FUNCTIONAL REQUIREMENTS DEFINE THE PRODUCT BEHAVIOR.
+
+THE TECHNOLOGY STACK DEFINED IN THIS PROMPT IS MANDATORY.
+
+When these three are combined, build the complete product.
+
+Do not sacrifice functionality for visuals.
+
+Do not sacrifice visuals for functionality.
+
+Do not replace the requested stack with another architecture.
+
+Do not introduce TanStack or another meta/full-stack framework.
+
+The final application must be a polished, responsive, secure, production-quality LAND LEDGER web platform.
+
+BUILD THE ACTUAL SYSTEM.
+
+RUN IT.
+
+TEST IT.
+
+FIX IT.
+
+VERIFY IT.
+
+DO NOT STOP AT MOCKUPS.
+DO NOT STOP AT STATIC FRONTEND.
+DO NOT STOP AT API PLACEHOLDERS.
+DO NOT STOP AT SMART-CONTRACT CODE.
+
+EVERY MAJOR FEATURE MUST BE CONNECTED END-TO-END.

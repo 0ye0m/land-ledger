@@ -1,0 +1,64 @@
+# LAND LEDGER — Hardhat local blockchain (Deployment + Service)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blockchain
+  namespace: land-ledger
+  labels:
+    app.kubernetes.io/name: land-ledger
+    app.kubernetes.io/component: blockchain
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: blockchain
+  template:
+    metadata:
+      labels:
+        app: blockchain
+        app.kubernetes.io/name: land-ledger
+        app.kubernetes.io/component: blockchain
+    spec:
+      containers:
+        - name: blockchain
+          image: land-ledger-blockchain:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8545
+              name: rpc
+          readinessProbe:
+            tcpSocket:
+              port: 8545
+            initialDelaySeconds: 20   # contract compilation on first boot
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            tcpSocket:
+              port: 8545
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: blockchain
+  namespace: land-ledger
+  labels:
+    app.kubernetes.io/name: land-ledger
+    app.kubernetes.io/component: blockchain
+spec:
+  type: ClusterIP
+  selector:
+    app: blockchain
+  ports:
+    - name: rpc
+      port: 8545
+      targetPort: 8545

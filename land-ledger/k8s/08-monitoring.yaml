@@ -1,0 +1,26 @@
+# LAND LEDGER — metrics endpoint for Prometheus
+#
+# A dedicated Service that selects the backend pods and exposes the same
+# /metrics HTTP port (3000). The prometheus.io/* annotations let a
+# kubernetes-pod/service auto-discovery scrape config pick this up without
+# exposing /metrics through the public ingress.
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-metrics
+  namespace: land-ledger
+  labels:
+    app.kubernetes.io/name: land-ledger
+    app.kubernetes.io/component: backend
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "3000"
+spec:
+  type: ClusterIP
+  selector:
+    app: backend
+  ports:
+    - name: metrics
+      port: 3000
+      targetPort: 3000

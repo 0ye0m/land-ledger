@@ -1,0 +1,12 @@
+# Keep build context clean: never ship host state into the image layers
+node_modules
+dist
+npm-debug.log*
+.env
+.env.*
+!.env.example
+coverage
+*.log
+.git
+Dockerfile
+.dockerignore

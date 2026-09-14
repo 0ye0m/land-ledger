@@ -1,0 +1,13 @@
+# LAND LEDGER — Prometheus scrape configuration
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Express backend /metrics (compose service DNS name "backend")
+  - job_name: land-ledger-backend
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["backend:3000"]
+        # Alternative when running Prometheus outside Docker / on localhost:
+        # - targets: ["localhost:3000"]

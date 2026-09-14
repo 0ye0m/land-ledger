@@ -1,0 +1,8 @@
+# LAND LEDGER — namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: land-ledger
+  labels:
+    app.kubernetes.io/name: land-ledger
+    app.kubernetes.io/part-of: land-ledger

@@ -1,0 +1,78 @@
+# LAND LEDGER — Express backend (Deployment x2 + Service :3000)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: land-ledger
+  labels:
+    app.kubernetes.io/name: land-ledger
+    app.kubernetes.io/component: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: backend
+        app.kubernetes.io/name: land-ledger
+        app.kubernetes.io/component: backend
+    spec:
+      containers:
+        - name: backend
+          image: land-ledger-backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: backend-config      # non-secret settings (01-configmap.yaml)
+            - secretRef:
+                name: backend-secrets     # PGPASSWORD / JWT_SECRET / operator key (02-secrets.yaml)
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 20
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: land-ledger
+  labels:
+    app.kubernetes.io/name: land-ledger
+    app.kubernetes.io/component: backend
+spec:
+  type: ClusterIP
+  selector:
+    app: backend
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000

@@ -1,0 +1,16 @@
+# LAND LEDGER — backend NON-SECRET configuration (no credentials here)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: land-ledger
+  labels:
+    app.kubernetes.io/name: land-ledger
+    app.kubernetes.io/component: backend
+data:
+  NODE_ENV: "production"
+  PORT: "3000"
+  BLOCKCHAIN_RPC_URL: "http://blockchain:8545"
+  CORS_ORIGIN: "http://localhost:8080"
+  BLOCKCHAIN_NETWORK_NAME: "hardhat"
+  MONGODB_DB_NAME: "land_ledger"

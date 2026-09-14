@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LAND LEDGER — Slide 8 · Results / Prototype</title>
+<link rel="stylesheet" href="global.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<style>
+  .shot-cap{margin:8px auto 0;width:fit-content;max-width:100%;background:var(--accent-soft);color:var(--ink);font-size:var(--fs-micro);font-weight:600;line-height:1.35;padding:5px 13px;border-radius:999px;white-space:nowrap;}
+  .stat-cell{padding:11px 14px;display:flex;flex-direction:column;justify-content:center;min-height:0;}
+  .stat-hero{font-family:var(--font-num);font-weight:800;color:var(--accent);line-height:1.12;}
+  .stat-label{font-size:var(--fs-micro);color:var(--muted);line-height:1.45;margin-top:5px;}
+</style>
+</head>
+<body style="margin:0">
+<div class="slide">
+
+  <div class="rl-hdr">
+    <div>
+      <div style="font-family:var(--font-heading);font-size:var(--fs-h1);font-weight:800;text-transform:uppercase;color:var(--navy);letter-spacing:.5px;line-height:1.15;">RESULTS / PROTOTYPE</div>
+      <div class="rl-hdr-rule"></div>
+    </div>
+    <img src="logo.png" class="rl-logo" alt="Ramdeobaba University">
+  </div>
+
+  <div class="rl-body" style="display:flex;flex-direction:column;min-height:0;padding:18px 56px 14px 56px;">
+
+    <!-- Screenshot gallery -->
+    <div style="flex:none;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+      <div>
+        <div class="shot" style="height:242px;"><img src="shot-login.png" alt="Secure sign-in" style="object-position:top;"></div>
+        <div class="shot-cap">Secure sign-in — role-based access</div>
+      </div>
+      <div>
+        <div class="shot" style="height:242px;"><img src="shot-citizen.png" alt="Citizen dashboard" style="object-position:top;"></div>
+        <div class="shot-cap">Citizen dashboard — owned properties &amp; transfers</div>
+      </div>
+      <div>
+        <div class="shot" style="height:242px;"><img src="shot-ledger.png" alt="Public ledger" style="object-position:top;"></div>
+        <div class="shot-cap">Public ledger — every on-chain transaction</div>
+      </div>
+    </div>
+
+    <!-- Verified results band -->
+    <div style="flex:1;display:flex;flex-direction:column;min-height:0;margin-top:22px;">
+      <div style="flex:none;display:flex;align-items:center;gap:9px;">
+        <span class="kicker-rule"></span>
+        <span class="material-icons" style="font-size:17px;color:var(--accent);">verified</span>
+        <span style="font-family:var(--font-heading);font-size:var(--fs-small);font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--navy);">Verified results</span>
+        <span style="flex:1;height:1px;background:var(--line);"></span>
+      </div>
+      <div style="flex:1;display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:9px;min-height:0;">
+        <div class="card-white stat-cell">
+          <div class="stat-hero" style="font-size:22px;">29/29</div>
+          <div class="stat-label">backend API tests passing</div>
+        </div>
+        <div class="card-white stat-cell">
+          <div class="stat-hero" style="font-size:22px;">20/20</div>
+          <div class="stat-label">smart-contract tests passing</div>
+        </div>
+        <div class="card-white stat-cell">
+          <div class="stat-hero" style="font-size:22px;">29/29</div>
+          <div class="stat-label">end-to-end demo checks</div>
+        </div>
+        <div class="card-white stat-cell">
+          <div class="stat-hero" style="font-size:19px;">Real tx settled</div>
+          <div class="stat-label">block 15, 0x9c706cbe…</div>
+        </div>
+        <div class="card-white stat-cell">
+          <div class="stat-hero" style="font-size:22px;">0</div>
+          <div class="stat-label">overflow 360–1280 px viewports</div>
+        </div>
+        <div class="card-white stat-cell">
+          <div class="stat-hero" style="font-size:19px;">Health green</div>
+          <div class="stat-label">on Atlas alone — PostgreSQL fully removed</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="rl-foot">
+    <div class="rl-foot-navy"><span style="font-size:var(--fs-micro);line-height:1.2;display:inline-block;">September 2026</span></div>
+    <div class="rl-foot-orange"><span style="font-size:var(--fs-micro);line-height:1.2;display:inline-block;">Slide 8 of 10</span></div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LAND LEDGER — Slide 6 · System Architecture / Methodology</title>
+<link rel="stylesheet" href="global.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<style>
+  .layer{display:flex;align-items:stretch;gap:12px;height:82px;}
+  .layer-chip{width:110px;flex:none;background:var(--navy-deep);color:#FFFFFF;border-radius:8px;display:flex;align-items:center;justify-content:center;text-align:center;font-family:var(--font-heading);font-size:var(--fs-micro);font-weight:700;letter-spacing:1.4px;text-transform:uppercase;line-height:1.4;padding:0 8px;}
+  .layer-boxes{flex:1;display:flex;align-items:stretch;gap:8px;min-width:0;}
+  .arch-box{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 14px;display:flex;flex-direction:column;justify-content:center;}
+  .arch-box .t{font-family:var(--font-heading);font-size:var(--fs-body);font-weight:700;color:var(--navy);line-height:1.25;}
+  .arch-box .s{font-size:var(--fs-micro);color:var(--muted);line-height:1.4;margin-top:3px;}
+  .flow-arrow{flex:none;align-self:center;width:18px;text-align:center;color:var(--accent);font-weight:800;font-size:16px;line-height:1;font-family:var(--font-num);}
+  .row-conn{height:22px;margin-left:122px;display:flex;align-items:center;justify-content:center;}
+  .row-conn span{display:block;transform:rotate(90deg);color:var(--accent);font-weight:800;font-size:15px;line-height:1;font-family:var(--font-num);}
+  .step-chip{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 10px;display:flex;align-items:center;gap:8px;}
+  .step-num{flex:none;width:22px;height:22px;border-radius:6px;background:var(--navy-deep);color:var(--accent);font-weight:800;font-size:10.5px;display:flex;align-items:center;justify-content:center;font-family:var(--font-num);}
+  .step-txt{font-size:11px;font-weight:600;color:var(--ink);line-height:1.3;}
+  .band-arrow{flex:none;align-self:center;color:var(--accent);font-weight:800;font-size:14px;line-height:1;font-family:var(--font-num);}
+</style>
+</head>
+<body style="margin:0">
+<div class="slide">
+
+  <div class="rl-hdr">
+    <div>
+      <div style="font-family:var(--font-heading);font-size:var(--fs-h1);font-weight:800;text-transform:uppercase;color:var(--navy);letter-spacing:.5px;line-height:1.15;">SYSTEM ARCHITECTURE / METHODOLOGY</div>
+      <div class="rl-hdr-rule"></div>
+    </div>
+    <img src="logo.png" class="rl-logo" alt="Ramdeobaba University">
+  </div>
+
+  <div class="rl-body" style="display:flex;flex-direction:column;min-height:0;padding:18px 56px 14px 56px;">
+
+    <!-- Layered block diagram — CSS boxes + text-glyph arrows only -->
+    <div style="flex:none;">
+      <div class="layer">
+        <div class="layer-chip">Clients</div>
+        <div class="layer-boxes">
+          <div class="arch-box"><div class="t">Citizen Portal</div><div class="s">React 18 · Vite · Tailwind CSS (responsive 360–1280 px)</div></div>
+          <div class="flow-arrow">→</div>
+          <div class="arch-box"><div class="t">Registrar Console</div><div class="s">React 18 · Vite · Tailwind CSS (responsive 360–1280 px)</div></div>
+        </div>
+      </div>
+      <div class="row-conn"><span>→</span></div>
+      <div class="layer">
+        <div class="layer-chip">API&nbsp;Layer</div>
+        <div class="layer-boxes">
+          <div class="arch-box"><div class="t">Express REST API</div><div class="s">Helmet · JWT + bcrypt auth · RBAC · rate limiting · /health · /metrics</div></div>
+        </div>
+      </div>
+      <div class="row-conn"><span>→</span></div>
+      <div class="layer">
+        <div class="layer-chip">Core&nbsp;Services</div>
+        <div class="layer-boxes">
+          <div class="arch-box"><div class="t">Fraud engine</div><div class="s">9 deterministic checks</div></div>
+          <div class="flow-arrow">→</div>
+          <div class="arch-box"><div class="t">Document service</div><div class="s">SHA-256 + Multer</div></div>
+          <div class="flow-arrow">→</div>
+          <div class="arch-box"><div class="t">Transfer orchestrator</div></div>
+          <div class="flow-arrow">→</div>
+          <div class="arch-box"><div class="t">Audit service</div></div>
+        </div>
+      </div>
+      <div class="row-conn"><span>→</span></div>
+      <div class="layer">
+        <div class="layer-chip">Data&nbsp;&amp;&nbsp;Ledger</div>
+        <div class="layer-boxes">
+          <div class="arch-box" style="border-left:4px solid var(--accent);"><div class="t">MongoDB Atlas</div><div class="s">8 collections · 24/7 cloud</div></div>
+          <div class="flow-arrow">→</div>
+          <div class="arch-box"><div class="t">LandRegistry.sol</div><div class="s">local EVM via Hardhat · ethers v6</div></div>
+          <div class="flow-arrow">→</div>
+          <div class="arch-box"><div class="t">Uploads volume</div><div class="s">original PDFs</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7-step workflow pipeline -->
+    <div class="card-white" style="margin-top:auto;padding:12px 16px 13px 16px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="kicker-rule"></span>
+        <span style="font-family:var(--font-heading);font-size:11px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--navy);">End-to-end transfer workflow</span>
+      </div>
+      <div style="display:flex;align-items:stretch;gap:5px;margin-top:9px;">
+        <div class="step-chip"><div class="step-num">01</div><div class="step-txt">Register property</div></div>
+        <div class="band-arrow">→</div>
+        <div class="step-chip"><div class="step-num">02</div><div class="step-txt">Upload &amp; hash documents</div></div>
+        <div class="band-arrow">→</div>
+        <div class="step-chip"><div class="step-num">03</div><div class="step-txt">Initiate transfer</div></div>
+        <div class="band-arrow">→</div>
+        <div class="step-chip"><div class="step-num">04</div><div class="step-txt">Fraud screening</div></div>
+        <div class="band-arrow">→</div>
+        <div class="step-chip"><div class="step-num">05</div><div class="step-txt">Registrar approval</div></div>
+        <div class="band-arrow">→</div>
+        <div class="step-chip"><div class="step-num">06</div><div class="step-txt">On-chain settlement</div></div>
+        <div class="band-arrow">→</div>
+        <div class="step-chip"><div class="step-num">07</div><div class="step-txt">Audit event logged</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="rl-foot">
+    <div class="rl-foot-navy"><span style="font-size:var(--fs-micro);line-height:1.2;display:inline-block;">September 2026</span></div>
+    <div class="rl-foot-orange"><span style="font-size:var(--fs-micro);line-height:1.2;display:inline-block;">Slide 6 of 10</span></div>
+  </div>
+
+</div>
+</body>
+</html>
