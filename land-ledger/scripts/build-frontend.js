@@ -14,7 +14,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 
-const root = path.resolve(__dirname, '..');
+const root = path.resolve(__dirname, '..', '..'); // land-ledger/scripts -> land-ledger -> project root
 const distIndex = path.join(root, 'land-ledger', 'frontend', 'dist', 'index.html');
 const viteBin = path.join(root, 'land-ledger', 'frontend', 'node_modules', '.bin', 'vite');
 
