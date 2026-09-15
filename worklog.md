@@ -329,3 +329,19 @@ Stage Summary:
 - Deploy payload now 10.7 MB clean tree + 8.5 MB git, zero junk, production-mode simulation passes end-to-end
 - User must click Publish again; land-ledger.space-z.ai should now deploy
 - Commits: 44b1fbd (clean snapshot), 7124fb1 (build-frontend path fix + verification)
+
+---
+Task ID: 19
+Agent: Super Z (main)
+Task: Restore preview after sandbox recycle (user could not see preview running)
+
+Work Log:
+- Sandbox had recycled: no node processes, :3000 dead, :81 showing platform waiting page
+- backend deps intact; backend/.env wiped again -> start-cloud.js self-healed it from upload/atlas-credentials.env
+- Restarted via nohup node land-ledger/scripts/start-cloud.js
+- Verified: :3000 ok, :81 ok, external preview link ok; mongodb connected; blockchain unavailable (old hardhat died in recycle; chain runtime was removed in Round 3 slimming, skills/_chain-runtime absent)
+- Decision: do NOT reinstall 471MB blockchain node_modules in sandbox - keeps disk/tree lean so publish (user priority #1) is not endangered; chain demo stays opt-in/local or post-publish option
+
+Stage Summary:
+- Preview restored and healthy; Atlas logins work; blockchain honestly shows unavailable in cloud preview
+- Publish payload remains the clean 10.7MB tree from Task 18
