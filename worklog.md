@@ -345,3 +345,18 @@ Work Log:
 Stage Summary:
 - Preview restored and healthy; Atlas logins work; blockchain honestly shows unavailable in cloud preview
 - Publish payload remains the clean 10.7MB tree from Task 18
+
+---
+Task ID: 20
+Agent: Super Z (main)
+Task: Restore blockchain in sandbox preview (user reported "blockchain not available")
+
+Work Log:
+- Reinstalled land-ledger/blockchain/node_modules on DISK ONLY (gitignored -> deploy payload untouched; verified git ls-files has 0 node_modules tracked, tree still clean 10.7MB)
+- Restarted full stack with BOOT_CHAIN=1 via start-cloud.js
+- Boot log confirmed: Hardhat node up -> LandRegistry contract deployed -> artifact synced to backend-visible path
+- Health verified locally (:3000), proxy (:81), external preview link: status ok, mongodb connected, blockchain connected, latestBlock 1 (genesis 0 + contract deploy tx in block 1)
+
+Stage Summary:
+- Preview now shows blockchain CONNECTED with deployed LandRegistry contract; publish payload unaffected
+- Known limitation: chain dies again on sandbox recycle; restore = npm install in blockchain + BOOT_CHAIN=1 restart
