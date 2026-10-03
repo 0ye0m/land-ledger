@@ -20,6 +20,7 @@ const transferRoutes = require('./routes/transferRoutes');
 const fraudRoutes = require('./routes/fraudRoutes');
 const blockchainRoutes = require('./routes/blockchainRoutes');
 const registrarRoutes = require('./routes/registrarRoutes');
+const workflowRoutes = require('./routes/workflowRoutes');
 
 function createApp() {
   const app = express();
@@ -76,6 +77,7 @@ function createApp() {
   app.use('/api/fraud', fraudRoutes);
   app.use('/api/blockchain', blockchainRoutes);
   app.use('/api/registrar', registrarRoutes);
+  app.use('/api/workflow', workflowRoutes);
   app.get('/api/audit', require('./middleware/auth').requireAuth, require('./middleware/auth').requireRole('registrar'), require('./controllers/registrarController').auditLogs);
 
   // Uploaded documents storage (UUID filenames; authenticated download also available).

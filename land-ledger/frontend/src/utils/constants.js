@@ -1,8 +1,11 @@
 export const STATUS_LABELS = {
   PENDING_REVIEW: 'Pending review',
+  SUBMITTED: 'Awaiting field survey',
+  SURVEY_VERIFIED: 'Survey cleared',
+  DOCS_VERIFIED: 'Docs verified',
   REGISTERED: 'Registered',
   REJECTED: 'Rejected',
-  PENDING: 'Pending',
+  PENDING: 'Awaiting doc verification',
   APPROVED: 'Approved',
   COMPLETED: 'Completed',
   FAILED: 'Failed',
@@ -13,6 +16,9 @@ export const STATUS_LABELS = {
 
 export const STATUS_TONES = {
   PENDING_REVIEW: 'pending',
+  SUBMITTED: 'info',
+  SURVEY_VERIFIED: 'primary',
+  DOCS_VERIFIED: 'pending',
   PENDING: 'pending',
   REGISTERED: 'ok',
   APPROVED: 'ok',
@@ -23,6 +29,14 @@ export const STATUS_TONES = {
   TAMPERED: 'bad',
   'HASH MISMATCH': 'bad',
 };
+
+/** Registration pipeline order for the workflow tracker. */
+export const REGISTRATION_STAGES = [
+  { key: 'SUBMITTED', label: 'Applied', hint: 'Citizen filed the application' },
+  { key: 'SURVEY_VERIFIED', label: 'Field survey', hint: 'Surveyor verified the parcel on ground' },
+  { key: 'DOCS_VERIFIED', label: 'Documents', hint: 'Clerk verified the attached documents' },
+  { key: 'REGISTERED', label: 'Registered', hint: 'Registrar approved and recorded on the ledger' },
+];
 
 export const RISK_TONES = { LOW: 'ok', MEDIUM: 'warn', HIGH: 'bad' };
 
@@ -48,7 +62,10 @@ export function labelFor(value, list) {
   return found ? found.label : value;
 }
 
-export const DEMO_ACCOUNTS = {
-  citizen: { email: 'asha.rao@example.com', password: 'Citizen@123' },
-  registrar: { email: 'meera.krishnan@landledger.gov', password: 'Registrar@123' },
-};
+export const DEMO_ACCOUNTS = [
+  { role: 'citizen', label: 'Citizen', email: 'asha.rao@example.com', password: 'Citizen@123' },
+  { role: 'surveyor', label: 'Surveyor', email: 'arjun.deshmukh@landledger.gov', password: 'Surveyor@123' },
+  { role: 'clerk', label: 'Doc verifier', email: 'deepa.shinde@landledger.gov', password: 'Verifier@123' },
+  { role: 'registrar', label: 'Registrar', email: 'meera.krishnan@landledger.gov', password: 'Registrar@123' },
+  { role: 'admin', label: 'Administrator', email: 'ramesh.iyer@landledger.gov', password: 'Admin@123' },
+];

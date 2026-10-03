@@ -12,7 +12,9 @@ import { formatDate, formatArea, buildQuery } from '../../utils/format.js';
 import { PROPERTY_TYPES } from '../../utils/constants.js';
 
 const STATUS_OPTIONS = [
-  { value: 'PENDING_REVIEW', label: 'Pending review' },
+  { value: 'SUBMITTED', label: 'Awaiting field survey' },
+  { value: 'SURVEY_VERIFIED', label: 'Survey cleared' },
+  { value: 'DOCS_VERIFIED', label: 'Docs verified' },
   { value: 'REGISTERED', label: 'Registered' },
   { value: 'REJECTED', label: 'Rejected' },
 ];
@@ -72,7 +74,7 @@ export default function RegistrarProperties() {
       header: 'Actions',
       render: (p) => (
         <Link to={`/registrar/properties/${p.property_id}`} className="btn btn-outline btn-sm" onClick={(e) => e.stopPropagation()}>
-          {p.status === 'PENDING_REVIEW' ? 'Review' : 'Open'}
+          {p.status === 'DOCS_VERIFIED' ? 'Review' : 'Open'}
         </Link>
       ),
     },

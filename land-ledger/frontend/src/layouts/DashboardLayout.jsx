@@ -27,6 +27,19 @@ const NAV = {
     { to: '/registrar/audit', label: 'Audit log', icon: FileText },
     { to: '/registrar/profile', label: 'Profile', icon: UserRound },
   ],
+  surveyor: [
+    { to: '/surveyor', label: 'Field survey queue', icon: ClipboardCheck, end: true },
+    { to: '/surveyor/profile', label: 'Profile', icon: UserRound },
+  ],
+  clerk: [
+    { to: '/clerk', label: 'Verification desk', icon: ClipboardCheck, end: true },
+    { to: '/clerk/profile', label: 'Profile', icon: UserRound },
+  ],
+  admin: [
+    { to: '/admin', label: 'Oversight board', icon: LayoutGrid, end: true },
+    { to: '/admin/audit', label: 'Audit log', icon: FileText },
+    { to: '/admin/profile', label: 'Profile', icon: UserRound },
+  ],
 };
 
 export default function DashboardLayout() {

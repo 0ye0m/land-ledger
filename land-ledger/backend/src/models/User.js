@@ -20,7 +20,10 @@ const userSchema = new mongoose.Schema(
     district: { type: String, default: null },
     state: { type: String, default: null },
     wallet_address: { type: String, default: null },
-    role: { type: String, enum: ['citizen', 'registrar'], default: 'citizen' },
+    /** Role hierarchy (escalation order):
+     *  citizen -> surveyor (field verification) -> clerk (document verification)
+     *  -> registrar (legal approval + on-chain) -> admin (oversight + override). */
+    role: { type: String, enum: ['citizen', 'surveyor', 'clerk', 'registrar', 'admin'], default: 'citizen' },
     last_activity_at: { type: Date, default: null },
   },
   {

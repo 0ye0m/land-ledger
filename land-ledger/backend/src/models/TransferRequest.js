@@ -5,11 +5,16 @@ const mongoose = require('mongoose');
 
 /**
  * MongoDB document model: transfer_requests
- * Status machine: PENDING -> APPROVED -> COMPLETED, or PENDING/APPROVED -> REJECTED,
- * or PENDING -> FAILED (blockchain settlement failure).
+ * Multi-role status machine:
+ *   PENDING        - citizen filed it; clerk (document verification) holds the file
+ *   DOCS_VERIFIED  - clerk cleared the documents; registrar legal review + settlement
+ *   APPROVED       - registrar approved, on-chain settlement in progress
+ *   COMPLETED      - ownership settled on the ledger
+ *   REJECTED       - rejected at document verification or registrar stage
+ *   FAILED         - blockchain settlement failure
  */
 
-const TRANSFER_STATUSES = ['PENDING', 'APPROVED', 'REJECTED', 'COMPLETED', 'FAILED'];
+const TRANSFER_STATUSES = ['PENDING', 'DOCS_VERIFIED', 'APPROVED', 'REJECTED', 'COMPLETED', 'FAILED'];
 const RISK_LEVELS = ['LOW', 'MEDIUM', 'HIGH'];
 
 const transferRequestSchema = new mongoose.Schema(
@@ -29,6 +34,11 @@ const transferRequestSchema = new mongoose.Schema(
     approved_by: { type: String, default: null },
     approved_at: { type: Date, default: null },
     rejected_by: { type: String, default: null },
+    /** Document verification stage (clerk). */
+    doc_verified_by: { type: String, default: null },
+    doc_verified_at: { type: Date, default: null },
+    doc_notes: { type: String, default: null },
+    rejection_stage: { type: String, enum: ['DOCUMENT_VERIFICATION', 'REGISTRAR_REVIEW', null], default: null },
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

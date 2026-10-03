@@ -86,7 +86,7 @@ const createProperty = asyncHandler(async (req, res) => {
     submitted_by_id: req.user.id,
     current_owner_id: req.user.id,
     current_owner_wallet: ownerWallet,
-    status: 'PENDING_REVIEW',
+    status: 'SUBMITTED',
   });
   const result = toRow(created.toObject());
 
@@ -95,10 +95,10 @@ const createProperty = asyncHandler(async (req, res) => {
     action: 'PROPERTY_CREATE',
     entityType: 'property',
     entityId: propertyId,
-    metadata: { title: value.title, district: value.district, status: 'PENDING_REVIEW' },
+    metadata: { title: value.title, district: value.district, status: 'SUBMITTED' },
   });
 
-  return ok(res, { message: 'Property submitted for registrar review', status: 201, data: { property: result } });
+  return ok(res, { message: 'Application submitted - field survey scheduled next', status: 201, data: { property: result } });
 });
 
 /**
@@ -237,8 +237,8 @@ const updateProperty = asyncHandler(async (req, res) => {
   if (!isRegistrar && !isSubmitter) {
     return fail(res, { message: 'You do not have permission to modify this record', errorCode: 'FORBIDDEN', status: 403 });
   }
-  if (!isRegistrar && property.status !== 'PENDING_REVIEW') {
-    return fail(res, { message: 'Only records pending review can be edited', errorCode: 'LOCKED_STATE', status: 409 });
+  if (!isRegistrar && !['SUBMITTED', 'SURVEY_VERIFIED'].includes(property.status)) {
+    return fail(res, { message: 'Only applications not yet under registrar review can be edited', errorCode: 'LOCKED_STATE', status: 409 });
   }
 
   const { valid, errors, value } = validateProperty({ ...req.body, ownerWallet: req.body.ownerWallet || property.current_owner_wallet });

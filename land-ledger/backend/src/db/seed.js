@@ -184,6 +184,22 @@ async function seed() {
     password: envSeed('SEED_REGISTRAR_PASSWORD', 'Registrar@123'), role: 'registrar',
     phone: '+91 98200 11223', district: 'Pune', state: 'Maharashtra', wallet: WALLETS.registrar,
   });
+  // Multi-role workflow staff (field survey -> document verification -> legal approval -> oversight)
+  const surveyor = await upsertUser({
+    fullName: 'Arjun Deshmukh', email: 'arjun.deshmukh@landledger.gov',
+    password: 'Surveyor@123', role: 'surveyor',
+    phone: '+91 98220 44556', district: 'Pune', state: 'Maharashtra', wallet: null,
+  });
+  const clerk = await upsertUser({
+    fullName: 'Deepa Shinde', email: 'deepa.shinde@landledger.gov',
+    password: 'Verifier@123', role: 'clerk',
+    phone: '+91 98220 77889', district: 'Pune', state: 'Maharashtra', wallet: null,
+  });
+  const admin = await upsertUser({
+    fullName: 'Ramesh Iyer', email: 'ramesh.iyer@landledger.gov',
+    password: 'Admin@123', role: 'admin',
+    phone: '+91 98220 99001', district: 'Pune', state: 'Maharashtra', wallet: null,
+  });
   const asha = await upsertUser({
     fullName: 'Asha Rao', email: envSeed('SEED_CITIZEN_EMAIL', 'asha.rao@example.com'),
     password: envSeed('SEED_CITIZEN_PASSWORD', 'Citizen@123'), role: 'citizen',
@@ -202,6 +218,9 @@ async function seed() {
   const userRow = (u) => ({ id: u._id, full_name: u.full_name, role: u.role, email: u.email });
 
   await auditService.record({ actor: userRow(registrar), action: 'USER_REGISTER', entityType: 'user', entityId: registrar._id, metadata: { seeded: true, role: 'registrar' } });
+  for (const u of [surveyor, clerk, admin]) {
+    await auditService.record({ actor: userRow(u), action: 'USER_REGISTER', entityType: 'user', entityId: u._id, metadata: { seeded: true, role: u.role } });
+  }
   for (const u of [asha, vikram, priya]) {
     await auditService.record({ actor: userRow(u), action: 'USER_REGISTER', entityType: 'user', entityId: u._id, metadata: { seeded: true, role: 'citizen' } });
   }
@@ -213,7 +232,7 @@ async function seed() {
     city: 'Pune', district: 'Pune', state: 'Maharashtra', areaValue: 4200, areaUnit: 'sq ft',
     propertyType: 'RESIDENTIAL_PLOT', description: 'Corner residential plot with clear chain of title across three prior transfers.',
     submittedBy: asha, ownerId: asha._id, ownerWallet: WALLETS.asha,
-    status: chainUp ? 'REGISTERED' : 'PENDING_REVIEW', createdDaysAgo: 21, updatedHoursAgo: 20,
+    status: chainUp ? 'REGISTERED' : 'DOCS_VERIFIED', createdDaysAgo: 21, updatedHoursAgo: 20,
   });
   const p2 = await insertProperty({
     propertyId: 'PROP-2026-0002', referenceNumber: 'LL/REG/2026/100002',
@@ -221,7 +240,7 @@ async function seed() {
     city: 'Pune', district: 'Pune', state: 'Maharashtra', areaValue: 1380, areaUnit: 'sq ft',
     propertyType: 'RESIDENTIAL_BUILDING', description: '3BHK apartment, phase II completion certificate attached.',
     submittedBy: asha, ownerId: asha._id, ownerWallet: WALLETS.asha,
-    status: 'PENDING_REVIEW', createdDaysAgo: 4, updatedHoursAgo: 30,
+    status: 'SUBMITTED', createdDaysAgo: 4, updatedHoursAgo: 30,
   });
   const p3 = await insertProperty({
     propertyId: 'PROP-2026-0003', referenceNumber: 'LL/REG/2026/100003',
@@ -229,7 +248,7 @@ async function seed() {
     city: 'Devanahalli', district: 'Bengaluru Rural', state: 'Karnataka', areaValue: 21780, areaUnit: 'sq ft',
     propertyType: 'AGRICULTURAL', description: 'Half-acre agricultural parcel with borewell easement recorded.',
     submittedBy: vikram, ownerId: vikram._id, ownerWallet: WALLETS.vikram,
-    status: chainUp ? 'REGISTERED' : 'PENDING_REVIEW', createdDaysAgo: 15, updatedHoursAgo: 14,
+    status: chainUp ? 'REGISTERED' : 'DOCS_VERIFIED', createdDaysAgo: 15, updatedHoursAgo: 14,
   });
   const p4 = await insertProperty({
     propertyId: 'PROP-2026-0004', referenceNumber: 'LL/REG/2026/100004',
@@ -237,7 +256,15 @@ async function seed() {
     city: 'Kochi', district: 'Ernakulam', state: 'Kerala', areaValue: 640, areaUnit: 'sq ft',
     propertyType: 'COMMERCIAL', description: 'Retail unit with transfer of leasehold recorded in the deed.',
     submittedBy: priya, ownerId: priya._id, ownerWallet: WALLETS.priya,
-    status: 'PENDING_REVIEW', createdDaysAgo: 2, updatedHoursAgo: 10,
+    status: 'DOCS_VERIFIED', createdDaysAgo: 2, updatedHoursAgo: 10,
+  });
+  const p6 = await insertProperty({
+    propertyId: 'PROP-2026-0006', referenceNumber: 'LL/REG/2026/100006',
+    title: 'House 4, Shanti Nagar', addressLine: 'House 4, Shanti Nagar, Wakad Road',
+    city: 'Pune', district: 'Pune', state: 'Maharashtra', areaValue: 1850, areaUnit: 'sq ft',
+    propertyType: 'RESIDENTIAL_BUILDING', description: 'Independent house with occupation certificate and updated tax receipts attached.',
+    submittedBy: priya, ownerId: priya._id, ownerWallet: WALLETS.priya,
+    status: 'SURVEY_VERIFIED', createdDaysAgo: 3, updatedHoursAgo: 8,
   });
   const p5 = await insertProperty({
     propertyId: 'PROP-2026-0005', referenceNumber: 'LL/REG/2026/100005',
@@ -250,11 +277,40 @@ async function seed() {
   });
 
   const submitterOf = (p) => (p.submitted_by_id === asha._id ? userRow(asha) : p.submitted_by_id === vikram._id ? userRow(vikram) : userRow(priya));
-  for (const p of [p1, p2, p3, p4, p5]) {
+  for (const p of [p1, p2, p3, p4, p5, p6]) {
     await auditService.record({
       actor: submitterOf(p),
       action: 'PROPERTY_CREATE', entityType: 'property', entityId: p.property_id, metadata: { seeded: true, status: p.status },
     });
+  }
+
+  // ---------- workflow stage history (realistic multi-office trail) ----------
+  const histEntries = [];
+  const daysAgoAt = (d) => new Date(Date.now() - d * 86400000);
+  // p4 (Shop 12): cleared survey + documents, now at the registrar desk.
+  histEntries.push(['PROP-2026-0004', [
+    { stage: 'SURVEY', action: 'SURVEY_PASSED', by_id: surveyor._id, by_name: surveyor.full_name, by_role: 'surveyor', notes: 'Ground visit done - boundaries match the sale deed sketch.', at: daysAgoAt(1.6) },
+    { stage: 'DOCUMENT_VERIFICATION', action: 'DOCS_VERIFIED', by_id: clerk._id, by_name: clerk.full_name, by_role: 'clerk', notes: 'Title deed and lease records consistent.', at: daysAgoAt(0.9) },
+  ]]);
+  // p6 (House 4): surveyor cleared, clerk verification pending.
+  histEntries.push(['PROP-2026-0006', [
+    { stage: 'SURVEY', action: 'SURVEY_PASSED', by_id: surveyor._id, by_name: surveyor.full_name, by_role: 'surveyor', notes: 'Structure matches recorded plinth area; no encroachment observed.', at: daysAgoAt(1.2) },
+  ]]);
+  // p1/p3 (REGISTERED or at registrar desk when chain down): full trail.
+  if (chainUp) {
+    histEntries.push(['PROP-2026-0001', [
+      { stage: 'SURVEY', action: 'SURVEY_PASSED', by_id: surveyor._id, by_name: surveyor.full_name, by_role: 'surveyor', notes: 'Corner plot, area measured 4200 sq ft (+/- 0.5%).', at: daysAgoAt(19) },
+      { stage: 'DOCUMENT_VERIFICATION', action: 'DOCS_VERIFIED', by_id: clerk._id, by_name: clerk.full_name, by_role: 'clerk', notes: 'Chain of title clear across three transfers.', at: daysAgoAt(18) },
+      { stage: 'REGISTRAR_REVIEW', action: 'REGISTRAR_APPROVED', by_id: registrar._id, by_name: registrar.full_name, by_role: 'registrar', notes: 'Legal scrutiny passed - registered on the ledger.', at: daysAgoAt(17) },
+    ]]);
+    histEntries.push(['PROP-2026-0003', [
+      { stage: 'SURVEY', action: 'SURVEY_PASSED', by_id: surveyor._id, by_name: surveyor.full_name, by_role: 'surveyor', notes: 'Agricultural parcel verified with borewell easement.', at: daysAgoAt(13) },
+      { stage: 'DOCUMENT_VERIFICATION', action: 'DOCS_VERIFIED', by_id: clerk._id, by_name: clerk.full_name, by_role: 'clerk', notes: 'Land revenue receipt paid and current.', at: daysAgoAt(12.5) },
+      { stage: 'REGISTRAR_REVIEW', action: 'REGISTRAR_APPROVED', by_id: registrar._id, by_name: registrar.full_name, by_role: 'registrar', notes: 'Approved and recorded on-chain.', at: daysAgoAt(12) },
+    ]]);
+  }
+  for (const [businessId, entries] of histEntries) {
+    await Property.updateOne({ property_id: businessId }, { $set: { stage_history: entries } });
   }
   if (p5.status === 'REJECTED') {
     await auditService.record({ actor: userRow(registrar), action: 'PROPERTY_REJECT', entityType: 'property', entityId: p5.property_id, result: 'FAILURE', metadata: { seeded: true, reason: p5.review_notes } });
@@ -294,7 +350,13 @@ async function seed() {
     lines: ['Deed No: EKM-MD-2210', 'Grantor: Kovoor Investments', 'Grantee: Priya Nair', 'Area: 640 sq ft'],
     verifiedBy: null, status: 'PENDING', daysAgo: 2,
   });
-  for (const d of [d1, d2, d3, d4, d5]) {
+  const d6 = await insertDocument({
+    property: p6, uploadedBy: priya, documentType: 'TAX_RECEIPT', fileName: 'occupation-cert-house4.pdf',
+    title: 'Occupation Certificate - House 4 Shanti Nagar',
+    lines: ['Cert No: PCMC-WK-4471', 'Owner: Priya Nair', 'Structure: Ground + 1', 'Issued: two years prior'],
+    verifiedBy: null, status: 'PENDING', daysAgo: 3,
+  });
+  for (const d of [d1, d2, d3, d4, d5, d6]) {
     await auditService.record({
       actor: submitterOf({ submitted_by_id: d.uploaded_by }),
       action: 'DOCUMENT_UPLOAD', entityType: 'document', entityId: d._id,
@@ -372,10 +434,13 @@ async function seed() {
   }
 
   console.log('\nSeed complete. Demo accounts:');
-  console.log('  Registrar : meera.krishnan@landledger.gov / Registrar@123');
   console.log('  Citizen   : asha.rao@example.com / Citizen@123');
   console.log('  Citizen   : vikram.mehta@example.com / Citizen@123');
   console.log('  Citizen   : priya.nair@example.com / Citizen@123');
+  console.log('  Surveyor  : arjun.deshmukh@landledger.gov / Surveyor@123');
+  console.log('  Clerk     : deepa.shinde@landledger.gov / Verifier@123');
+  console.log('  Registrar : meera.krishnan@landledger.gov / Registrar@123');
+  console.log('  Admin     : ramesh.iyer@landledger.gov / Admin@123');
 }
 
 function envSeed(name, fallback) {

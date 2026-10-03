@@ -30,9 +30,9 @@ const dashboard = asyncHandler(async (req, res) => {
     highRiskDocs,
     docActivityDocs,
   ] = await Promise.all([
-    Property.countDocuments({ status: 'PENDING_REVIEW' }),
-    TransferRequest.countDocuments({ status: 'PENDING' }),
-    TransferRequest.find({ status: 'PENDING' }).select('_id').lean(),
+    Property.countDocuments({ status: { $in: ['SUBMITTED', 'SURVEY_VERIFIED', 'DOCS_VERIFIED'] } }),
+    TransferRequest.countDocuments({ status: { $in: ['PENDING', 'DOCS_VERIFIED'] } }),
+    TransferRequest.find({ status: { $in: ['PENDING', 'DOCS_VERIFIED'] } }).select('_id').lean(),
     Document.countDocuments({ verification_status: 'VERIFIED' }),
     Property.countDocuments({ status: 'REJECTED' }),
     TransferRequest.countDocuments({ status: 'REJECTED' }),
@@ -50,7 +50,7 @@ const dashboard = asyncHandler(async (req, res) => {
 
   // Recent reviews: latest approval/rejection/verification/blockchain events.
   const recentReviewsRaw = await AuditEvent.find({
-    action: { $in: ['PROPERTY_APPROVE', 'PROPERTY_REJECT', 'TRANSFER_APPROVE', 'TRANSFER_REJECT', 'DOCUMENT_VERIFY', 'BLOCKCHAIN_TX', 'BLOCKCHAIN_TX_FAILED'] },
+    action: { $in: ['PROPERTY_APPROVE', 'PROPERTY_REJECT', 'TRANSFER_APPROVE', 'TRANSFER_REJECT', 'DOCUMENT_VERIFY', 'SURVEY_PASSED', 'SURVEY_REJECTED', 'DOCS_VERIFIED_PASS', 'DOCS_VERIFIED_FAIL', 'TRANSFER_DOCS_VERIFIED', 'TRANSFER_DOCS_REJECTED', 'PROPERTY_OVERRIDE_REJECT', 'TRANSFER_OVERRIDE_REJECT', 'BLOCKCHAIN_TX', 'BLOCKCHAIN_TX_FAILED'] },
   }).sort({ created_at: -1 }).limit(8).lean();
 
   // Decorate everything with the legacy JOIN shapes.
@@ -132,9 +132,9 @@ const dashboard = asyncHandler(async (req, res) => {
   });
 });
 
-/** GET /api/registrar/pending-properties - registration review queue. */
+/** GET /api/registrar/pending-properties - files that reached the registrar desk. */
 const pendingProperties = asyncHandler(async (req, res) => {
-  const docs = await Property.find({ status: 'PENDING_REVIEW' }).sort({ created_at: 1 }).lean();
+  const docs = await Property.find({ status: 'DOCS_VERIFIED' }).sort({ created_at: 1 }).lean();
 
   const propIds = docs.map((p) => p._id);
   const submitterIds = [...new Set(docs.map((p) => p.submitted_by_id).filter(Boolean))];
@@ -167,9 +167,9 @@ const pendingProperties = asyncHandler(async (req, res) => {
   return ok(res, { message: 'Pending registrations loaded', data: { properties } });
 });
 
-/** GET /api/registrar/pending-transfers - transfer review queue with latest fraud results. */
+/** GET /api/registrar/pending-transfers - clerk-verified transfers awaiting legal review. */
 const pendingTransfers = asyncHandler(async (req, res) => {
-  const docs = await TransferRequest.find({ status: 'PENDING' }).sort({ created_at: 1 }).lean();
+  const docs = await TransferRequest.find({ status: 'DOCS_VERIFIED' }).sort({ created_at: 1 }).lean();
 
   const propIds = [...new Set(docs.map((t) => t.property_id))];
   const transferIds = docs.map((t) => t._id);
@@ -231,8 +231,8 @@ const approveProperty = asyncHandler(async (req, res) => {
   }).lean();
   const property = propDoc ? toRow(propDoc) : null;
   if (!property) return fail(res, { message: 'Property not found', errorCode: 'PROPERTY_NOT_FOUND', status: 404 });
-  if (property.status !== 'PENDING_REVIEW') {
-    return fail(res, { message: `Only pending registrations can be approved (current: ${property.status})`, errorCode: 'INVALID_STATE', status: 409 });
+  if (property.status !== 'DOCS_VERIFIED') {
+    return fail(res, { message: `Only applications cleared by document verification can be approved (current stage: ${property.status})`, errorCode: 'INVALID_STATE', status: 409 });
   }
 
   await auditService.record({
@@ -278,8 +278,8 @@ const approveProperty = asyncHandler(async (req, res) => {
     timestamp: new Date(),
   });
   const updatedDoc = await Property.findOneAndUpdate(
-    { _id: property.id, status: 'PENDING_REVIEW' },
-    { $set: { status: 'REGISTERED', registered_at: new Date(), review_notes: String(req.body.reason || '').trim() || 'Approved by registrar' } },
+    { _id: property.id, status: 'DOCS_VERIFIED' },
+    { $set: { status: 'REGISTERED', registered_at: new Date(), review_notes: String(req.body.reason || '').trim() || 'Approved by registrar' }, $push: { stage_history: { stage: 'REGISTRAR_REVIEW', action: 'REGISTRAR_APPROVED', by_id: req.user.id, by_name: req.user.full_name, by_role: req.user.role, notes: String(req.body.reason || '').trim() || null, at: new Date() } } },
     { new: true }
   ).lean();
 
@@ -305,15 +305,15 @@ const rejectProperty = asyncHandler(async (req, res) => {
   }).lean();
   const property = propDoc ? toRow(propDoc) : null;
   if (!property) return fail(res, { message: 'Property not found', errorCode: 'PROPERTY_NOT_FOUND', status: 404 });
-  if (property.status !== 'PENDING_REVIEW') {
-    return fail(res, { message: `Only pending registrations can be rejected (current: ${property.status})`, errorCode: 'INVALID_STATE', status: 409 });
+  if (property.status !== 'DOCS_VERIFIED') {
+    return fail(res, { message: `Only applications cleared by document verification can be rejected here (current stage: ${property.status}). Earlier stages are rejected by the surveyor or clerk.`, errorCode: 'INVALID_STATE', status: 409 });
   }
   const reason = String(req.body.reason || '').trim();
   if (!reason) return fail(res, { message: 'A rejection reason is required', errorCode: 'REASON_REQUIRED', status: 422 });
 
   const updatedDoc = await Property.findOneAndUpdate(
-    { _id: property.id, status: 'PENDING_REVIEW' },
-    { $set: { status: 'REJECTED', review_notes: reason } },
+    { _id: property.id, status: 'DOCS_VERIFIED' },
+    { $set: { status: 'REJECTED', rejection_stage: 'REGISTRAR_REVIEW', review_notes: reason }, $push: { stage_history: { stage: 'REGISTRAR_REVIEW', action: 'REGISTRAR_REJECTED', by_id: req.user.id, by_name: req.user.full_name, by_role: req.user.role, notes: reason, at: new Date() } } },
     { new: true }
   ).lean();
   await auditService.record({

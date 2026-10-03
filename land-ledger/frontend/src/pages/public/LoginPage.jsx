@@ -122,14 +122,13 @@ export default function LoginPage() {
             <span className="divider-h flex-1" />
           </div>
 
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3">Preview an account</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3">Preview an office account</p>
           <div className="flex flex-wrap gap-2.5">
-            <Button variant="secondary" size="sm" disabled={submitting} onClick={() => doLogin(DEMO_ACCOUNTS.citizen)}>
-              Citizen
-            </Button>
-            <Button variant="secondary" size="sm" disabled={submitting} onClick={() => doLogin(DEMO_ACCOUNTS.registrar)}>
-              Registrar
-            </Button>
+            {DEMO_ACCOUNTS.map((acc) => (
+              <Button key={acc.role} variant="secondary" size="sm" disabled={submitting} onClick={() => doLogin(acc)} title={`${acc.email} / ${acc.password}`}>
+                {acc.label}
+              </Button>
+            ))}
           </div>
 
           <p className="text-[13.5px] mt-8 muted">

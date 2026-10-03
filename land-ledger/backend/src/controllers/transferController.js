@@ -255,8 +255,8 @@ const approveTransfer = asyncHandler(async (req, res) => {
   }
   const transfer = await getTransferFull(req.params.id);
   if (!transfer) return fail(res, { message: 'Transfer not found', errorCode: 'TRANSFER_NOT_FOUND', status: 404 });
-  if (transfer.status !== 'PENDING') {
-    return fail(res, { message: `Only pending transfers can be approved (current: ${transfer.status})`, errorCode: 'INVALID_STATE', status: 409 });
+  if (transfer.status !== 'DOCS_VERIFIED') {
+    return fail(res, { message: `Only transfers cleared by document verification can be approved (current stage: ${transfer.status}). The clerk verifies documents first.`, errorCode: 'INVALID_STATE', status: 409 });
   }
 
   // Fresh fraud gate at decision time.
@@ -282,15 +282,15 @@ const approveTransfer = asyncHandler(async (req, res) => {
     });
   }
 
-  // Atomic guarded transition: only one approver can flip PENDING -> APPROVED.
+  // Atomic guarded transition: only one approver can flip DOCS_VERIFIED -> APPROVED.
   const approvalReason = String(req.body.reason || '').trim() || 'Approved after registrar review';
   const claimed = await TransferRequest.findOneAndUpdate(
-    { _id: transfer.id, status: 'PENDING' },
+    { _id: transfer.id, status: 'DOCS_VERIFIED' },
     { $set: { status: 'APPROVED', approved_by: req.user.id, approved_at: new Date(), approval_reason: approvalReason } },
     { new: true }
   ).lean();
   if (!claimed) {
-    return fail(res, { message: 'Transfer is no longer pending', errorCode: 'INVALID_STATE', status: 409 });
+    return fail(res, { message: 'Transfer is no longer awaiting registrar approval', errorCode: 'INVALID_STATE', status: 409 });
   }
   await auditService.record({
     actor: req.user, action: 'TRANSFER_APPROVE', entityType: 'transfer', entityId: transfer.transfer_reference,
@@ -377,8 +377,8 @@ const rejectTransfer = asyncHandler(async (req, res) => {
   }
   const transfer = await getTransferFull(req.params.id);
   if (!transfer) return fail(res, { message: 'Transfer not found', errorCode: 'TRANSFER_NOT_FOUND', status: 404 });
-  if (!['PENDING', 'APPROVED'].includes(transfer.status)) {
-    return fail(res, { message: `Only pending or approved transfers can be rejected (current: ${transfer.status})`, errorCode: 'INVALID_STATE', status: 409 });
+  if (!['DOCS_VERIFIED', 'APPROVED'].includes(transfer.status)) {
+    return fail(res, { message: `Only transfers awaiting or under registrar review can be rejected here (current: ${transfer.status}). Pending files are rejected by the clerk.`, errorCode: 'INVALID_STATE', status: 409 });
   }
 
   const reason = String(req.body.reason || '').trim();
@@ -387,8 +387,8 @@ const rejectTransfer = asyncHandler(async (req, res) => {
   }
 
   const updatedDoc = await TransferRequest.findOneAndUpdate(
-    { _id: transfer.id, status: { $in: ['PENDING', 'APPROVED'] } },
-    { $set: { status: 'REJECTED', rejected_by: req.user.id, rejection_reason: reason } },
+    { _id: transfer.id, status: { $in: ['DOCS_VERIFIED', 'APPROVED'] } },
+    { $set: { status: 'REJECTED', rejected_by: req.user.id, rejection_reason: reason, rejection_stage: 'REGISTRAR_REVIEW' } },
     { new: true }
   ).lean();
 

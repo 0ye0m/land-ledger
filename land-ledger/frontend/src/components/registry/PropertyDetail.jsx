@@ -4,6 +4,8 @@ import {
   ArrowLeft, FilePlus2, ArrowRightLeft, ShieldCheck, ShieldAlert, Database, Link2, RefreshCw, Download, ExternalLink, History,
 } from 'lucide-react';
 import { propertyService, documentService, registrarService } from '../../services';
+import { REGISTRATION_STAGES } from '../../utils/constants';
+import { CheckCircle2, Circle, XCircle } from 'lucide-react';
 import { useApi, useDocumentTitle } from '../../hooks/index.js';
 import PageHeader, { SectionKicker } from '../../components/registry/PageHeader.jsx';
 import { StatusBadge, RiskBadge, HashChip } from '../../components/registry/Badges.jsx';
@@ -150,6 +152,9 @@ export default function PropertyDetail({ role }) {
           </>
         }
       />
+
+      {/* Multi-role workflow tracker */}
+      <WorkflowTracker property={property} />
 
       {/* Off-chain application record */}
       <section>
@@ -340,11 +345,11 @@ export default function PropertyDetail({ role }) {
       </div>
 
       {/* Registrar review controls */}
-      {isRegistrar && property.status === 'PENDING_REVIEW' ? (
+      {isRegistrar && property.status === 'DOCS_VERIFIED' ? (
         <section className="registry-panel p-5 border-t-2 border-t-primary/40">
           <SectionKicker>Registrar decision</SectionKicker>
           <p className="text-[13px] muted mt-2 max-w-2xl leading-relaxed">
-            Approving registers this property on the blockchain ledger against the owner wallet. Rejection requires a reason that is recorded in
+            Survey and document verification are complete. Approving registers this property on the blockchain ledger against the owner wallet. Rejection requires a reason that is recorded in
             the audit trail.
           </p>
           <div className="flex flex-wrap gap-2.5 mt-4">
@@ -453,5 +458,84 @@ export default function PropertyDetail({ role }) {
         </div>
       </Modal>
     </div>
+  );
+}
+
+/**
+ * Multi-role workflow tracker: shows the four registration stages with the
+ * current position, plus the full stage history (who cleared what, when).
+ */
+const STAGE_INDEX = { SUBMITTED: 0, SURVEY_VERIFIED: 1, DOCS_VERIFIED: 2, REGISTERED: 3 };
+const STAGE_OWNER = { SURVEY: 'Surveyor', DOCUMENT_VERIFICATION: 'Doc verification clerk', REGISTRAR_REVIEW: 'Registrar' };
+const ACTION_LABELS = {
+  SURVEY_PASSED: 'Field survey passed',
+  SURVEY_REJECTED: 'Rejected at field survey',
+  DOCS_VERIFIED: 'Documents verified',
+  DOCS_REJECTED: 'Rejected at document verification',
+  REGISTRAR_APPROVED: 'Registrar approved & registered',
+  REGISTRAR_REJECTED: 'Rejected by registrar',
+  ADMIN_OVERRIDE_REJECT: 'Stopped by oversight',
+};
+
+function WorkflowTracker({ property }) {
+  const history = Array.isArray(property.stage_history) ? property.stage_history : [];
+  const rejected = property.status === 'REJECTED';
+  const currentIndex = rejected ? -1 : (STAGE_INDEX[property.status] ?? 0);
+
+  return (
+    <section>
+      <SectionKicker>Workflow progress</SectionKicker>
+      <div className="registry-panel mt-3 px-4 sm:px-5 py-4">
+        {/* Stage rail */}
+        <div className="flex flex-wrap gap-x-2 gap-y-2">
+          {REGISTRATION_STAGES.map((s, i) => {
+            const done = !rejected && i < currentIndex;
+            const current = !rejected && i === currentIndex;
+            const reached = done || current;
+            return (
+              <div key={s.key} className="flex items-center gap-2 min-w-0">
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold ${
+                    done
+                      ? 'border-[rgb(var(--ll-accent)/0.4)] bg-[rgb(var(--ll-accent-soft))] text-[rgb(var(--ll-accent-foreground))]'
+                      : current
+                        ? 'border-primary/50 bg-primary/10 text-primary'
+                        : 'border-border text-muted-foreground'
+                  }`}
+                  title={s.hint}
+                >
+                  {done ? <CheckCircle2 size={12} /> : current ? <Circle size={12} /> : <Circle size={12} className="opacity-40" />}
+                  {s.label}
+                </span>
+                {i < REGISTRATION_STAGES.length - 1 ? <span className="muted text-[11px]">→</span> : null}
+              </div>
+            );
+          })}
+          {rejected ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-destructive/40 bg-[rgb(var(--ll-destructive-soft))] text-destructive px-2.5 py-1 text-[11px] font-bold">
+              <XCircle size={12} /> Stopped at {STAGE_OWNER[property.rejection_stage] || 'an office'}
+            </span>
+          ) : null}
+        </div>
+
+        {/* Stage history trail */}
+        {history.length ? (
+          <ul className="mt-4 flex flex-col gap-2.5 border-t border-border pt-4">
+            {history.map((h, i) => (
+              <li key={i} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+                <p className="text-[12.5px]">
+                  <strong>{ACTION_LABELS[h.action] || h.action}</strong>
+                  <span className="muted"> · {STAGE_OWNER[h.stage] || h.stage} · {h.by_name || 'system'}{h.by_role ? ` (${h.by_role})` : ''}</span>
+                </p>
+                <p className="text-[11px] muted">{h.at ? formatDate(h.at, { withTime: true }) : ''}</p>
+                {h.notes ? <p className="text-[11.5px] muted w-full italic">“{h.notes}”</p> : null}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-3 border-t border-border pt-3 text-[12px] muted">No office actions recorded yet — the file is waiting at its first desk.</p>
+        )}
+      </div>
+    </section>
   );
 }

@@ -32,6 +32,20 @@ const Ledger = lazy(() => import('./pages/registrar/LedgerPage.jsx'));
 const Audit = lazy(() => import('./pages/registrar/AuditPage.jsx'));
 const RegistrarProfile = lazy(() => import('./pages/shared/ProfilePage.jsx'));
 
+const SurveyorDashboard = lazy(() => import('./pages/workflow/SurveyorDashboard.jsx'));
+const ClerkDashboard = lazy(() => import('./pages/workflow/ClerkDashboard.jsx'));
+const AdminDashboard = lazy(() => import('./pages/workflow/AdminDashboard.jsx'));
+const OfficeProfile = lazy(() => import('./pages/shared/ProfilePage.jsx'));
+
+/** Where each role lands after sign-in. */
+const ROLE_HOME = {
+  citizen: '/citizen',
+  surveyor: '/surveyor',
+  clerk: '/clerk',
+  registrar: '/registrar',
+  admin: '/admin',
+};
+
 function FullPageLoading() {
   return (
     <div className="min-h-screen grid place-items-center bg-background site-noise">
@@ -46,7 +60,7 @@ function ProtectedRoute({ role, children }) {
   if (initializing) return <FullPageLoading />;
   if (!user) return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   if (role && user.role !== role) {
-    return <Navigate to={user.role === 'registrar' ? '/registrar' : '/citizen'} replace />;
+    return <Navigate to={ROLE_HOME[user.role] || '/citizen'} replace />;
   }
   return children;
 }
@@ -54,7 +68,7 @@ function ProtectedRoute({ role, children }) {
 function AuthRoute({ children }) {
   const { user, initializing } = useAuth();
   if (initializing) return <FullPageLoading />;
-  if (user) return <Navigate to={user.role === 'registrar' ? '/registrar' : '/citizen'} replace />;
+  if (user) return <Navigate to={ROLE_HOME[user.role] || '/citizen'} replace />;
   return children;
 }
 
@@ -95,6 +109,25 @@ export default function App() {
           <Route path="ledger" element={<Ledger />} />
           <Route path="audit" element={<Audit />} />
           <Route path="profile" element={<RegistrarProfile />} />
+        </Route>
+
+        {/* Surveyor - field verification office */}
+        <Route path="/surveyor" element={<ProtectedRoute role="surveyor"><DashboardLayout /></ProtectedRoute>}>
+          <Route index element={<SurveyorDashboard />} />
+          <Route path="profile" element={<OfficeProfile />} />
+        </Route>
+
+        {/* Clerk - document verification office */}
+        <Route path="/clerk" element={<ProtectedRoute role="clerk"><DashboardLayout /></ProtectedRoute>}>
+          <Route index element={<ClerkDashboard />} />
+          <Route path="profile" element={<OfficeProfile />} />
+        </Route>
+
+        {/* Admin - oversight / control tower */}
+        <Route path="/admin" element={<ProtectedRoute role="admin"><DashboardLayout /></ProtectedRoute>}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="audit" element={<Audit />} />
+          <Route path="profile" element={<OfficeProfile />} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />

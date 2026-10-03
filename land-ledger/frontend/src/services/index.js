@@ -73,3 +73,13 @@ export const registrarService = {
   activity: (params = {}) => get(`/registrar/activity?${qs(params)}`),
   loginEvents: (params = {}) => get(`/registrar/login-events?${qs(params)}`),
 };
+
+export const workflowService = {
+  queue: () => get('/workflow/queue'),
+  oversight: () => get('/workflow/oversight'),
+  survey: (id, decision, notes) => post(`/workflow/properties/${id}/survey`, { decision, notes }),
+  verifyPropertyDocs: (id, decision, notes) => post(`/workflow/properties/${id}/verify-docs`, { decision, notes }),
+  verifyTransferDocs: (id, decision, notes) => post(`/workflow/transfers/${id}/verify-docs`, { decision, notes }),
+  overrideRejectProperty: (id, reason) => post(`/workflow/properties/${id}/override-reject`, { reason }),
+  overrideRejectTransfer: (id, reason) => post(`/workflow/transfers/${id}/override-reject`, { reason }),
+};

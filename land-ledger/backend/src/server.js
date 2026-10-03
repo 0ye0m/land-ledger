@@ -22,7 +22,13 @@ const server = app.listen(env.port, () => {
 mongoReady.then((ok) => {
   if (!ok) {
     logger.warn('[mongo] unreachable at boot - API stays up (degraded) and the driver keeps retrying');
+    return;
   }
+  // One-time (idempotent) migration from the single-step registrar era:
+  // PENDING_REVIEW files were sitting at the registrar desk -> DOCS_VERIFIED.
+  require('./controllers/workflowController')
+    .migrateLegacyStatuses()
+    .catch((err) => logger.warn(`[workflow] legacy status migration skipped: ${err.message}`));
 });
 
 async function shutdown(signal) {
