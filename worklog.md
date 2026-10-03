@@ -360,3 +360,20 @@ Work Log:
 Stage Summary:
 - Preview now shows blockchain CONNECTED with deployed LandRegistry contract; publish payload unaffected
 - Known limitation: chain dies again on sandbox recycle; restore = npm install in blockchain + BOOT_CHAIN=1 restart
+
+---
+Task ID: 21
+Agent: Super Z (main)
+Task: Preview dead again (sandbox recycle) - restore app + chain
+
+Work Log:
+- Sandbox recycled again: all processes dead, :3000 empty, :81 waiting page
+- Deps check: backend ok; blockchain runtime wiped by recycle -> reinstalled (disk only, gitignored)
+- Booted with BOOT_CHAIN=1; log confirms Hardhat up + LandRegistry contract deployed
+- Verified :3000 / :81 / external preview link all ok; mongodb connected; blockchain connected; latestBlock 1
+- Created land-ledger/scripts/revive.sh (one-command revival: deps check + kill stale + BOOT_CHAIN=1 boot + health wait up to 90s); committed to git
+
+Stage Summary:
+- Full stack restored (app + Atlas + chain + deployed contract); preview live
+- Future recycles: single command `bash land-ledger/scripts/revive.sh`
+- Recurring pattern (recycles killed preview 3x) -> published link remains the real fix
