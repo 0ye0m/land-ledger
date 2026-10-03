@@ -377,3 +377,24 @@ Stage Summary:
 - Full stack restored (app + Atlas + chain + deployed contract); preview live
 - Future recycles: single command `bash land-ledger/scripts/revive.sh`
 - Recurring pattern (recycles killed preview 3x) -> published link remains the real fix
+
+---
+Task ID: 22
+Agent: Super Z (main)
+Task: Multi-role hierarchy + task division across the land processing pipeline (frontend + backend)
+
+Work Log:
+- Designed 5-role government pipeline: citizen (files) -> surveyor (field verification) -> clerk (document verification) -> registrar (legal approval + on-chain) -> admin (oversight + override)
+- Backend: User.role enum extended; Property statuses SUBMITTED/SURVEY_VERIFIED/DOCS_VERIFIED/REGISTERED/REJECTED + stage_history[] + survey_notes + rejection_stage; TransferRequest +DOCS_VERIFIED stage + doc_verified_by/at + rejection_stage
+- New workflowController + workflowRoutes (/api/workflow): role-aware queue, survey, verify-docs (property+transfer), override-reject (property+transfer), oversight; legacy PENDING_REVIEW auto-migrates to DOCS_VERIFIED at boot (idempotent)
+- registrarController: queues repointed to DOCS_VERIFIED; approve/reject stage-gated; dashboard metrics widened; transferController approve/reject gated
+- seed.js: +3 staff accounts (surveyor/clerk/admin), 6 properties spread across all stages, stage histories, p6 documents
+- Frontend: ROLE_HOME map, /surveyor + /clerk + /admin routes + NAVs, SurveyorDashboard, ClerkDashboard, AdminDashboard pages, workflowService, WorkflowTracker on shared PropertyDetail, status labels/tones, 5 demo-account chips on login, status filters updated
+- E2E verified via scripts/test-workflow.js: 27/27 PASS (role walls 403, stage guards 409, full pipeline incl. on-chain registration, admin oversight)
+- Demo queue spread verified: surveyor 1 file, clerk 1 property + 1 transfer, registrar 1 file, admin sees all
+- Rebuilt dist, force-committed, full stack restarted with BOOT_CHAIN=1 (latestBlock 3); payload still 10.9 MB / 302 files
+- Note: fullstack-dev skill loaded but NOT applied (it targets fresh Next.js scaffolds; existing Vite+Express project takes precedence; its verification standards followed via E2E + build checks)
+
+Stage Summary:
+- Feature complete and deployed in sandbox preview; demo accounts: surveyor arjun.deshmukh@landledger.gov/Surveyor@123, clerk deepa.shinde@landledger.gov/Verifier@123, admin ramesh.iyer@landledger.gov/Admin@123
+- Commit e7a8c9c
