@@ -398,3 +398,21 @@ Work Log:
 Stage Summary:
 - Feature complete and deployed in sandbox preview; demo accounts: surveyor arjun.deshmukh@landledger.gov/Surveyor@123, clerk deepa.shinde@landledger.gov/Verifier@123, admin ramesh.iyer@landledger.gov/Admin@123
 - Commit e7a8c9c
+
+---
+Task ID: 23
+Agent: Super Z (main)
+Task: "cant see the demo" - sandbox recycle revive + full verification
+
+Work Log:
+- Health check on :3000 failed (conn refused) -> sandbox recycled again during idle
+- Ran bash land-ledger/scripts/revive.sh -> UP after ~3s
+- Health: status ok, database connected, mongodb connected, blockchain connected, latestBlock 1
+- External preview link verified HTTP 200
+- All 5 role logins verified: registrar / surveyor / clerk / admin / citizen (response wrapped in data{} - initial parse error was mine, not the app)
+- Workflow queues verified non-empty: surveyor queue has PROP-2026-0002, clerk queue has PROP-2026-0006
+
+Stage Summary:
+- Full stack live with multi-role pipeline fully operational (Task 22 feature intact)
+- Demo accounts all working; queues populated per role
+- No code changes needed; revival only

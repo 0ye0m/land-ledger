@@ -1,0 +1,109 @@
+# LAND LEDGER — PostgreSQL 16 (credentials Secret + StatefulSet + Service + 5Gi PVC)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secret
+  namespace: land-ledger
+  labels:
+    app.kubernetes.io/name: land-ledger
+    app.kubernetes.io/component: database
+type: Opaque
+# ⚠️ REPLACE BEFORE APPLY — password placeholder, see 02-secrets.yaml
+stringData:
+  POSTGRES_DB: "land_ledger"
+  POSTGRES_USER: "landledger"
+  POSTGRES_PASSWORD: "REPLACE_BEFORE_APPLY"   # REPLACE BEFORE APPLY
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: land-ledger
+  labels:
+    app.kubernetes.io/name: land-ledger
+    app.kubernetes.io/component: database
+spec:
+  type: ClusterIP
+  selector:
+    app: postgres
+  ports:
+    - name: pg
+      port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: land-ledger
+  labels:
+    app.kubernetes.io/name: land-ledger
+    app.kubernetes.io/component: database
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+        app.kubernetes.io/name: land-ledger
+        app.kubernetes.io/component: database
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5432
+              name: pg
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: pgdata
+              mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "landledger", "-d", "land_ledger"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "landledger", "-d", "land_ledger"]
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+  volumeClaimTemplates:
+    - metadata:
+        name: pgdata
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi
