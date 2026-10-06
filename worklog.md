@@ -430,3 +430,29 @@ Work Log:
 
 Stage Summary:
 - Full stack live again; no code changes; 4th recycle handled by revive.sh in one command
+
+---
+Task ID: 25
+Agent: Super Z (main)
+Task: Email-OTP MFA + 8-user demo allowlist + multi-party consent workflow (frontend + backend)
+
+Work Log:
+- Audited full auth surface (User model, authController, JWT/RBAC middleware, seed, login_events, frontend AuthContext/LoginPage, tests); found NO existing OTP/MFA/email capability; baseline tests actually 28/29 (stale PENDING_REVIEW assertion from Task 22)
+- PART 2/3/8: src/config/allowlist.js - 8 allowlisted identities (4 real + 4 dummy w/ Indian demo names), normalized email comparison, deterministic roles (2+ citizens, surveyor, clerk, registrar, admin), maskEmail; register endpoint rejects non-allowlisted (403 EMAIL_NOT_ALLOWLISTED); profile email immutable
+- PART 4/6/7/23: MfaChallenge model (HMAC-SHA256 otp_hash w/ pepper, 5min expiry, single-use consumption, 5-attempt lockout, send-count, supersede) + otpService (crypto.randomInt, timing-safe compare, per-hour challenge cap, resend cooldown) + /api/auth/verify-otp + /api/auth/resend-otp; JWT now issued ONLY after OTP verify; generic error messages throughout
+- PART 5: emailService (nodemailer SMTP from env; fail-safe 503 when unconfigured + not dev mode; in-memory outbox for tests + gated dev capture)
+- PART 11-18: PropertyParty model (app-level OWNER/CO_OWNER vs chain single owner), TransferConsent model (SELLER/CO_OWNER/BUYER x PENDING/APPROVED/REJECTED/EXPIRED, unique per transfer+user), consentService.decide (7-step guard chain + atomic findOneAndUpdate), decision rule server-side (any reject -> REJECTED + expire rest; all approve -> fraud revalidation -> clerk PENDING), TransferRequest +CONSENT_PENDING +CONSENT rejection stage; clerk/registrar endpoints return 409 CONSENT_INCOMPLETE + audit TRANSFER_BLOCKED_CONSENT; admin queues include consent-pending files
+- PART 15: consent-required emails (identifiers only, no links, no documents)
+- PART 20/21: audit events MFA_CHALLENGE_CREATED/RESENT/VERIFY_SUCCESS/VERIFY_FAILURE/OTP_RESEND_RATE_LIMITED/CONSENT_REQUESTED/CONSENT_APPROVED/CONSENT_REJECTED/TRANSFER_CONSENT_COMPLETE/TRANSFER_CONSENT_REJECTED; login_events reasons LOGIN_PASSWORD_SUCCESS_MFA_REQUIRED/MFA_SUCCESS/MFA_FAILED/MFA_EXPIRED/MFA_RATE_LIMITED
+- PART 9/10: seed.js rewritten - 8 allowlisted users (LandLedger@123), 8 properties across all stages incl. co-owned PROP-2026-0001 (Om+Shruti), 4 consent-staged transfers (TRF-2026-0001 live multi-party demo; 0002 clerk desk; 0003 registrar desk; 0004 buyer-pending), real PDF docs w/ SHA-256, real fraud runs, stage histories, login-event samples; idempotent (skip unless --force; aligns identity/role on existing users)
+- Chain-aware reseed: getPropertyOwnerOnChain read added to blockchainService; seed skips already-settled parcels, re-points drifted owners with REAL txs; disk-only chain cursor (gitignored .runtime) floors counters above on-chain history; registrarController bumps cursor
+- PART 16/22: LoginPage 2-step MFA UI (6-box OTP input, masked email, expiry countdown, resend cooldown, devCode demo banner, paste support, auto-submit); citizen Dashboard Pending Actions section w/ party board + Approve/Reject modal; TransferDetail consent board + inline decision; RegisterPage allowlist note; DEMO_ACCOUNTS now 8 chips that prefill (cannot auto-login); CONSENT_PENDING status labels/tones
+- PART 25: backend 44/44 (was 28/29; +15 MFA/consent/security tests incl. replay, lockout, cooldown, supersede, rate-limit, allowlist strict-mode); contract 20/20; E2E scripts/test-workflow.js rewritten + extended 27 -> 56 checks (MFA gate, consent mid-states, no-bypass, settlement tx hash) 56/56; vite build clean
+- PART 26: security review - OTP never stored/logged/returned (except triple-gated devCode: MFA_DEV_MODE=1 + NODE_ENV=development + SMTP unconfigured); password_hash never in responses; JWT only post-OTP; generic messages; atomic guarded transitions; unique consent index
+- Committed 5f87cb5 (90 files, +2912/-673); payload still 8.25 MiB packed / 268 files; sandbox reseeded to pristine demo state; all 8 users verified through live MFA gauntlet; preview HTTP 200
+- Docs: land-ledger/docs/DEMO-GUIDE.md (accounts, rules, 15-step demo script, reseed/test commands) + backend/.env.example (SMTP/MFA tuning)
+
+Stage Summary:
+- Login now REQUIRES password + email OTP; old demo users replaced by the 8 allowlisted identities with stable roles; multi-party consent gate fully server-enforced before clerk/registrar/blockchain stages; existing fraud/doc-integrity/registrar/blockchain systems untouched
+- Demo: mandwadeom2616@gmail.com / LandLedger@123 (+7 accounts in DEMO-GUIDE); consent live-demo = TRF-2026-0001 (Shruti co-owner + Ganesh buyer must approve)
+- Known demo-mode note: sandbox shows OTP in a labelled banner until SMTP creds are configured (production can never leak it); published-link MFA will fail safely (503) until SMTP is set - configure SMTP_HOST/USER/PASSWORD for real email OTP
