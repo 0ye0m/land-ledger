@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-/* LAND LEDGER - multi-role workflow end-to-end test (against a running API). */
+/* LAND LEDGER - multi-role workflow E2E test (against a running API).
+ * Exercises: email-OTP MFA sign-in, the 5-role pipeline, the multi-party
+ * consent gate, stage guards, on-chain registration and settlement. */
 'use strict';
 
 const API = process.env.API || 'http://127.0.0.1:3000';
@@ -22,23 +24,35 @@ async function req(method, path, { token, body } = {}) {
   return { status: res.status, json };
 }
 
+/**
+ * Two-factor login: password step returns an MFA challenge (never a token);
+ * in the sandbox demo the gated devCode field carries the OTP; verify issues
+ * the JWT. This is exactly the flow the frontend performs.
+ */
 async function login(email, password) {
   const r = await req('POST', '/auth/login', { body: { email, password } });
-  check(`login ${email}`, r.status === 200 && r.json?.data?.token, JSON.stringify(r.json).slice(0, 120));
-  return r.json.data.token;
+  const d = r.json?.data || {};
+  check(`login step1 (MFA challenge) ${email}`, r.status === 200 && d.mfaRequired === true && !!d.challengeId && !d.token, JSON.stringify(r.json).slice(0, 140));
+  const verify = await req('POST', '/auth/verify-otp', { body: { challengeId: d.challengeId, otp: d.devCode } });
+  check(`login step2 (OTP verify) ${email}`, verify.status === 200 && !!verify.json?.data?.token, JSON.stringify(verify.json).slice(0, 140));
+  return verify.json.data.token;
 }
 
 (async () => {
+  // --- 0. password alone must NOT yield a token
+  const pwdOnly = await req('POST', '/auth/login', { body: { email: 'mandwadeom2616@gmail.com', password: 'LandLedger@123' } });
+  check('password alone does not issue JWT (MFA gate)', pwdOnly.status === 200 && pwdOnly.json?.data?.mfaRequired === true && !pwdOnly.json?.data?.token, JSON.stringify(pwdOnly.json).slice(0, 140));
+
   // --- 1. citizen files a new application -> SUBMITTED
-  const asha = await login('asha.rao@example.com', 'Citizen@123');
+  const om = await login('mandwadeom2616@gmail.com', 'LandLedger@123');
   const created = await req('POST', '/properties', {
-    token: asha,
+    token: om,
     body: {
       title: 'Flat 21, Green Meadows', addressLine: 'Flat 21, Green Meadows Phase 2',
       city: 'Pune', district: 'Pune', state: 'Maharashtra',
       areaValue: 1120, areaUnit: 'sq ft', propertyType: 'RESIDENTIAL_BUILDING',
       description: 'E2E workflow test application.',
-      ownerWallet: '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC',
+      ownerWallet: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
     },
   });
   check('citizen creates application (SUBMITTED)', created.status === 201 && created.json?.data?.property?.status === 'SUBMITTED',
@@ -47,11 +61,11 @@ async function login(email, password) {
   const newPropRef = created.json?.data?.property?.property_id;
 
   // --- 2. role walls: citizen cannot survey
-  const wall = await req('POST', `/workflow/properties/${newPropId}/survey`, { token: asha, body: { decision: 'APPROVE' } });
+  const wall = await req('POST', `/workflow/properties/${newPropId}/survey`, { token: om, body: { decision: 'APPROVE' } });
   check('citizen blocked from survey action (403)', wall.status === 403, `got ${wall.status}`);
 
-  // --- 3. surveyor: queue has the new file + seeded PROP-2026-0002, approves both
-  const surveyor = await login('arjun.deshmukh@landledger.gov', 'Surveyor@123');
+  // --- 3. surveyor: queue has the new file + seeded Flat 503, approves both
+  const surveyor = await login('panpaliyaag@rknec.edu', 'LandLedger@123');
   const sq = await req('GET', '/workflow/queue', { token: surveyor });
   const surveyQueue = sq.json?.data?.properties?.map((p) => p.property_id) || [];
   check('surveyor queue contains new application', surveyQueue.includes(newPropRef), JSON.stringify(surveyQueue));
@@ -67,37 +81,97 @@ async function login(email, password) {
   const reSurvey = await req('POST', `/workflow/properties/${newPropId}/survey`, { token: surveyor, body: { decision: 'APPROVE' } });
   check('re-survey blocked (409)', reSurvey.status === 409, `got ${reSurvey.status}`);
 
-  // --- 4. clerk: verify docs for new property + seeded House 4 + the transfer
-  const clerk = await login('deepa.shinde@landledger.gov', 'Verifier@123');
+  // --- 4. clerk: docs for new property + House 4 + consent-cleared TRF-2026-0002
+  const clerk = await login('tekdiwalnishant@gmail.com', 'LandLedger@123');
   const cq = await req('GET', '/workflow/queue', { token: clerk });
   const clerkProps = cq.json?.data?.properties?.map((p) => p.property_id) || [];
   const clerkTransfers = cq.json?.data?.transfers?.map((t) => t.transfer_reference) || [];
   check('clerk queue has property after survey', clerkProps.includes(newPropRef), JSON.stringify(clerkProps));
   check('clerk queue has seeded House 4 (PROP-2026-0006)', clerkProps.includes('PROP-2026-0006'));
-  check('clerk queue has seeded transfer TRF-2026-0001', clerkTransfers.includes('TRF-2026-0001'), JSON.stringify(clerkTransfers));
+  check('clerk queue holds consent-cleared TRF-2026-0002', clerkTransfers.includes('TRF-2026-0002'), JSON.stringify(clerkTransfers));
+  check('clerk queue does NOT hold consent-pending TRF-2026-0001 (server-enforced gate)', !clerkTransfers.includes('TRF-2026-0001'), JSON.stringify(clerkTransfers));
   const v1 = await req('POST', `/workflow/properties/${newPropId}/verify-docs`, { token: clerk, body: { decision: 'APPROVE', notes: 'Deed and receipts in order.' } });
   check('clerk verifies new application -> DOCS_VERIFIED', v1.status === 200 && v1.json?.data?.property?.status === 'DOCS_VERIFIED',
     JSON.stringify(v1.json).slice(0, 160));
   const p6 = (cq.json.data.properties.find((p) => p.property_id === 'PROP-2026-0006') || {}).id;
   const v2 = p6 ? await req('POST', `/workflow/properties/${p6}/verify-docs`, { token: clerk, body: { decision: 'APPROVE', notes: 'Occupation cert current.' } }) : { status: 0 };
   check('clerk verifies seeded House 4', v2.status === 200, `got ${v2.status}`);
-  const trf = (cq.json.data.transfers.find((t) => t.transfer_reference === 'TRF-2026-0001') || {}).id;
-  const v3 = trf ? await req('POST', `/workflow/transfers/${trf}/verify-docs`, { token: clerk, body: { decision: 'APPROVE', notes: 'Transfer papers complete.' } }) : { status: 0 };
-  check('clerk verifies seeded transfer -> DOCS_VERIFIED', v3.status === 200 && v3.json?.data?.transfer?.status === 'DOCS_VERIFIED', `got ${v3.status}`);
+  const trf2 = (cq.json.data.transfers.find((t) => t.transfer_reference === 'TRF-2026-0002') || {}).id;
+  const v3 = trf2 ? await req('POST', `/workflow/transfers/${trf2}/verify-docs`, { token: clerk, body: { decision: 'APPROVE', notes: 'Transfer papers complete.' } }) : { status: 0 };
+  check('clerk verifies consent-cleared transfer -> DOCS_VERIFIED', v3.status === 200 && v3.json?.data?.transfer?.status === 'DOCS_VERIFIED', `got ${v3.status}`);
 
-  // --- 5. registrar: only DOCS_VERIFIED files appear; approve on-chain
-  const registrar = await login('meera.krishnan@landledger.gov', 'Registrar@123');
+  // clerk is blocked on the consent-pending multi-party transfer
+  const board0 = await req('GET', '/consents/transfer/TRF-2026-0001', { token: clerk });
+  check('clerk can view the consent board (staff)', board0.status === 200, `got ${board0.status}`);
+  const trf1Uuid = board0.json?.data?.transfer?.id;
+  const earlyVerify = await req('POST', `/workflow/transfers/${trf1Uuid}/verify-docs`, { token: clerk, body: { decision: 'APPROVE' } });
+  check('clerk blocked by consent gate on TRF-2026-0001 (409 CONSENT_INCOMPLETE)', earlyVerify.status === 409 && earlyVerify.json?.errorCode === 'CONSENT_INCOMPLETE', `got ${earlyVerify.status}`);
+
+  // --- 5. multi-party consent on TRF-2026-0001 (co-owned parcel)
+  const parties0 = board0.json?.data?.consents || [];
+  check('consent board lists 3 required parties (seller+co-owner+buyer)', parties0.length === 3, JSON.stringify(parties0.map((c) => c.party_role)));
+  check('seller consent recorded via initiation', (parties0.find((c) => c.party_role === 'SELLER') || {}).status === 'APPROVED');
+  check('co-owner + buyer still PENDING', ['CO_OWNER', 'BUYER'].every((r) => (parties0.find((c) => c.party_role === r) || {}).status === 'PENDING'));
+
+  // co-owner Shruti sees the item in her Pending Actions feed and approves
+  const shruti = await login('shrutipethe111@gmail.com', 'LandLedger@123');
+  const feed = await req('GET', '/consents/pending', { token: shruti });
+  const feedItem = (feed.json?.data?.actions || []).find((a) => a.transfer_reference === 'TRF-2026-0001');
+  check("co-owner's Pending Actions include TRF-2026-0001", Boolean(feedItem), JSON.stringify(feed.json).slice(0, 200));
+  check('feed item names her as CO_OWNER', feedItem?.your_role === 'CO_OWNER');
+  const shrutiConsentId = (parties0.find((c) => c.party_role === 'CO_OWNER') || {}).id;
+  const c1 = await req('POST', `/consents/${shrutiConsentId}/decision`, { token: shruti, body: { decision: 'APPROVE' } });
+  check('co-owner approves consent', c1.status === 200, JSON.stringify(c1.json).slice(0, 160));
+
+  // mid-state: buyer still pending -> transfer must STAY CONSENT_PENDING
+  const mid = await req('GET', '/transfers/TRF-2026-0001', { token: om });
+  check('transfer stays CONSENT_PENDING while buyer pending (no bypass)', mid.json?.data?.transfer?.status === 'CONSENT_PENDING', `got ${mid.json?.data?.transfer?.status}`);
+
+  // buyer Ganesh approves via his Pending Actions
+  const ganesh = await login('alphadummy103@gmail.com', 'LandLedger@123');
+  const gFeed = await req('GET', '/consents/pending', { token: ganesh });
+  const gItem = (gFeed.json?.data?.actions || []).find((a) => a.transfer_reference === 'TRF-2026-0001');
+  check("buyer's Pending Actions include TRF-2026-0001", Boolean(gItem) && gItem.your_role === 'BUYER');
+  const buyerConsentId = (parties0.find((c) => c.party_role === 'BUYER') || {}).id;
+  const c2 = await req('POST', `/consents/${buyerConsentId}/decision`, { token: ganesh, body: { decision: 'APPROVE' } });
+  check('buyer approves consent -> transfer advances', c2.status === 200 && c2.json?.data?.transfer?.status === 'PENDING', JSON.stringify(c2.json).slice(0, 200));
+
+  // double decision is refused
+  const c3 = await req('POST', `/consents/${shrutiConsentId}/decision`, { token: shruti, body: { decision: 'APPROVE' } });
+  check('double consent refused (409)', c3.status === 409, `got ${c3.status}`);
+  // outsider cannot act on someone else's consent (403 - it is not theirs)
+  const outsider = await req('POST', `/consents/${shrutiConsentId}/decision`, { token: om, body: { decision: 'APPROVE' } });
+  check("another user cannot decide someone else's consent (403)", outsider.status === 403, `got ${outsider.status}`);
+
+  // now the clerk CAN verify the consent-cleared transfer
+  const v4 = await req('POST', `/workflow/transfers/${trf1Uuid}/verify-docs`, { token: clerk, body: { decision: 'APPROVE', notes: 'Consent board complete; papers in order.' } });
+  check('clerk verifies consent-cleared TRF-2026-0001 -> DOCS_VERIFIED', v4.status === 200 && v4.json?.data?.transfer?.status === 'DOCS_VERIFIED', JSON.stringify(v4.json).slice(0, 160));
+
+  // --- 6. registrar: approvals + on-chain settlement
+  const registrar = await login('omdummy101@gmail.com', 'LandLedger@123');
   const rq = await req('GET', '/workflow/queue', { token: registrar });
   const regProps = rq.json?.data?.properties?.map((p) => p.property_id) || [];
   const regTransfers = rq.json?.data?.transfers?.map((t) => t.transfer_reference) || [];
   check('registrar queue holds the verified application', regProps.includes(newPropRef), JSON.stringify(regProps));
-  check('registrar queue holds verified transfer', regTransfers.includes('TRF-2026-0001'), JSON.stringify(regTransfers));
+  check('registrar queue holds TRF-2026-0001 + TRF-2026-0003', regTransfers.includes('TRF-2026-0001') && regTransfers.includes('TRF-2026-0003'), JSON.stringify(regTransfers));
+
+  // registrar is blocked on a still-consent-pending transfer (TRF-2026-0004)
+  const blocked = await req('POST', '/transfers/TRF-2026-0004/approve', { token: registrar, body: { reason: 'attempt' } });
+  check('registrar blocked by consent gate on TRF-2026-0004 (409 CONSENT_INCOMPLETE)', blocked.status === 409 && blocked.json?.errorCode === 'CONSENT_INCOMPLETE', `got ${blocked.status}`);
+
   const reg = await req('POST', `/registrar/properties/${newPropId}/approve`, { token: registrar, body: { reason: 'Legal scrutiny passed.' } });
   check('registrar approves + registers on-chain', reg.status === 200 && reg.json?.data?.property?.status === 'REGISTERED' && !!reg.json?.data?.blockchainTransaction,
     JSON.stringify(reg.json).slice(0, 200));
 
-  // --- 6. admin: oversight board + override
-  const admin = await login('ramesh.iyer@landledger.gov', 'Admin@123');
+  const settle = await req('POST', `/transfers/${trf1Uuid}/approve`, { token: registrar, body: { reason: 'Consent complete; all checks clear.' } });
+  check('registrar settles multi-party transfer on-chain -> COMPLETED', settle.status === 200 && settle.json?.data?.transfer?.status === 'COMPLETED', JSON.stringify(settle.json).slice(0, 220));
+  const txHash = settle.json?.data?.blockchainTransaction?.transaction_hash || '';
+  check('settlement carries a real transaction hash + block', /^0x[0-9a-f]{64}$/.test(txHash) && Number(settle.json?.data?.blockchainTransaction?.block_number) > 0, txHash.slice(0, 20));
+  const p1after = await req('GET', '/properties/PROP-2026-0001', { token: om });
+  check('ownership updated to the buyer after settlement', p1after.json?.data?.property?.current_owner_id, JSON.stringify(p1after.json?.data?.property?.current_owner_id || '').slice(0, 60));
+
+  // --- 7. admin: oversight board + override + role wall
+  const admin = await login('omdummy102@gmail.com', 'LandLedger@123');
   const ov = await req('GET', '/workflow/oversight', { token: admin });
   check('admin oversight loads', ov.status === 200 && ov.json?.data?.propertyStageCounts, JSON.stringify(ov.json).slice(0, 160));
   const users = ov.json?.data?.users || [];
@@ -109,8 +183,8 @@ async function login(email, password) {
   const adminSurvey = await req('POST', `/workflow/properties/${newPropId}/survey`, { token: admin, body: { decision: 'APPROVE' } });
   check('admin blocked from surveyor action (403)', adminSurvey.status === 403, `got ${adminSurvey.status}`);
 
-  // --- 7. citizen sees the full trail on their file
-  const detail = await req('GET', `/properties/${newPropId}`, { token: asha });
+  // --- 8. citizen sees the full trail on their file
+  const detail = await req('GET', `/properties/${newPropId}`, { token: om });
   const hist = detail.json?.data?.property?.stage_history || [];
   check('citizen sees stage history trail (>=3 entries)', hist.length >= 3, `got ${hist.length}`);
   check('final status REGISTERED', detail.json?.data?.property?.status === 'REGISTERED');

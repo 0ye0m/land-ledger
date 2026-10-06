@@ -184,6 +184,19 @@ async function transferOwnershipOnChain(propertyId, expectedOwnerWallet, newOwne
   });
 }
 
+
+/** Read-only: the current on-chain owner wallet for a business property id. */
+async function getPropertyOwnerOnChain(propertyId) {
+  const active = getContract();
+  if (!active) return null;
+  try {
+    const owner = await active.getPropertyOwner(ethers.id(propertyId));
+    return owner && owner !== '0x0000000000000000000000000000000000000000' ? owner : null;
+  } catch {
+    return null; // unknown / unregistered id
+  }
+}
+
 async function verifyOwnershipOnChain(propertyId, claimedWallet) {
   const active = getContract();
   if (!active) return { available: false, verified: false };
@@ -198,6 +211,7 @@ async function verifyOwnershipOnChain(propertyId, claimedWallet) {
 module.exports = {
   getStatus,
   getContractAddress,
+  getPropertyOwnerOnChain,
   registerPropertyOnChain,
   transferOwnershipOnChain,
   verifyOwnershipOnChain,

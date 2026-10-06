@@ -112,6 +112,9 @@ export default function RegisterPage() {
             <span className="num">01</span> Your details
           </p>
           <h2 className="page-title text-[30px] mt-3">Create citizen account</h2>
+          <p className="muted text-[12.5px] mt-2 leading-relaxed">
+            This is a controlled demonstration registry: only pre-approved email addresses (the eight demo identities) can create an account. Other emails are rejected at registration.
+          </p>
 
           <form className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-5" onSubmit={onSubmit} noValidate>
             {errors.form ? (

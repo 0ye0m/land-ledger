@@ -1,6 +1,20 @@
 'use strict';
 
-const { app, request, auth, registerUser, createProperty, uploadDocument } = require('./setup');
+const { app, request, auth, registerUser, createProperty, uploadDocument, uniq } = require('./setup');
+
+const WALLET_BUYER_1 = '0x90F79bf6EB2c4f870365E785982E1f101E93b906';
+const WALLET_BUYER_2 = '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65';
+
+/** Approve the buyer's pending consent on a transfer (by reference). */
+async function buyerApprovesConsent(buyerToken, transferRef) {
+  const board = await request(app).get(`/api/consents/transfer/${transferRef}`).set(auth(buyerToken));
+  expect(board.status).toBe(200);
+  const consentId = board.body.data.myConsent?.consentId;
+  expect(consentId).toBeTruthy();
+  const decision = await request(app).post(`/api/consents/${consentId}/decision`).set(auth(buyerToken)).send({ decision: 'APPROVE' });
+  expect(decision.status).toBe(200);
+  return decision;
+}
 
 async function prepareRegisteredProperty({ withDocuments = true } = {}) {
   const seller = await registerUser();
@@ -17,7 +31,7 @@ async function prepareRegisteredProperty({ withDocuments = true } = {}) {
 
 describe('TRANSFERS', () => {
   test(
-    'valid transfer flows PENDING -> registrar approval -> COMPLETED with real tx hash (requires Hardhat)',
+    'consent gate + full flow: CONSENT_PENDING -> buyer approves -> clerk docs -> registrar approval -> COMPLETED with real tx hash (requires Hardhat)',
     async () => {
       const { seller, registrar, propertyId, approve } = await prepareRegisteredProperty();
       if (approve.status !== 200) {
@@ -25,15 +39,37 @@ describe('TRANSFERS', () => {
         expect(approve.status).toBeGreaterThan(0);
         return;
       }
-      const buyer = await registerUser({ wallet: '0x90F79bf6EB2c4f870365E785982E1f101E93b906' });
+      const buyer = await registerUser({ wallet: WALLET_BUYER_1 });
+      const clerk = await registerUser({ role: 'registrar' });
+      await require('../src/models/User').updateOne({ _id: clerk.user.id }, { $set: { role: 'clerk' } });
 
       const created = await request(app).post('/api/transfers').set(auth(seller.token)).send({
         propertyId, buyerEmail: buyer.email, requestDetails: 'Private sale agreed',
       });
       expect(created.status).toBe(201);
       const transferRef = created.body.data.transfer.transfer_reference;
-      expect(created.body.data.transfer.status).toBe('PENDING');
+      // The buyer is a required party: the file parks at the consent gate.
+      expect(created.body.data.transfer.status).toBe('CONSENT_PENDING');
       expect(created.body.data.fraud.checks_performed.length).toBeGreaterThanOrEqual(8);
+
+      // Clerk cannot verify while consent is pending (server-enforced).
+      const earlyVerify = await request(app).post(`/api/workflow/transfers/${created.body.data.transfer.id}/verify-docs`)
+        .set(auth(clerk.token)).send({ decision: 'APPROVE' });
+      expect(earlyVerify.status).toBe(409);
+      expect(earlyVerify.body.errorCode).toBe('CONSENT_INCOMPLETE');
+
+      // Seller's own consent row already APPROVED via initiation; buyer must act.
+      const sellerBoard = await request(app).get(`/api/consents/transfer/${transferRef}`).set(auth(seller.token));
+      expect(sellerBoard.body.data.myConsent).toBeNull(); // seller has no pending row
+      await buyerApprovesConsent(buyer.token, transferRef);
+
+      const afterConsent = await request(app).get(`/api/transfers/${transferRef}`).set(auth(seller.token));
+      expect(afterConsent.body.data.transfer.status).toBe('PENDING');
+
+      const verified = await request(app).post(`/api/workflow/transfers/${created.body.data.transfer.id}/verify-docs`)
+        .set(auth(clerk.token)).send({ decision: 'APPROVE', notes: 'Documents consistent' });
+      expect(verified.status).toBe(200);
+      expect(verified.body.data.transfer.status).toBe('DOCS_VERIFIED');
 
       const approved = await request(app).post(`/api/transfers/${transferRef}/approve`).set(auth(registrar.token)).send({ reason: 'All checks clear' });
       expect(approved.status).toBe(200);
@@ -42,7 +78,7 @@ describe('TRANSFERS', () => {
       expect(tx.transaction_hash).toMatch(/^0x[0-9a-f]{64}$/);
       expect(Number(tx.block_number)).toBeGreaterThan(0);
 
-      // Ownership moved in PostgreSQL
+      // Ownership moved in MongoDB
       const detail = await request(app).get(`/api/properties/${propertyId}`).set(auth(seller.token));
       expect(detail.body.data.property.current_owner_id).toBe(buyer.user.id);
     },
@@ -74,17 +110,18 @@ describe('TRANSFERS', () => {
     expect(res.body.errorCode).toBe('SELLER_NOT_OWNER');
   });
 
-  test('duplicate active transfer is rejected', async () => {
+  test('duplicate active transfer is rejected (consent-pending counts as active)', async () => {
     const { seller, propertyId, approve } = await prepareRegisteredProperty();
     if (approve.status !== 200) {
       console.log('   [skip] Hardhat unavailable - duplicate transfer test skipped');
       return;
     }
-    const buyerA = await registerUser({ wallet: '0x90F79bf6EB2c4f870365E785982E1f101E93b906' });
-    const buyerB = await registerUser({ wallet: '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65' });
+    const buyerA = await registerUser({ wallet: WALLET_BUYER_1 });
+    const buyerB = await registerUser({ wallet: WALLET_BUYER_2 });
 
     const first = await request(app).post('/api/transfers').set(auth(seller.token)).send({ propertyId, buyerEmail: buyerA.email });
     expect(first.status).toBe(201);
+    expect(first.body.data.transfer.status).toBe('CONSENT_PENDING');
 
     const second = await request(app).post('/api/transfers').set(auth(seller.token)).send({ propertyId, buyerEmail: buyerB.email });
     expect(second.status).toBe(409);

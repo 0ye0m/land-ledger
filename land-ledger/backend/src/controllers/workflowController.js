@@ -31,6 +31,7 @@ const STAGE_BY_PROPERTY_STATUS = {
   DOCS_VERIFIED: 'REGISTRAR_REVIEW',
 };
 const STAGE_BY_TRANSFER_STATUS = {
+  CONSENT_PENDING: 'CONSENT',
   PENDING: 'DOCUMENT_VERIFICATION',
   DOCS_VERIFIED: 'REGISTRAR_REVIEW',
 };
@@ -117,6 +118,8 @@ const queue = asyncHandler(async (req, res) => {
   } else if (role === 'clerk') {
     const [propDocs, transferDocs] = await Promise.all([
       Property.find({ status: 'SURVEY_VERIFIED' }).sort({ created_at: 1 }).lean(),
+      // CONSENT_PENDING transfers are NOT visible here: the consent gate must
+      // clear (server-enforced) before document verification may begin.
       TransferRequest.find({ status: 'PENDING' }).sort({ created_at: 1 }).lean(),
     ]);
     data.properties = await decorateProperties(propDocs);
@@ -131,9 +134,9 @@ const queue = asyncHandler(async (req, res) => {
   } else if (role === 'admin') {
     const [propDocs, transferDocs, propCounts, transferCounts, usersByRole] = await Promise.all([
       Property.find({ status: { $in: ACTIVE_STATUSES } }).sort({ created_at: 1 }).lean(),
-      TransferRequest.find({ status: { $in: ['PENDING', 'DOCS_VERIFIED'] } }).sort({ created_at: 1 }).lean(),
+      TransferRequest.find({ status: { $in: ['CONSENT_PENDING', 'PENDING', 'DOCS_VERIFIED'] } }).sort({ created_at: 1 }).lean(),
       Property.aggregate([{ $match: { status: { $in: ACTIVE_STATUSES } } }, { $group: { _id: '$status', n: { $sum: 1 } } }]),
-      TransferRequest.aggregate([{ $match: { status: { $in: ['PENDING', 'DOCS_VERIFIED'] } } }, { $group: { _id: '$status', n: { $sum: 1 } } }]),
+      TransferRequest.aggregate([{ $match: { status: { $in: ['CONSENT_PENDING', 'PENDING', 'DOCS_VERIFIED'] } } }, { $group: { _id: '$status', n: { $sum: 1 } } }]),
       User.aggregate([{ $group: { _id: '$role', n: { $sum: 1 } } }]),
     ]);
     data.properties = await decorateProperties(propDocs);
@@ -258,6 +261,13 @@ const verifyTransferDocs = asyncHandler(async (req, res) => {
 
   const transfer = await TransferRequest.findById(req.params.id).lean();
   if (!transfer) return fail(res, { message: 'Transfer not found', errorCode: 'TRANSFER_NOT_FOUND', status: 404 });
+  if (transfer.status === 'CONSENT_PENDING') {
+    await auditService.record({
+      actor: req.user, action: 'TRANSFER_BLOCKED_CONSENT', entityType: 'transfer', entityId: transfer.transfer_reference,
+      result: 'FAILURE', metadata: { stage: 'DOCUMENT_VERIFICATION', reason: 'required-party consent incomplete' },
+    });
+    return fail(res, { message: 'This transfer is still waiting for the required parties to consent. Document verification opens once every party has explicitly agreed.', errorCode: 'CONSENT_INCOMPLETE', status: 409 });
+  }
   if (transfer.status !== 'PENDING') {
     return fail(res, { message: `Only pending transfers await document verification (current stage: ${transfer.status})`, errorCode: 'INVALID_STATE', status: 409 });
   }

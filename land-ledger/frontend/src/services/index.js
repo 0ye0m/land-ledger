@@ -17,7 +17,15 @@ function qs(params = {}) {
 export const authService = {
   register: (payload) => post('/auth/register', payload),
   login: (payload) => post('/auth/login', payload),
+  verifyOtp: (payload) => post('/auth/verify-otp', payload),
+  resendOtp: (payload) => post('/auth/resend-otp', payload),
   me: () => get('/auth/me'),
+};
+
+export const consentService = {
+  pending: () => get('/consents/pending'),
+  board: (transferRef) => get(`/consents/transfer/${transferRef}`),
+  decide: (consentId, decision, reason) => post(`/consents/${consentId}/decision`, { decision, reason }),
 };
 
 export const userService = {

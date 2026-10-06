@@ -31,10 +31,25 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = useCallback(async (credentials) => {
+    // Step 1 of sign-in: password check. The API answers with an MFA
+    // challenge (challengeId) - never a token. Callers continue with
+    // verifyOtp() + completeLogin().
     const res = await authService.login(credentials);
-    setToken(res.data.token);
-    setUser(res.data.user);
-    return res.data.user;
+    return res.data; // { mfaRequired: true, challengeId, maskedEmail, ... }
+  }, []);
+
+  const verifyOtp = useCallback(async ({ challengeId, otp }) => {
+    const res = await authService.verifyOtp({ challengeId, otp });
+    return res.data; // { token, user }
+  }, []);
+
+  const resendOtp = useCallback((challengeId) => authService.resendOtp({ challengeId }), []);
+
+  /** Step 2 finish: store the verified session. */
+  const completeLogin = useCallback(({ token, user }) => {
+    setToken(token);
+    setUser(user);
+    return user;
   }, []);
 
   const register = useCallback(async (payload) => {
@@ -59,8 +74,8 @@ export function AuthProvider({ children }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, initializing, login, register, logout, refreshUser, isAuthenticated: Boolean(user) }),
-    [user, initializing, login, register, logout, refreshUser]
+    () => ({ user, initializing, login, verifyOtp, resendOtp, completeLogin, register, logout, refreshUser, isAuthenticated: Boolean(user) }),
+    [user, initializing, login, verifyOtp, resendOtp, completeLogin, register, logout, refreshUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

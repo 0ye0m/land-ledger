@@ -3,11 +3,11 @@
 const { app, request, auth, registerUser, createProperty } = require('./setup');
 
 describe('PROPERTIES', () => {
-  test('citizen creates a registration request (PENDING_REVIEW)', async () => {
+  test('citizen creates a registration request (SUBMITTED)', async () => {
     const { token } = await registerUser();
     const res = await createProperty(token);
     expect(res.status).toBe(201);
-    expect(res.body.data.property.status).toBe('PENDING_REVIEW');
+    expect(res.body.data.property.status).toBe('SUBMITTED');
     expect(res.body.data.property.property_id).toMatch(/^PROP-\d{4}-\d{4}$/);
   });
 

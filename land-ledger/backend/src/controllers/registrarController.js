@@ -50,7 +50,7 @@ const dashboard = asyncHandler(async (req, res) => {
 
   // Recent reviews: latest approval/rejection/verification/blockchain events.
   const recentReviewsRaw = await AuditEvent.find({
-    action: { $in: ['PROPERTY_APPROVE', 'PROPERTY_REJECT', 'TRANSFER_APPROVE', 'TRANSFER_REJECT', 'DOCUMENT_VERIFY', 'SURVEY_PASSED', 'SURVEY_REJECTED', 'DOCS_VERIFIED_PASS', 'DOCS_VERIFIED_FAIL', 'TRANSFER_DOCS_VERIFIED', 'TRANSFER_DOCS_REJECTED', 'PROPERTY_OVERRIDE_REJECT', 'TRANSFER_OVERRIDE_REJECT', 'BLOCKCHAIN_TX', 'BLOCKCHAIN_TX_FAILED'] },
+    action: { $in: ['PROPERTY_APPROVE', 'PROPERTY_REJECT', 'TRANSFER_APPROVE', 'TRANSFER_REJECT', 'DOCUMENT_VERIFY', 'SURVEY_PASSED', 'SURVEY_REJECTED', 'DOCS_VERIFIED_PASS', 'DOCS_VERIFIED_FAIL', 'TRANSFER_DOCS_VERIFIED', 'TRANSFER_DOCS_REJECTED', 'PROPERTY_OVERRIDE_REJECT', 'TRANSFER_OVERRIDE_REJECT', 'BLOCKCHAIN_TX', 'BLOCKCHAIN_TX_FAILED', 'MFA_CHALLENGE_CREATED', 'MFA_VERIFY_SUCCESS', 'MFA_VERIFY_FAILURE', 'CONSENT_REQUESTED', 'CONSENT_APPROVED', 'CONSENT_REJECTED', 'TRANSFER_CONSENT_COMPLETE', 'TRANSFER_CONSENT_REJECTED', 'TRANSFER_BLOCKED_CONSENT'] },
   }).sort({ created_at: -1 }).limit(8).lean();
 
   // Decorate everything with the legacy JOIN shapes.
@@ -253,6 +253,10 @@ const approveProperty = asyncHandler(async (req, res) => {
   let receipt;
   try {
     receipt = await blockchainService.registerPropertyOnChain(property.property_id, ownerWallet);
+    // Remember the highest settled business id for this chain session so a
+    // future reseed floors its counters above on-chain history.
+    const suffixMatch = String(property.property_id).match(/(\d+)$/);
+    if (suffixMatch) require('../utils/chainCursor').bumpPropertyCursor(parseInt(suffixMatch[1], 10));
   } catch (err) {
     await auditService.record({
       actor: req.user, action: 'BLOCKCHAIN_TX_FAILED', entityType: 'property', entityId: property.property_id,

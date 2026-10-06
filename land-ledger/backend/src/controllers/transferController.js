@@ -13,6 +13,7 @@ const { validateTransfer } = require('../validators');
 const auditService = require('../services/auditService');
 const blockchainService = require('../services/blockchainService');
 const fraudService = require('../services/fraudService');
+const consentService = require('../services/consentService');
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -142,6 +143,17 @@ const createTransfer = asyncHandler(async (req, res) => {
   const transfer = toRow(created.toObject());
   const fraud = await fraudService.persistFraudCheck(transfer.id, preflight);
 
+  // ---- Multi-party consent gate (Parts 12-14) ----
+  // Every associated owner/co-owner plus the buyer must explicitly consent
+  // before the file may reach the clerk. The seller's own consent is recorded
+  // via INITIATION (filing the request is their explicit act).
+  const consents = await consentService.openConsentForTransfer({
+    transfer,
+    propertyBusinessId: property.property_id,
+  });
+  const refreshed = toRow(await TransferRequest.findById(transfer.id).lean());
+  transfer.status = refreshed.status; // CONSENT_PENDING when extra parties exist
+
   await auditService.record({
     actor: req.user,
     action: 'TRANSFER_CREATE',
@@ -158,12 +170,22 @@ const createTransfer = asyncHandler(async (req, res) => {
     metadata: { riskLevel: preflight.riskLevel, reasons: preflight.reasons, summary: preflight.summary },
   });
 
+  const consentPending = transfer.status === 'CONSENT_PENDING';
   return ok(res, {
-    message: preflight.riskLevel === 'HIGH'
-      ? 'Transfer created, but registrar review is mandatory - high risk flags detected'
+    message: consentPending
+      ? 'Transfer created - it is now waiting for the required parties to consent before office review begins'
       : 'Transfer request created successfully and sent for registrar review',
     status: 201,
-    data: { transfer, fraud },
+    data: {
+      transfer,
+      fraud,
+      consents: consents.map((c) => ({
+        id: c._id,
+        user_id: c.user_id,
+        party_role: c.party_role,
+        status: c.status,
+      })),
+    },
   });
 });
 
@@ -217,16 +239,20 @@ const getTransfer = asyncHandler(async (req, res) => {
   if (!transfer) return fail(res, { message: 'Transfer not found', errorCode: 'TRANSFER_NOT_FOUND', status: 404 });
 
   const involved = transfer.seller_id === req.user.id || transfer.buyer_id === req.user.id;
-  if (!involved && req.user.role !== 'registrar') {
+  const consentParty = involved ? false : await consentService.isConsentParty({ transferId: transfer.id, userId: req.user.id });
+  const staffViewer = ['registrar', 'admin'].includes(req.user.role);
+  if (!involved && !consentParty && !staffViewer) {
     return fail(res, { message: 'You do not have access to this transfer', errorCode: 'FORBIDDEN', status: 403 });
   }
 
-  const [documentDocs, fraudCheck, txDoc, auditTrail] = await Promise.all([
+  const [documentDocs, fraudCheck, txDoc, auditTrail, consentRows] = await Promise.all([
     Document.find({ property_id: transfer.property_id }).sort({ created_at: -1 }).lean(),
     fraudService.latestFraudCheckForTransfer(transfer.id),
     BlockchainTransaction.findOne({ transfer_id: transfer.id }).sort({ created_at: -1 }).lean(),
     auditService.trailForEntity({ entityType: 'transfer', entityId: transfer.transfer_reference }),
+    consentService.consentsForTransfer(transfer.id),
   ]);
+  const consents = consentRows.map((r) => ({ ...r, is_me: String(r.user_id) === String(req.user.id) }));
 
   const uploaderIds = [...new Set(documentDocs.map((d) => d.uploaded_by).filter(Boolean))];
   const uploaders = uploaderIds.length ? await User.find({ _id: { $in: uploaderIds } }).select('full_name').lean() : [];
@@ -244,6 +270,10 @@ const getTransfer = asyncHandler(async (req, res) => {
       fraudCheck,
       blockchainTransaction: txDoc ? toRow(txDoc) : null,
       auditTrail,
+      consents,
+      myConsent: (consents.find((c) => c.is_me && c.status === 'PENDING')
+        ? { consentId: consents.find((c) => c.is_me && c.status === 'PENDING').id, partyRole: consents.find((c) => c.is_me && c.status === 'PENDING').party_role, status: 'PENDING' }
+        : null),
     },
   });
 });
@@ -255,6 +285,13 @@ const approveTransfer = asyncHandler(async (req, res) => {
   }
   const transfer = await getTransferFull(req.params.id);
   if (!transfer) return fail(res, { message: 'Transfer not found', errorCode: 'TRANSFER_NOT_FOUND', status: 404 });
+  if (transfer.status === 'CONSENT_PENDING') {
+    await auditService.record({
+      actor: req.user, action: 'TRANSFER_BLOCKED_CONSENT', entityType: 'transfer', entityId: transfer.transfer_reference,
+      result: 'FAILURE', metadata: { stage: 'REGISTRAR_APPROVAL', reason: 'required-party consent incomplete' },
+    });
+    return fail(res, { message: 'This transfer is still waiting for the required parties to consent. Approval is blocked until every party has explicitly agreed.', errorCode: 'CONSENT_INCOMPLETE', status: 409 });
+  }
   if (transfer.status !== 'DOCS_VERIFIED') {
     return fail(res, { message: `Only transfers cleared by document verification can be approved (current stage: ${transfer.status}). The clerk verifies documents first.`, errorCode: 'INVALID_STATE', status: 409 });
   }

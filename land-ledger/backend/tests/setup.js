@@ -6,6 +6,15 @@ process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret_land_ledger';
 // Tests MUST use a dedicated throwaway database - never the live `land_ledger` one.
 process.env.MONGODB_DB_NAME = 'land_ledger_test';
+// Deterministic MFA limits for tests (override any local .env values).
+process.env.MFA_DEV_MODE = '0'; // tests use the mail outbox, never devCode
+process.env.MFA_MAX_CHALLENGES_PER_HOUR = process.env.MFA_MAX_CHALLENGES_PER_HOUR_TEST || '5';
+// TEST-ONLY escape hatch: the demo email allowlist targets the 8 real demo
+// identities; automated tests need arbitrary @test.local accounts. This flag
+// is ignored when NODE_ENV=production (see src/config/allowlist.js). MFA is
+// NEVER bypassed - tests below exercise the real login -> OTP -> verify flow
+// against the in-memory mail outbox.
+process.env.AUTH_ALLOWLIST = 'off';
 
 require('./_globals');
 
@@ -20,6 +29,7 @@ const Document = require('../src/models/Document');
 const TransferRequest = require('../src/models/TransferRequest');
 const FraudCheck = require('../src/models/FraudCheck');
 const BlockchainTransaction = require('../src/models/BlockchainTransaction');
+const emailService = require('../src/services/emailService');
 
 const app = createApp();
 
@@ -45,6 +55,10 @@ async function ensureReady() {
       BlockchainTransaction.deleteMany({}),
       mongoose.connection.db.collection('audit_events').deleteMany({}),
       mongoose.connection.db.collection('login_events').deleteMany({}),
+      mongoose.connection.db.collection('mfa_challenges').deleteMany({}),
+      mongoose.connection.db.collection('property_parties').deleteMany({}),
+      mongoose.connection.db.collection('transfer_consents').deleteMany({}),
+      mongoose.connection.db.collection('counters').deleteMany({}),
     ]);
     wiped = true;
   }
@@ -54,6 +68,34 @@ let seq = 0;
 function uniq(prefix) {
   seq += 1;
   return `${prefix}-test-${Date.now()}-${seq}`;
+}
+
+/** Extract the most recent 6-digit OTP code emailed to `email` (test outbox). */
+function latestOtpFor(email) {
+  const mails = emailService.recentTestMails(20).filter((m) => m.to === String(email).toLowerCase());
+  if (!mails.length) return null;
+  const match = mails[mails.length - 1].text.match(/\b(\d{6})\b/);
+  return match ? match[1] : null;
+}
+
+/**
+ * Full two-factor login: password step -> pull the emailed OTP from the test
+ * outbox -> verify step. Returns the same shape the frontend stores.
+ */
+async function mfaLogin(email, password) {
+  await ensureReady();
+  const start = await request(app).post('/api/auth/login').send({ email, password });
+  if (start.status !== 200 || !start.body?.data?.mfaRequired) {
+    throw new Error(`mfaLogin: password step failed: ${start.status} ${JSON.stringify(start.body).slice(0, 200)}`);
+  }
+  const challengeId = start.body.data.challengeId;
+  const otp = latestOtpFor(email);
+  if (!otp) throw new Error(`mfaLogin: no OTP email captured for ${email}`);
+  const verify = await request(app).post('/api/auth/verify-otp').send({ challengeId, otp });
+  if (verify.status !== 200 || !verify.body?.data?.token) {
+    throw new Error(`mfaLogin: verify step failed: ${verify.status} ${JSON.stringify(verify.body).slice(0, 200)}`);
+  }
+  return verify.body.data;
 }
 
 async function registerUser({ role = 'citizen', wallet = null } = {}) {
@@ -75,16 +117,15 @@ async function registerUser({ role = 'citizen', wallet = null } = {}) {
   if (role === 'registrar') {
     // Elevate via direct DB update - role changes are never client-controlled in the API.
     await User.updateOne({ _id: user.id }, { $set: { role: 'registrar' } });
-    const login = await request(app).post('/api/auth/login').send({ email, password: 'Testing@123' });
-    return { user: login.body.data.user, token: login.body.data.token, email, password: 'Testing@123' };
+    const login = await mfaLogin(email, 'Testing@123');
+    return { user: login.user, token: login.token, email, password: 'Testing@123' };
   }
   return { user, token: res.body.data.token, email, password: 'Testing@123' };
 }
 
 async function login(email, password) {
   await ensureReady();
-  const res = await request(app).post('/api/auth/login').send({ email, password });
-  return res.body.data;
+  return mfaLogin(email, password);
 }
 
 function auth(token) {
@@ -122,4 +163,7 @@ async function uploadDocument(token, propertyId, { fileName = 'deed.pdf', mimety
   return res;
 }
 
-module.exports = { app, request, auth, uniq, registerUser, login, createProperty, uploadDocument, ensureReady, mongoose };
+module.exports = {
+  app, request, auth, uniq, registerUser, login, mfaLogin, latestOtpFor,
+  createProperty, uploadDocument, ensureReady, mongoose, emailService,
+};

@@ -5,6 +5,7 @@ export const STATUS_LABELS = {
   DOCS_VERIFIED: 'Docs verified',
   REGISTERED: 'Registered',
   REJECTED: 'Rejected',
+  CONSENT_PENDING: 'Waiting for party consent',
   PENDING: 'Awaiting doc verification',
   APPROVED: 'Approved',
   COMPLETED: 'Completed',
@@ -19,6 +20,7 @@ export const STATUS_TONES = {
   SUBMITTED: 'info',
   SURVEY_VERIFIED: 'primary',
   DOCS_VERIFIED: 'pending',
+  CONSENT_PENDING: 'warn',
   PENDING: 'pending',
   REGISTERED: 'ok',
   APPROVED: 'ok',
@@ -28,6 +30,20 @@ export const STATUS_TONES = {
   FAILED: 'bad',
   TAMPERED: 'bad',
   'HASH MISMATCH': 'bad',
+};
+
+/** Consent board states (multi-party transfers). */
+export const CONSENT_STATUS_LABELS = {
+  PENDING: 'Pending',
+  APPROVED: 'Approved',
+  REJECTED: 'Rejected',
+  EXPIRED: 'Expired',
+};
+
+export const CONSENT_PARTY_ROLE_LABELS = {
+  SELLER: 'Owner / Seller',
+  CO_OWNER: 'Co-owner',
+  BUYER: 'Buyer / Proposed owner',
 };
 
 /** Registration pipeline order for the workflow tracker. */
@@ -62,10 +78,21 @@ export function labelFor(value, list) {
   return found ? found.label : value;
 }
 
+/**
+ * Demo account chips (this project shipped with demo shortcuts before MFA).
+ * Chips now PREFILL the sign-in form - with email-OTP MFA active, no chip can
+ * sign in by itself: the verification code goes to the account's real inbox.
+ * The demo password is uniform and documented in docs/DEMO-GUIDE.md.
+ */
+export const DEMO_PASSWORD = 'LandLedger@123';
+
 export const DEMO_ACCOUNTS = [
-  { role: 'citizen', label: 'Citizen', email: 'asha.rao@example.com', password: 'Citizen@123' },
-  { role: 'surveyor', label: 'Surveyor', email: 'arjun.deshmukh@landledger.gov', password: 'Surveyor@123' },
-  { role: 'clerk', label: 'Doc verifier', email: 'deepa.shinde@landledger.gov', password: 'Verifier@123' },
-  { role: 'registrar', label: 'Registrar', email: 'meera.krishnan@landledger.gov', password: 'Registrar@123' },
-  { role: 'admin', label: 'Administrator', email: 'ramesh.iyer@landledger.gov', password: 'Admin@123' },
+  { role: 'citizen', label: 'Om (Citizen)', email: 'mandwadeom2616@gmail.com', password: DEMO_PASSWORD },
+  { role: 'citizen', label: 'Shruti (Citizen)', email: 'shrutipethe111@gmail.com', password: DEMO_PASSWORD },
+  { role: 'surveyor', label: 'Akshay (Surveyor)', email: 'panpaliyaag@rknec.edu', password: DEMO_PASSWORD },
+  { role: 'clerk', label: 'Nishant (Doc verifier)', email: 'tekdiwalnishant@gmail.com', password: DEMO_PASSWORD },
+  { role: 'registrar', label: 'Prakash (Registrar)', email: 'omdummy101@gmail.com', password: DEMO_PASSWORD },
+  { role: 'admin', label: 'Sunita (Administrator)', email: 'omdummy102@gmail.com', password: DEMO_PASSWORD },
+  { role: 'citizen', label: 'Ganesh (Citizen)', email: 'alphadummy103@gmail.com', password: DEMO_PASSWORD },
+  { role: 'citizen', label: 'Kavita (Citizen)', email: 'alpha20051610@gmail.com', password: DEMO_PASSWORD },
 ];

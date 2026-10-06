@@ -28,6 +28,39 @@ const env = {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   },
 
+  smtp: {
+    // FREE/low-cost email via any SMTP provider (e.g. Gmail App Password,
+    // not the account's real password). Missing config => OTP email sending
+    // fails safely; MFA never silently bypasses (see mfa.devMode below).
+    host: process.env.SMTP_HOST || '',
+    port: parseInt(process.env.SMTP_PORT || '587', 10),
+    secure: process.env.SMTP_SECURE === 'true' || process.env.SMTP_PORT === '465',
+    user: process.env.SMTP_USER || '',
+    password: process.env.SMTP_PASSWORD || '',
+    from: process.env.SMTP_FROM || process.env.SMTP_USER || 'LAND LEDGER <no-reply@landledger.local>',
+  },
+
+  mfa: {
+    otpTtlMinutes: parseInt(process.env.MFA_OTP_TTL_MINUTES || '5', 10),
+    otpMaxAttempts: parseInt(process.env.MFA_OTP_MAX_ATTEMPTS || '5', 10),
+    otpLength: 6,
+    resendCooldownSeconds: parseInt(process.env.MFA_RESEND_COOLDOWN_SECONDS || '45', 10),
+    maxSendsPerChallenge: parseInt(process.env.MFA_MAX_SENDS_PER_CHALLENGE || '3', 10),
+    maxChallengesPerHour: parseInt(process.env.MFA_MAX_CHALLENGES_PER_HOUR || '5', 10),
+    // Server-side pepper for the OTP HMAC (never leaves the server).
+    otpPepper: process.env.OTP_PEPPER || process.env.JWT_SECRET || 'dev_only_otp_pepper_change_me',
+    /**
+     * DEMO-ONLY escape hatch for environments without SMTP credentials
+     * (e.g. the sandbox preview). Requires an explicit MFA_DEV_MODE=1 AND
+     * NODE_ENV=development; it NEVER activates in test or production. In dev
+     * mode the OTP flow is fully real (hashed, expiring, single-use) except
+     * the OTP is surfaced in the API response so the demo can complete
+     * without a mailbox. Configure SMTP_HOST/SMTP_USER/SMTP_PASSWORD to
+     * switch to real email delivery - then remove MFA_DEV_MODE.
+     */
+    devMode: process.env.MFA_DEV_MODE === '1' && process.env.NODE_ENV === 'development',
+  },
+
   uploads: {
     dir: process.env.UPLOAD_DIR || 'uploads',
     maxMb: parseInt(process.env.MAX_UPLOAD_SIZE_MB || '10', 10),

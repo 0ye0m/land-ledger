@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, ShieldCheck, XCircle, CheckCircle2, Download } from 'lucide-react';
-import { transferService, documentService, registrarService } from '../../services';
+import { ArrowLeft, ShieldCheck, XCircle, CheckCircle2, Download, Users, CircleDashed } from 'lucide-react';
+import { transferService, documentService, registrarService, consentService } from '../../services';
 import { useApi, useDocumentTitle } from '../../hooks/index.js';
 import PageHeader, { SectionKicker } from '../../components/registry/PageHeader.jsx';
 import { StatusBadge, RiskBadge, HashChip } from '../../components/registry/Badges.jsx';
@@ -13,6 +13,7 @@ import { Textarea } from '../../components/ui/Input.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
 import { formatDate, formatFileSize, truncateText } from '../../utils/format.js';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { CONSENT_STATUS_LABELS, CONSENT_PARTY_ROLE_LABELS } from '../../utils/constants.js';
 
 function Cell({ label, children }) {
   return (
@@ -44,7 +45,34 @@ export default function TransferDetail({ role }) {
   const tx = data?.data?.blockchainTransaction;
   const documents = data?.data?.documents || [];
   const auditTrail = data?.data?.auditTrail || [];
+  const consents = data?.data?.consents || [];
+  const myConsent = data?.data?.myConsent || null;
   const isRegistrar = role === 'registrar';
+
+  const [consentAction, setConsentAction] = useState(null); // 'approve' | 'reject'
+  const [consentReason, setConsentReason] = useState('');
+  const [consentError, setConsentError] = useState('');
+  const [consentWorking, setConsentWorking] = useState(false);
+
+  async function submitConsentDecision() {
+    if (consentAction === 'reject' && !consentReason.trim()) {
+      setConsentError('A rejection reason is required');
+      return;
+    }
+    setConsentWorking(true);
+    setConsentError('');
+    try {
+      const res = await consentService.decide(myConsent.consentId, consentAction === 'approve' ? 'APPROVE' : 'REJECT', consentReason.trim());
+      toast.success(res.message || 'Consent recorded');
+      setConsentAction(null);
+      setConsentReason('');
+      refetch();
+    } catch (err) {
+      setConsentError(err.message);
+    } finally {
+      setConsentWorking(false);
+    }
+  }
 
   async function submitDecision() {
     if (!action) return;
@@ -108,9 +136,75 @@ export default function TransferDetail({ role }) {
 
       {transfer.status === 'REJECTED' && transfer.rejection_reason ? (
         <div className="rounded border border-[rgb(var(--ll-warn)/0.5)] bg-[rgb(var(--ll-warn-soft))] px-4 py-3.5">
-          <p className="font-bold text-[14px] text-[rgb(var(--ll-warn))]">Rejected by registrar</p>
+          <p className="font-bold text-[14px] text-[rgb(var(--ll-warn))]">Rejected{transfer.rejection_stage === 'CONSENT' ? ' during party consent' : ' by registrar'}</p>
           <p className="text-[12.5px] mt-1 text-foreground/80 leading-relaxed">{transfer.rejection_reason}</p>
         </div>
+      ) : null}
+
+      {/* Your pending consent decision (Part 16) */}
+      {myConsent && transfer.status === 'CONSENT_PENDING' ? (
+        <section className="registry-panel p-5 border-l-4 border-l-[rgb(var(--ll-warn))]">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="font-bold text-[14.5px] text-[rgb(var(--ll-warn))] uppercase tracking-wide">Action required</p>
+              <p className="text-[13px] mt-1 text-foreground/85 leading-relaxed">
+                This transfer needs your explicit consent as{' '}
+                <span className="font-semibold">{CONSENT_PARTY_ROLE_LABELS[myConsent.partyRole] || myConsent.partyRole}</span> before it can move to office review.
+              </p>
+            </div>
+            <div className="flex gap-2.5">
+              <Button icon={CheckCircle2} onClick={() => { setConsentAction('approve'); setConsentError(''); }}>
+                Approve
+              </Button>
+              <Button variant="destructive" onClick={() => { setConsentAction('reject'); setConsentError(''); }}>
+                Reject
+              </Button>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {/* Multi-party consent board */}
+      {consents.length > 0 ? (
+        <section className="registry-panel">
+          <header className="px-5 py-3.5 border-b border-border flex items-center justify-between gap-3">
+            <h2 className="font-display font-bold text-[15px] flex items-center gap-2">
+              <Users size={16} /> Required party consent
+            </h2>
+            <span className="text-[12px] muted">
+              {consents.filter((c) => c.status === 'APPROVED').length}/{consents.length} approved
+            </span>
+          </header>
+          <ul className="divide-y divide-border">
+            {consents.map((c) => (
+              <li key={c.id} className="px-5 py-3 flex items-center justify-between gap-3 flex-wrap">
+                <div className="min-w-0 flex items-center gap-3">
+                  {c.status === 'APPROVED' ? (
+                    <CheckCircle2 size={17} style={{ color: 'rgb(var(--ll-accent))' }} className="flex-none" />
+                  ) : c.status === 'REJECTED' ? (
+                    <XCircle size={17} className="text-destructive flex-none" />
+                  ) : (
+                    <CircleDashed size={17} className="text-muted-foreground flex-none" />
+                  )}
+                  <div className="min-w-0">
+                    <p className="font-semibold text-[13px] truncate">
+                      {c.party_name || c.party_email || 'Party'}
+                      {c.is_me ? <span className="ml-2 text-[11px] font-bold uppercase text-[rgb(var(--ll-accent))]">you</span> : null}
+                    </p>
+                    <p className="text-[11.5px] muted">{CONSENT_PARTY_ROLE_LABELS[c.party_role] || c.party_role}{c.responded_at ? ` · responded ${formatDate(c.responded_at, { withTime: true })}` : ''}</p>
+                    {c.rejection_reason ? <p className="text-[11.5px] text-destructive mt-0.5">Reason: {c.rejection_reason}</p> : null}
+                  </div>
+                </div>
+                <span className={`text-[12px] font-bold ${c.status === 'APPROVED' ? 'text-[rgb(var(--ll-accent-foreground))]' : c.status === 'REJECTED' ? 'text-destructive' : 'text-muted-foreground'}`}>
+                  {CONSENT_STATUS_LABELS[c.status] || c.status}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="px-5 py-3 text-[11.5px] muted border-t border-border">
+            Office review can only begin after every required party has explicitly consented. Decisions are recorded in the audit trail and cannot be changed.
+          </p>
+        </section>
       ) : null}
 
       <div className="grid lg:grid-cols-[1.25fr_1fr] gap-5 items-start">
@@ -287,7 +381,43 @@ export default function TransferDetail({ role }) {
         </section>
       ) : null}
 
-      {/* Decision modal */}
+      {/* Decision modal (party consent) */}
+      <Modal
+        open={Boolean(consentAction)}
+        onClose={() => setConsentAction(null)}
+        title={consentAction === 'approve' ? 'Approve this transfer' : 'Reject this transfer'}
+        kicker="Your consent"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setConsentAction(null)} disabled={consentWorking}>
+              Cancel
+            </Button>
+            <Button variant={consentAction === 'reject' ? 'destructive' : 'primary'} onClick={submitConsentDecision} loading={consentWorking}>
+              {consentAction === 'approve' ? 'Record approval' : 'Record rejection'}
+            </Button>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          <p className="text-[13px] muted leading-relaxed">
+            {consentAction === 'approve'
+              ? 'Your approval is recorded permanently in the audit trail. Once every required party has approved, the transfer moves to office review.'
+              : 'Your rejection stops this transfer immediately. The other parties are notified and the request is closed with your recorded reason.'}
+          </p>
+          <Textarea
+            label={consentAction === 'approve' ? 'Note (optional)' : 'Rejection reason (required)'}
+            rows={3}
+            value={consentReason}
+            onChange={(e) => {
+              setConsentReason(e.target.value);
+              setConsentError('');
+            }}
+            error={consentError}
+          />
+        </div>
+      </Modal>
+
+      {/* Decision modal (registrar) */}
       <Modal
         open={Boolean(action)}
         onClose={() => setAction(null)}
