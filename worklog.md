@@ -416,3 +416,17 @@ Stage Summary:
 - Full stack live with multi-role pipeline fully operational (Task 22 feature intact)
 - Demo accounts all working; queues populated per role
 - No code changes needed; revival only
+
+---
+Task ID: 24
+Agent: Super Z (main)
+Task: "project is not running, start workspace" - sandbox recycle revive
+
+Work Log:
+- :3000 conn refused -> sandbox recycled during idle
+- bash land-ledger/scripts/revive.sh -> UP after ~3s
+- Health: status ok, mongodb connected, blockchain connected, latestBlock 1
+- External preview HTTP 200; citizen login OK (role=citizen)
+
+Stage Summary:
+- Full stack live again; no code changes; 4th recycle handled by revive.sh in one command
