@@ -40,15 +40,29 @@ if (!fs.existsSync(envPath)) {
     path.join(ROOT, '..', '..', 'upload', 'atlas-credentials.env'),
   ];
   let uri = '';
+  let credsText = '';
   for (const c of candidates) {
     if (!fs.existsSync(c)) continue;
-    const m = fs.readFileSync(c, 'utf8').match(/^MONGODB_URI=(.*)$/m);
+    credsText = fs.readFileSync(c, 'utf8');
+    const m = credsText.match(/^MONGODB_URI=(.*)$/m);
     if (m && m[1].trim()) {
       uri = m[1].trim().replace(/^["']|["']$/g, '');
       if (!uri.includes('?')) uri += '/?retryWrites=true&w=majority&appName=land-ledger';
       break;
     }
   }
+  // SMTP (real OTP email) - optional; the same tracked credentials file can
+  // supply SMTP_HOST/SMTP_PORT/SMTP_SECURE/SMTP_USER/SMTP_PASSWORD/SMTP_FROM
+  // so the published link sends OTPs exactly like the local sandbox.
+  const smtp = {};
+  for (const key of ['SMTP_HOST', 'SMTP_PORT', 'SMTP_SECURE', 'SMTP_USER', 'SMTP_PASSWORD', 'SMTP_FROM']) {
+    const mm = credsText.match(new RegExp('^' + key + '=(.*)$', 'm'));
+    if (mm && mm[1].trim()) smtp[key] = mm[1].trim().replace(/^["']|["']$/g, '');
+  }
+  const smtpLines = Object.keys(smtp).length
+    ? ['', '# SMTP - real OTP email delivery (Gmail App Password or any provider)',
+       ...Object.entries(smtp).map(([k, v]) => `${k}=${v}`)]
+    : [];
   const port = process.env.PORT || '3000';
   const content = [
     'NODE_ENV=development',
@@ -67,6 +81,7 @@ if (!fs.existsSync(envPath)) {
     'BLOCKCHAIN_RPC_URL=http://127.0.0.1:8545',
     'CONTRACT_ADDRESS=',
     'BLOCKCHAIN_NETWORK_NAME=hardhat',
+    ...smtpLines,
     '',
   ].join('\n');
   fs.writeFileSync(envPath, content);

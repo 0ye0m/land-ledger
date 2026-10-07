@@ -55,11 +55,12 @@ async function sendMail({ to, subject, text }) {
     return { sent: true, transport: 'test-outbox' };
   }
 
-  // Explicitly gated demo mode (MFA_DEV_MODE=1 && non-production): capture
-  // the email locally instead of failing. The OTP reaches the user through
-  // the gated devCode channel in the challenge response. This branch can
-  // never activate in production (see config/env.js).
-  if (env.mfa.devMode) {
+  // Explicitly gated demo mode (MFA_DEV_MODE=1 && non-production && SMTP
+  // unconfigured): capture the email locally instead of failing. The OTP
+  // reaches the user through the gated devCode channel in the challenge
+  // response. This branch can never activate in production (see config/env.js)
+  // and always yields to real SMTP delivery as soon as SMTP is configured.
+  if (env.mfa.devMode && !smtpConfigured()) {
     const message = { to, subject, text, at: new Date() };
     testOutbox.push(message);
     if (testOutbox.length > 200) testOutbox.shift();
