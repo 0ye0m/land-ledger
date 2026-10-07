@@ -18,9 +18,28 @@ const root = path.resolve(__dirname, '..', '..'); // land-ledger/scripts -> land
 const distIndex = path.join(root, 'land-ledger', 'frontend', 'dist', 'index.html');
 const viteBin = path.join(root, 'land-ledger', 'frontend', 'node_modules', '.bin', 'vite');
 
-if (fs.existsSync(distIndex)) {
+// Integrity check: every /assets/* chunk referenced by dist/index.html must
+// exist on disk. Guards against a partially written dist (e.g. an interrupted
+// vite build) being silently served as a blank page.
+function distAssetsResolve() {
+  try {
+    const html = fs.readFileSync(distIndex, 'utf8');
+    const refs = [...html.matchAll(/(?:src|href)="(\/assets\/[^"]+)"/g)].map((m) => m[1]);
+    if (!refs.length) return false;
+    const assetsDir = path.join(root, 'land-ledger', 'frontend', 'dist');
+    return refs.every((ref) => fs.existsSync(path.join(assetsDir, ref.replace(/^\/+/, ''))));
+  } catch {
+    return false;
+  }
+}
+
+if (fs.existsSync(distIndex) && distAssetsResolve()) {
   console.log('[build] land-ledger/frontend/dist already built and committed - skipping vite build.');
   process.exit(0);
+}
+
+if (fs.existsSync(distIndex)) {
+  console.warn('[build] WARNING: dist/index.html references missing asset chunks - rebuilding...');
 }
 
 if (!fs.existsSync(viteBin)) {
