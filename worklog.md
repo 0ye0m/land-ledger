@@ -493,3 +493,20 @@ Work Log:
 
 Stage Summary:
 - REAL-TIME OTP EMAIL DELIVERY IS LIVE: password -> hashed-OTP email from mandwadeop@rknec.edu -> verify -> JWT; works in sandbox AND published link (self-heal carries SMTP_*); all baselines green (44/44, 20/20, 56/56); demo state pristine; user should check 3 inboxes: rknec.edu (test mail), mandwadeom2616@gmail.com + shrutipethe111@gmail.com (OTP mails)
+
+---
+Task ID: 27
+Agent: Super Z (main)
+Task: "can't see preview / full blank page" - diagnose and fix
+
+Work Log:
+- Server + external link healthy (HTTP 200), all referenced assets returned 200 -> masked the real bug (SPA fallback 200)
+- agent-browser headless: page title OK but #root has 0 children, accessibility tree empty -> confirmed runtime blank (not user's cache)
+- Root cause: dist/index.html referenced /assets/index-DQN6fFF-.js + index-BmY8UNd6.css which were MISSING from dist/assets (interrupted Task-25 vite build committed as-is); GET on missing asset -> SPA fallback served index.html as the module script -> browser MIME-rejects -> React never mounts -> blank page
+- Fix: npm install frontend devDeps (vite) + full vite build (52 chunks, 3s); references now match disk; server serves dist live (no restart needed)
+- Verified: JS asset now application/javascript with real vite bytes; headless browser renders home + login (MFA UI: email/password/Continue/demo chips)
+- Hardened build-frontend.js: integrity check verifies every /assets/* ref in dist/index.html exists before skipping rebuild (prevents silently shipping corrupt dist)
+- Committed 5845dc3 (dist + build script)
+
+Stage Summary:
+- Blank preview root-caused (partial dist build) and permanently fixed; build script now self-heals corrupted dist on every deploy; preview verified rendering end-to-end in headless browser
