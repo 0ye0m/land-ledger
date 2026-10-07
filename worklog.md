@@ -456,3 +456,22 @@ Stage Summary:
 - Login now REQUIRES password + email OTP; old demo users replaced by the 8 allowlisted identities with stable roles; multi-party consent gate fully server-enforced before clerk/registrar/blockchain stages; existing fraud/doc-integrity/registrar/blockchain systems untouched
 - Demo: mandwadeom2616@gmail.com / LandLedger@123 (+7 accounts in DEMO-GUIDE); consent live-demo = TRF-2026-0001 (Shruti co-owner + Ganesh buyer must approve)
 - Known demo-mode note: sandbox shows OTP in a labelled banner until SMTP creds are configured (production can never leak it); published-link MFA will fail safely (503) until SMTP is set - configure SMTP_HOST/USER/PASSWORD for real email OTP
+
+---
+Task ID: 26
+Agent: Super Z (main)
+Task: "start the workspace + configure real-time OTP email sending" (user picked Gmail App Password, free tier only; confirmed 4 dummy demo names)
+
+Work Log:
+- revive.sh -> UP ~3s (mongodb + blockchain connected, latestBlock 1)
+- Discovered Task 25 implementation fully live (commit 5f87cb5) but backend/.env has NO SMTP_* and NO MFA_DEV_MODE -> login fails safely 503 EMAIL_NOT_CONFIGURED for every user (root cause of "otp thing not good for demo")
+- Live-tested login step 1: password verified OK, blocked exactly at email gate -> fail-safe path works as designed
+- Audited emailService/env config: SMTP_HOST/PORT/SECURE/USER/PASSWORD/FROM supported; Gmail App Password natively OK; devCode triple-gated (MFA_DEV_MODE=1 + development + !smtpConfigured)
+- Fix 1 (emailService): dev-capture branch now also requires !smtpConfigured() - configured SMTP always wins over dev mode, code matches documented triple gate
+- Fix 2 (start-cloud.js self-heal): now extracts SMTP_* from tracked upload/atlas-credentials.env and writes them into rebuilt backend/.env -> PUBLISHED link will send real OTPs, not just sandbox
+- Appended SMTP placeholder sections to backend/.env (sandbox) + upload/atlas-credentials.env (tracked -> ships in deploy payload)
+- Backend tests: 44/44 pass; commit 85bead3; tree clean
+- E2E note: scripts/test-workflow.js runs against live server using devCode (needs MFA_DEV_MODE=1 + no SMTP on that server); after real SMTP configured, E2E must run against a dedicated boot (PORT=3100 MFA_DEV_MODE=1 SMTP_HOST=) then reseed
+
+Stage Summary:
+- Workspace healthy; SMTP plumbing ready in BOTH sandbox and deploy payload; ONLY missing input = user's Gmail address + 16-char App Password -> then fill both env files, restart, live-verify real OTP delivery, full test gauntlet + reseed, final 12-item report
