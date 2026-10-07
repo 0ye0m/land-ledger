@@ -475,3 +475,21 @@ Work Log:
 
 Stage Summary:
 - Workspace healthy; SMTP plumbing ready in BOTH sandbox and deploy payload; ONLY missing input = user's Gmail address + 16-char App Password -> then fill both env files, restart, live-verify real OTP delivery, full test gauntlet + reseed, final 12-item report
+
+---
+Task ID: 26-completion
+Agent: Super Z (main)
+Task: Real SMTP wired + full verification gauntlet (user provided mandwadeop@rknec.edu Gmail App Password)
+
+Work Log:
+- scripts/set-smtp-env.py filled SMTP_* into backend/.env AND tracked upload/atlas-credentials.env (user=mandwadeop@rknec.edu, host=smtp.gmail.com:465 secure)
+- revive.sh restart -> direct SMTP proof (scripts/test-smtp.js): PASS auth+connection verify, PASS test mail accepted (messageId @rknec.edu) - user's inbox has test mail
+- Live login proof #1: mandwadeom2616@gmail.com -> mfaRequired+challengeId, REAL OTP emailed to Om's Gmail
+- E2E discovery: suite needs devCode; SMTP-configured server correctly hides it -> dedicated boot (PORT=3100 MFA_DEV_MODE=1 SMTP_HOST= subshell-detached ( ... & )) pattern found in revive.sh; learned MFA_MAX_CHALLENGES_PER_HOUR default 5 rate-limits repeated logins (working as designed)
+- 3 E2E attempts: 55/56 (rate-limit), 36/56 (state pollution from reruns) -> FIX: reseed --force BEFORE single clean run -> 56/56 PASS
+- Contract 20/20; backend 44/44 re-confirmed with live SMTP env
+- Final: reseed pristine (TRF-2026-0001 CONSENT_PENDING live demo, 0002 clerk, 0003 registrar, 0004 buyer-pending; chain-aware skips, latestBlock 12); login proof #2 Shruti -> mfaRequired, REAL OTP emailed (s******@gmail.com)
+- set-smtp-env.py refactored to arg-based (no secret in tracked script); password lives only in upload/atlas-credentials.env (required for published link) - revocable via Google App Passwords
+
+Stage Summary:
+- REAL-TIME OTP EMAIL DELIVERY IS LIVE: password -> hashed-OTP email from mandwadeop@rknec.edu -> verify -> JWT; works in sandbox AND published link (self-heal carries SMTP_*); all baselines green (44/44, 20/20, 56/56); demo state pristine; user should check 3 inboxes: rknec.edu (test mail), mandwadeom2616@gmail.com + shrutipethe111@gmail.com (OTP mails)
