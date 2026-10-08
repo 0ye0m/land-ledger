@@ -526,3 +526,17 @@ Work Log:
 
 Stage Summary:
 - Blank-preview class of bugs ELIMINATED: dist now fully committed + integrity-checked by build-frontend.js before skip + gitignore can never exclude it again; recycle playbook: revive.sh handles everything incl. SMTP
+
+---
+Task ID: 29
+Agent: Super Z (main)
+Task: Recycle #6 revival ("start workspace and preview properly")
+
+Work Log:
+- Health dead -> bash land-ledger/scripts/revive.sh -> UP ~3s, blockchain connected instantly (latestBlock 1)
+- Committed dist SURVIVED the fresh clone (gitignore fix af36162 proven in production); no manual rebuild needed
+- Headless browser: preview renders full interactive tree (nav/hero/sign-in)
+- Live OTP login: mandwadeom2616@gmail.com -> mfaRequired + challengeId (real email, SMTP self-heal worked again)
+
+Stage Summary:
+- First recycle where ZERO manual repair was needed - revive.sh + committed dist + SMTP self-heal = fully autonomous recovery; playbook stable
