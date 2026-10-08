@@ -510,3 +510,19 @@ Work Log:
 
 Stage Summary:
 - Blank preview root-caused (partial dist build) and permanently fixed; build script now self-heals corrupted dist on every deploy; preview verified rendering end-to-end in headless browser
+
+---
+Task ID: 28
+Agent: Super Z (main)
+Task: "start workspace + preview properly" - 5th recycle + root-cause the recurring blank preview
+
+Work Log:
+- Recycle #5: revive.sh UP ~3s; chain warmed ~14s later (blockchain connected, latestBlock 1)
+- Preview blank AGAIN -> dist files on disk MISSING -> recycle restores workspace as fresh clone of COMMITTED tree
+- Root cause chain: land-ledger/.gitignore blanket "dist/" rule silently EXCLUDED all new dist chunks from commit 38ce3e3 (git add -A skips gitignored untracked files; only Task-25-era force-added files were tracked) -> fixed dist never actually in git -> every recycle/clone resurrects the broken trio (index.html + format + vendor chunks only)
+- Proof: git log --all -- <entry-chunk> empty; git ls-tree HEAD count 0
+- Fixes: (1) vite reinstall + rebuild (52 chunks, 3.2s); (2) .gitignore exception !frontend/dist/ + !frontend/dist/** (anchored to land-ledger/); (3) committed full dist - 51 files, entry chunk verified in HEAD via git ls-tree
+- Note: backend/.env survived recycle via hardened start-cloud self-heal pulling SMTP_* from tracked upload/atlas-credentials.env (SMTP active after revive without manual steps)
+
+Stage Summary:
+- Blank-preview class of bugs ELIMINATED: dist now fully committed + integrity-checked by build-frontend.js before skip + gitignore can never exclude it again; recycle playbook: revive.sh handles everything incl. SMTP
