@@ -10,6 +10,11 @@ cache/
 artifacts/
 deployments/local.json
 
+# EXCEPTION - the production SPA ships PRE-BUILT (deploy contract):
+# land-ledger/frontend/dist must always be committed, never ignored.
+!frontend/dist/
+!frontend/dist/**
+
 # Environment
 .env
 .env.local
