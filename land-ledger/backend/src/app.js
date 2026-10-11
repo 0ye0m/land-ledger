@@ -97,12 +97,26 @@ function createApp() {
   const altDistDir = path.resolve(process.cwd(), 'public');
   const spaDir = fs.existsSync(distDir) ? distDir : fs.existsSync(altDistDir) ? altDistDir : null;
   if (spaDir) {
-    app.use(express.static(spaDir, { maxAge: '1h', index: 'index.html' }));
+    // Cache policy for the integrated SPA:
+    //  - /assets/* chunk filenames are content-hashed -> cache long + immutable.
+    //  - index.html (and SPA fallbacks) must ALWAYS revalidate: a 1h-cached
+    //    index.html would reference renamed/deleted chunks after every rebuild
+    //    and render a blank page until the hour elapsed.
+    app.use(express.static(spaDir, {
+      index: 'index.html',
+      setHeaders(res, filePath) {
+        if (filePath.endsWith('.html')) {
+          res.setHeader('Cache-Control', 'no-cache');
+        } else if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+          res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
+        }
+      },
+    }));
     app.get('*', (req, res, next) => {
       if (req.path.startsWith('/api') || req.path.startsWith('/uploads') || req.path.startsWith('/health') || req.path.startsWith('/metrics')) {
         return next();
       }
-      res.sendFile(path.join(spaDir, 'index.html'));
+      res.sendFile(path.join(spaDir, 'index.html'), { headers: { 'Cache-Control': 'no-cache' } });
     });
   }
 

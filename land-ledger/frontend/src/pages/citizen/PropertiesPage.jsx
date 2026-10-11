@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Landmark } from 'lucide-react';
 import { propertyService } from '../../services';
-import { useApi, useDocumentTitle, hashOf } from '../../hooks/index.js';
+import { useApi, useDocumentTitle, hashOf, useDebounced } from '../../hooks/index.js';
 import PageHeader from '../../components/registry/PageHeader.jsx';
 import DataTable from '../../components/registry/DataTable.jsx';
 import { StatusBadge } from '../../components/registry/Badges.jsx';

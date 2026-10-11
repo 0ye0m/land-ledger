@@ -311,3 +311,25 @@ body {
     }
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* THEME MORPH - circular reveal on theme switch (View Transitions API) */
+/* The old frame is held perfectly still while the new theme expands   */
+/* from the toggle click as a hardware-accelerated clip-path circle    */
+/* (see ThemeToggle.jsx - Web Animations API on the new pseudo-layer). */
+/* ------------------------------------------------------------------ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none !important;
+  mix-blend-mode: normal !important;
+}
+
+/* Keep the incoming theme layer stacked above the outgoing one so the
+   circular clip actually reveals it (defensive: matches UA paint order). */
+::view-transition-image-pair(root) {
+  isolation: auto;
+}
+
+::view-transition-new(root) {
+  z-index: 1;
+}

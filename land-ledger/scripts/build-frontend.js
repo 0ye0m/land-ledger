@@ -48,5 +48,42 @@ if (!fs.existsSync(viteBin)) {
 }
 
 console.log('[build] running vite build for land-ledger/frontend ...');
+
+// Static guard BEFORE building: every custom hook used in a source file must
+// be imported by that file. A missing import is invisible to vite (it compiles
+// to an unresolved global) and explodes at runtime as ReferenceError, which
+// crashes the whole React tree - every navigation then looks broken.
+function checkHookImports() {
+  const srcDir = path.join(root, 'land-ledger', 'frontend', 'src');
+  const hooks = ['useApi', 'useDocumentTitle', 'hashOf', 'useDebounced', 'applyTheme'];
+  const files = [];
+  (function walk(dir) {
+    for (const name of fs.readdirSync(dir)) {
+      const p = path.join(dir, name);
+      if (fs.statSync(p).isDirectory()) walk(p);
+      else if (/\.(jsx?|tsx?)$/.test(name)) files.push(p);
+    }
+  })(srcDir);
+  let bad = 0;
+  for (const file of files) {
+    const src = fs.readFileSync(file, 'utf8');
+    for (const hook of hooks) {
+      const usedRe = new RegExp(`\\b${hook}\\s*\\(`);
+      if (!usedRe.test(src)) continue;
+      const imported = new RegExp(`import\\s*\\{[^}]*\\b${hook}\\b[^}]*\\}`).test(src);
+      const defined = new RegExp(`(function\\s+${hook}\\b|const\\s+${hook}\\s*=)`).test(src);
+      if (!imported && !defined) {
+        console.error(`[build] MISSING IMPORT: "${hook}" used but not imported/defined in ${path.relative(root, file)}`);
+        bad++;
+      }
+    }
+  }
+  if (bad > 0) {
+    console.error('[build] aborting - fix the missing imports above (unresolved globals crash the app at runtime).');
+    process.exit(1);
+  }
+}
+checkHookImports();
+
 const res = spawnSync(viteBin, ['build'], { cwd: path.join(root, 'land-ledger', 'frontend'), stdio: 'inherit' });
 process.exit(res.status == null ? 0 : res.status);
