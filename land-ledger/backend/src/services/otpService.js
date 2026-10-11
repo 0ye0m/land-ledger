@@ -142,15 +142,30 @@ async function verifyChallenge({ challengeId, otp }) {
 
   const matches = timingSafeEqualHex(challenge.otp_hash, hmacOtp(String(otp || '').trim()));
   if (!matches) {
-    const attempts = challenge.attempts + 1;
-    const giveUp = attempts >= challenge.max_attempts;
-    await MfaChallenge.updateOne(
-      { _id: challenge._id },
-      giveUp
-        ? { $set: { attempts, invalidated: true, invalidated_reason: 'max_attempts' } }
-        : { $set: { attempts } }
-    );
-    return { ok: false, reason: giveUp ? ERR.TOO_MANY_ATTEMPTS : ERR.MISMATCH, attemptsLeft: Math.max(0, challenge.max_attempts - attempts) };
+    // Atomic guarded increment: concurrent wrong guesses can never race past
+    // max_attempts (a plain read-modify-write $set would let parallel requests
+    // all read the same counter and each write attempts+1).
+    const bumped = await MfaChallenge.findOneAndUpdate(
+      { _id: challenge._id, attempts: { $lt: challenge.max_attempts } },
+      { $inc: { attempts: 1 } },
+      { new: true }
+    ).lean();
+    if (!bumped) {
+      // Counter already at/over the cap (lost race or stale read).
+      await MfaChallenge.updateOne(
+        { _id: challenge._id, invalidated: false },
+        { $set: { invalidated: true, invalidated_reason: 'max_attempts' } }
+      );
+      return { ok: false, reason: ERR.TOO_MANY_ATTEMPTS, attemptsLeft: 0 };
+    }
+    const giveUp = bumped.attempts >= bumped.max_attempts;
+    if (giveUp) {
+      await MfaChallenge.updateOne(
+        { _id: bumped._id, invalidated: false },
+        { $set: { invalidated: true, invalidated_reason: 'max_attempts' } }
+      );
+    }
+    return { ok: false, reason: giveUp ? ERR.TOO_MANY_ATTEMPTS : ERR.MISMATCH, attemptsLeft: Math.max(0, bumped.max_attempts - bumped.attempts) };
   }
 
   // Single-use consumption (guarded update - replay cannot double-consume).

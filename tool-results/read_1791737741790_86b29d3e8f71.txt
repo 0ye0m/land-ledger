@@ -1,0 +1,709 @@
+     1→'use strict';
+     2→
+     3→/**
+     4→ * LAND LEDGER - development/demo seed (MongoDB Atlas).
+     5→ *
+     6→ * CONTROLLED DEMONSTRATION ENVIRONMENT:
+     7→ *   Identities come exclusively from the 8-address email allowlist
+     8→ *   (src/config/allowlist.js). Role assignment is deterministic - running the
+     9→ *   seed repeatedly can never shuffle roles, so the demonstration stays
+    10→ *   predictable.
+    11→ *
+    12→ * Idempotent: skips when the allowlisted registrar account already exists
+    13→ * (use --force to wipe + reseed). Existing user IDs/relationships are
+    14→ * preserved; identities are aligned to the allowlist on reseed.
+    15→ *
+    16→ * Creates believable fictional data around the 8 users: properties across
+    17→ * every workflow stage, REAL document files with real SHA-256 fingerprints,
+    18→ * an application-level multi-owner record (MongoDB parties vs. the chain's
+    19→ * single current owner), consent-gated transfers, genuine fraud-engine runs,
+    20→ * and - only when the Hardhat node is reachable - REAL on-chain registrations
+    21→ * with real transaction hashes. Blockchain records are never fabricated.
+    22→ */
+    23→
+    24→const fs = require('fs');
+    25→const path = require('path');
+    26→const crypto = require('crypto');
+    27→const bcrypt = require('bcryptjs');
+    28→const mongoose = require('mongoose');
+    29→const { connectMongo } = require('./mongo');
+    30→const User = require('../models/User');
+    31→const Property = require('../models/Property');
+    32→const Document = require('../models/Document');
+    33→const TransferRequest = require('../models/TransferRequest');
+    34→const FraudCheck = require('../models/FraudCheck');
+    35→const BlockchainTransaction = require('../models/BlockchainTransaction');
+    36→const Counter = require('../models/Counter');
+    37→const PropertyParty = require('../models/PropertyParty');
+    38→const TransferConsent = require('../models/TransferConsent');
+    39→const MfaChallenge = require('../models/MfaChallenge');
+    40→const { ensureIndexes } = require('./mongo-indexes');
+    41→const auditService = require('../services/auditService');
+    42→const blockchainService = require('../services/blockchainService');
+    43→const fraudService = require('../services/fraudService');
+    44→const { sha256Buffer } = require('../utils/hash');
+    45→const { bumpPropertyCursor, readCursor } = require('../utils/chainCursor');
+    46→const { ALLOWED_DEMO_USERS } = require('../config/allowlist');
+    47→
+    48→const env = require('../config/env');
+    49→
+    50→/** Deterministic demo password for every seeded account (presentation ease). */
+    51→const DEMO_PASSWORD = process.env.SEED_DEMO_PASSWORD || 'LandLedger@123';
+    52→
+    53→// Well-known Hardhat accounts (test network only - valueless keys, never mainnet).
+    54→const W = {
+    55→  operator: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+    56→  om: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+    57→  shruti: '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC',
+    58→  ganesh: '0x90F79bf6EB2c4f870365E785982E1f101E93b906',
+    59→  kavita: '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65',
+    60→  registrar: '0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc',
+    61→};
+    62→
+    63→/** Stable role map (Part 3) - >=2 citizens, 1 surveyor, 1 clerk, 1 registrar, 1 admin. */
+    64→const ROLE_BY_EMAIL = Object.fromEntries(ALLOWED_DEMO_USERS.map((u) => [u.email, u.role]));
+    65→const NAME_BY_EMAIL = Object.fromEntries(ALLOWED_DEMO_USERS.map((u) => [u.email, u.name]));
+    66→const WALLET_BY_EMAIL = {
+    67→  'mandwadeom2616@gmail.com': W.om,
+    68→  'shrutipethe111@gmail.com': W.shruti,
+    69→  'panpaliyaag@rknec.edu': null,
+    70→  'tekdiwalnishant@gmail.com': null,
+    71→  'omdummy101@gmail.com': W.registrar,
+    72→  'omdummy102@gmail.com': null,
+    73→  'alphadummy103@gmail.com': W.ganesh,
+    74→  'alpha20051610@gmail.com': W.kavita,
+    75→};
+    76→const PHONE_BY_EMAIL = {
+    77→  'mandwadeom2616@gmail.com': '+91 98220 11001',
+    78→  'shrutipethe111@gmail.com': '+91 98220 11002',
+    79→  'panpaliyaag@rknec.edu': '+91 98220 11003',
+    80→  'tekdiwalnishant@gmail.com': '+91 98220 11004',
+    81→  'omdummy101@gmail.com': '+91 98220 11005',
+    82→  'omdummy102@gmail.com': '+91 98220 11006',
+    83→  'alphadummy103@gmail.com': '+91 98220 11007',
+    84→  'alpha20051610@gmail.com': '+91 98220 11008',
+    85→};
+    86→const PLACE_BY_EMAIL = {
+    87→  'mandwadeom2616@gmail.com': { district: 'Pune', state: 'Maharashtra' },
+    88→  'shrutipethe111@gmail.com': { district: 'Pune', state: 'Maharashtra' },
+    89→  'panpaliyaag@rknec.edu': { district: 'Nagpur', state: 'Maharashtra' },
+    90→  'tekdiwalnishant@gmail.com': { district: 'Nagpur', state: 'Maharashtra' },
+    91→  'omdummy101@gmail.com': { district: 'Pune', state: 'Maharashtra' },
+    92→  'omdummy102@gmail.com': { district: 'Pune', state: 'Maharashtra' },
+    93→  'alphadummy103@gmail.com': { district: 'Pune', state: 'Maharashtra' },
+    94→  'alpha20051610@gmail.com': { district: 'Bengaluru Urban', state: 'Karnataka' },
+    95→};
+    96→
+    97→// ---------- minimal but valid PDF generator ----------
+    98→function escapePdfText(s) {
+    99→  return s.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)').replace(/[^\x20-\x7E]/g, ' ');
+   100→}
+   101→
+   102→function makeSeedPdf(title, lines) {
+   103→  const contentParts = ['BT /F1 16 Tf 50 800 Td (' + escapePdfText(title) + ') Tj ET'];
+   104→  let y = 770;
+   105→  for (const line of lines) {
+   106→    contentParts.push(`BT /F1 10 Tf 50 ${y} Td (${escapePdfText(line)}) Tj ET`);
+   107→    y -= 16;
+   108→  }
+   109→  const content = contentParts.join('\n');
+   110→  const objects = [];
+   111→  objects.push('<< /Type /Catalog /Pages 2 0 R >>');
+   112→  objects.push('<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+   113→  objects.push('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>');
+   114→  objects.push(`<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
+   115→  objects.push('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
+   116→
+   117→  let pdf = '%PDF-1.4\n';
+   118→  const offsets = [];
+   119→  objects.forEach((body, i) => {
+   120→    offsets.push(pdf.length);
+   121→    pdf += `${i + 1} 0 obj\n${body}\nendobj\n`;
+   122→  });
+   123→  const xrefStart = pdf.length;
+   124→  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+   125→  for (const off of offsets) {
+   126→    pdf += `${String(off).padStart(10, '0')} 00000 n \n`;
+   127→  }
+   128→  pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`;
+   129→  return Buffer.from(pdf, 'latin1');
+   130→}
+   131→
+   132→// ---------- helpers ----------
+   133→const uploadRoot = path.resolve(process.cwd(), env.uploads.dir);
+   134→
+   135→function writeSeedFile(propertyDir, fileName, buffer) {
+   136→  const dir = path.join(uploadRoot, 'seed', propertyDir);
+   137→  fs.mkdirSync(dir, { recursive: true });
+   138→  const absolute = path.join(dir, fileName);
+   139→  fs.writeFileSync(absolute, buffer);
+   140→  return path.relative(uploadRoot, absolute);
+   141→}
+   142→
+   143→async function upsertUser({ email, password }) {
+   144→  const normalized = String(email).trim().toLowerCase();
+   145→  const name = NAME_BY_EMAIL[normalized];
+   146→  const role = ROLE_BY_EMAIL[normalized];
+   147→  if (!name || !role) throw new Error(`seed: email ${normalized} is not on the demo allowlist`);
+   148→
+   149→  const existing = await User.findOne({ email: normalized }).lean();
+   150→  if (existing) {
+   151→    // Deterministic alignment: identity + role follow the allowlist; the
+   152→    // password hash is preserved so admin/user password changes survive.
+   153→    if (existing.full_name !== name || existing.role !== role) {
+   154→      await User.updateOne({ _id: existing._id }, { $set: { full_name: name, role } });
+   155→    }
+   156→    return User.findOne({ email: normalized }).lean();
+   157→  }
+   158→  const hash = await bcrypt.hash(password, 10);
+   159→  await User.create({
+   160→    full_name: name,
+   161→    email: normalized,
+   162→    password_hash: hash,
+   163→    phone: PHONE_BY_EMAIL[normalized] || null,
+   164→    district: PLACE_BY_EMAIL[normalized].district,
+   165→    state: PLACE_BY_EMAIL[normalized].state,
+   166→    wallet_address: WALLET_BY_EMAIL[normalized] || null,
+   167→    role,
+   168→    last_activity_at: new Date(Date.now() - 3 * 3600000),
+   169→  });
+   170→  return User.findOne({ email: normalized }).lean();
+   171→}
+   172→
+   173→async function insertProperty(p) {
+   174→  const now = Date.now();
+   175→  await Property.create({
+   176→    property_id: p.propertyId,
+   177→    reference_number: p.referenceNumber,
+   178→    title: p.title,
+   179→    address_line: p.addressLine,
+   180→    city: p.city,
+   181→    district: p.district,
+   182→    state: p.state,
+   183→    area_value: p.areaValue,
+   184→    area_unit: p.areaUnit,
+   185→    property_type: p.propertyType,
+   186→    description: p.description,
+   187→    submitted_by_id: p.submittedBy._id,
+   188→    current_owner_id: p.ownerId,
+   189→    current_owner_wallet: p.ownerWallet,
+   190→    status: p.status,
+   191→    review_notes: p.reviewNotes || null,
+   192→    registered_at: p.registeredAt || null,
+   193→  });
+   194→  const doc = await Property.findOne({ property_id: p.propertyId }).lean();
+   195→  // Preserve the intended seed ages (timestamps option set them to "now").
+   196→  await Property.updateOne(
+   197→    { _id: doc._id },
+   198→    { $set: { created_at: new Date(now - p.createdDaysAgo * 86400000), updated_at: new Date(now - p.updatedHoursAgo * 3600000) } }
+   199→  );
+   200→  return Property.findOne({ property_id: p.propertyId }).lean();
+   201→}
+   202→
+   203→/** Application-level associated parties (distinct from the chain's single owner). */
+   204→async function insertParties(property, parties, addedBy) {
+   205→  for (const party of parties) {
+   206→    await PropertyParty.create({
+   207→      property_id: property._id,
+   208→      user_id: party.user._id,
+   209→      party_role: party.role,
+   210→      share_percent: party.share || null,
+   211→      notes: party.notes || null,
+   212→      added_by: addedBy ? addedBy._id : null,
+   213→    });
+   214→  }
+   215→}
+   216→
+   217→async function insertDocument({ property, uploadedBy, documentType, fileName, title, lines, verifiedBy, status, daysAgo }) {
+   218→  const buffer = makeSeedPdf(title, lines);
+   219→  const sha = sha256Buffer(buffer);
+   220→  const storagePath = writeSeedFile(property.property_id, fileName, buffer);
+   221→  const createdAt = new Date(Date.now() - daysAgo * 86400000);
+   222→  const verifiedAt = verifiedBy ? new Date(Date.now() - (daysAgo - 1) * 86400000) : null;
+   223→  await Document.create({
+   224→    property_id: property._id,
+   225→    uploaded_by: uploadedBy._id,
+   226→    document_type: documentType,
+   227→    file_name: fileName,
+   228→    file_size: buffer.length,
+   229→    mime_type: 'application/pdf',
+   230→    storage_path: storagePath,
+   231→    sha256_hash: sha,
+   232→    verification_status: status,
+   233→    verified_by: verifiedBy ? verifiedBy._id : null,
+   234→    verified_at: verifiedAt,
+   235→    created_at: createdAt,
+   236→    updated_at: createdAt,
+   237→  });
+   238→  return Document.findOne({ property_id: property._id, file_name: fileName }).lean();
+   239→}
+   240→
+   241→/**
+   242→ * Seed a transfer with its explicit consent board (no emails from the seed;
+   243→ * consent rows carry realistic mixed states for the demonstration).
+   244→ */
+   245→async function insertTransfer({ reference, property, seller, buyer, status, riskLevel, details, consents, docVerify, daysAgo, rejectionStage, rejectionReason }) {
+   246→  const created = await TransferRequest.create({
+   247→    transfer_reference: reference,
+   248→    property_id: property._id,
+   249→    seller_id: seller._id,
+   250→    seller_wallet: seller.wallet_address || null,
+   251→    buyer_id: buyer._id,
+   252→    buyer_wallet: buyer.wallet_address || null,
+   253→    status,
+   254→    risk_level: riskLevel || 'LOW',
+   255→    request_details: details || null,
+   256→    rejection_stage: rejectionStage || null,
+   257→    rejection_reason: rejectionReason || null,
+   258→    doc_verified_by: docVerify ? docVerify.clerk._id : null,
+   259→    doc_verified_at: docVerify ? new Date(Date.now() - 0.5 * 86400000) : null,
+   260→    doc_notes: docVerify ? docVerify.notes : null,
+   261→  });
+   262→  for (const c of consents) {
+   263→    await TransferConsent.create({
+   264→      transfer_id: created._id,
+   265→      property_id: property._id,
+   266→      user_id: c.user._id,
+   267→      party_role: c.role,
+   268→      status: c.status,
+   269→      created_at: new Date(Date.now() - (daysAgo + 0.2) * 86400000),
+   270→      responded_at: c.status === 'PENDING' ? null : new Date(Date.now() - (c.respondedDaysAgo ?? daysAgo - 0.1) * 86400000),
+   271→      rejection_reason: c.rejection_reason || null,
+   272→      decided_via: c.decided_via || 'SEEDED',
+   273→    });
+   274→  }
+   275→  const createdAgo = new Date(Date.now() - daysAgo * 86400000);
+   276→  await TransferRequest.updateOne({ _id: created._id }, { $set: { created_at: createdAgo, updated_at: createdAgo } });
+   277→  return TransferRequest.findOne({ transfer_reference: reference }).lean();
+   278→}
+   279→
+   280→const userRow = (u) => ({ id: u._id, full_name: u.full_name, role: u.role, email: u.email });
+   281→
+   282→async function seed() {
+   283→  const force = process.argv.includes('--force');
+   284→  const registrarEmail = 'omdummy101@gmail.com';
+   285→  const registrarExists = await User.findOne({ email: registrarEmail }).lean();
+   286→
+   287→  if (registrarExists && !force) {
+   288→    console.log('Seed data already present - skipping. Use --force to reseed.');
+   289→    return;
+   290→  }
+   291→  if (force) {
+   292→    console.log('Force reseed: clearing registry collections...');
+   293→    for (const Model of [User, Property, Document, TransferRequest, FraudCheck, BlockchainTransaction, PropertyParty, TransferConsent, MfaChallenge]) {
+   294→      await Model.deleteMany({});
+   295→    }
+   296→    await mongoose.connection.db.collection('audit_events').deleteMany({});
+   297→    await mongoose.connection.db.collection('login_events').deleteMany({});
+   298→    await mongoose.connection.db.collection('counters').deleteMany({});
+   299→  }
+   300→  await ensureIndexes(mongoose.connection.db);
+   301→
+   302→  const chain = await blockchainService.getStatus();
+   303→  const chainUp = chain.available;
+   304→  console.log(`Blockchain: ${chainUp ? `AVAILABLE at ${chain.contractAddress}` : 'unavailable - REGISTERED seeds will be skipped (no fabricated chain records)'}`);
+   305→
+   306→  // ---------- users (the 8 allowlisted identities, deterministic roles) ----------
+   307→  const byEmail = {};
+   308→  for (const entry of ALLOWED_DEMO_USERS) {
+   309→    byEmail[entry.email] = await upsertUser({ email: entry.email, password: DEMO_PASSWORD });
+   310→  }
+   311→  const om = byEmail['mandwadeom2616@gmail.com'];
+   312→  const shruti = byEmail['shrutipethe111@gmail.com'];
+   313→  const surveyor = byEmail['panpaliyaag@rknec.edu'];
+   314→  const clerk = byEmail['tekdiwalnishant@gmail.com'];
+   315→  const registrar = byEmail['omdummy101@gmail.com'];
+   316→  const admin = byEmail['omdummy102@gmail.com'];
+   317→  const ganesh = byEmail['alphadummy103@gmail.com'];
+   318→  const kavita = byEmail['alpha20051610@gmail.com'];
+   319→
+   320→  for (const u of Object.values(byEmail)) {
+   321→    await auditService.record({ actor: userRow(u), action: 'USER_REGISTER', entityType: 'user', entityId: u._id, metadata: { seeded: true, role: u.role, allowlisted: true } });
+   322→  }
+   323→
+   324→  // ---------- properties (spread across every workflow stage) ----------
+   325→  const registeredOr = chainUp ? 'REGISTERED' : 'DOCS_VERIFIED';
+   326→  const p1 = await insertProperty({
+   327→    propertyId: 'PROP-2026-0001', referenceNumber: 'LL/REG/2026/100001',
+   328→    title: 'Survey 142/2, Koregaon Park', addressLine: 'Survey 142/2, Lane 7, Koregaon Park',
+   329→    city: 'Pune', district: 'Pune', state: 'Maharashtra', areaValue: 4200, areaUnit: 'sq ft',
+   330→    propertyType: 'RESIDENTIAL_PLOT', description: 'Corner residential plot jointly held by two siblings; clear chain of title across three prior transfers.',
+   331→    submittedBy: om, ownerId: om._id, ownerWallet: W.om,
+   332→    status: registeredOr, createdDaysAgo: 21, updatedHoursAgo: 20,
+   333→  });
+   334→  const p2 = await insertProperty({
+   335→    propertyId: 'PROP-2026-0002', referenceNumber: 'LL/REG/2026/100002',
+   336→    title: 'Flat 503, Sunrise Residency', addressLine: '503, Sunrise Residency, Baner Road',
+   337→    city: 'Pune', district: 'Pune', state: 'Maharashtra', areaValue: 1380, areaUnit: 'sq ft',
+   338→    propertyType: 'RESIDENTIAL_BUILDING', description: '3BHK apartment, phase II completion certificate attached.',
+   339→    submittedBy: om, ownerId: om._id, ownerWallet: W.om,
+   340→    status: 'SUBMITTED', createdDaysAgo: 4, updatedHoursAgo: 30,
+   341→  });
+   342→  const p3 = await insertProperty({
+   343→    propertyId: 'PROP-2026-0003', referenceNumber: 'LL/REG/2026/100003',
+   344→    title: 'Khasra 88, Devanahalli Farmland', addressLine: 'Khasra 88, near Nandi Road',
+   345→    city: 'Devanahalli', district: 'Bengaluru Rural', state: 'Karnataka', areaValue: 21780, areaUnit: 'sq ft',
+   346→    propertyType: 'AGRICULTURAL', description: 'Half-acre agricultural parcel with borewell easement recorded.',
+   347→    submittedBy: shruti, ownerId: shruti._id, ownerWallet: W.shruti,
+   348→    status: registeredOr, createdDaysAgo: 15, updatedHoursAgo: 14,
+   349→  });
+   350→  const p4 = await insertProperty({
+   351→    propertyId: 'PROP-2026-0004', referenceNumber: 'LL/REG/2026/100004',
+   352→    title: 'Shop 12, Marine Drive Commercial', addressLine: 'Shop 12, Ground Floor, Marine Drive',
+   353→    city: 'Kochi', district: 'Ernakulam', state: 'Kerala', areaValue: 640, areaUnit: 'sq ft',
+   354→    propertyType: 'COMMERCIAL', description: 'Retail unit with transfer of leasehold recorded in the deed.',
+   355→    submittedBy: ganesh, ownerId: ganesh._id, ownerWallet: W.ganesh,
+   356→    status: 'DOCS_VERIFIED', createdDaysAgo: 2, updatedHoursAgo: 10,
+   357→  });
+   358→  const p6 = await insertProperty({
+   359→    propertyId: 'PROP-2026-0006', referenceNumber: 'LL/REG/2026/100006',
+   360→    title: 'House 4, Shanti Nagar', addressLine: 'House 4, Shanti Nagar, Wakad Road',
+   361→    city: 'Pune', district: 'Pune', state: 'Maharashtra', areaValue: 1850, areaUnit: 'sq ft',
+   362→    propertyType: 'RESIDENTIAL_BUILDING', description: 'Independent house with occupation certificate and updated tax receipts attached.',
+   363→    submittedBy: shruti, ownerId: shruti._id, ownerWallet: W.shruti,
+   364→    status: 'SURVEY_VERIFIED', createdDaysAgo: 3, updatedHoursAgo: 8,
+   365→  });
+   366→  const p5 = await insertProperty({
+   367→    propertyId: 'PROP-2026-0005', referenceNumber: 'LL/REG/2026/100005',
+   368→    title: 'Plot 9, Emerald Enclave', addressLine: 'Plot 9, Emerald Enclave Phase 3',
+   369→    city: 'Bengaluru', district: 'Bengaluru Urban', state: 'Karnataka', areaValue: 2400, areaUnit: 'sq ft',
+   370→    propertyType: 'RESIDENTIAL_PLOT', description: 'Layout plot submission missing approved survey sketch.',
+   371→    submittedBy: kavita, ownerId: kavita._id, ownerWallet: W.kavita,
+   372→    status: 'REJECTED', reviewNotes: 'Survey sketch does not match the recorded layout plan. Resubmit with the endorsed survey document.',
+   373→    createdDaysAgo: 9, updatedHoursAgo: 7,
+   374→  });
+   375→  const p7 = await insertProperty({
+   376→    propertyId: 'PROP-2026-0007', referenceNumber: 'LL/REG/2026/100007',
+   377→    title: 'Office 3, Ashoka Chambers', addressLine: 'Office 3, First Floor, Ashoka Chambers, M.G. Road',
+   378→    city: 'Nagpur', district: 'Nagpur', state: 'Maharashtra', areaValue: 920, areaUnit: 'sq ft',
+   379→    propertyType: 'COMMERCIAL', description: 'Compact office unit purchased for a consultancy practice; lease-freehold converted.',
+   380→    submittedBy: ganesh, ownerId: ganesh._id, ownerWallet: W.ganesh,
+   381→    status: registeredOr, createdDaysAgo: 12, updatedHoursAgo: 11,
+   382→  });
+   383→  const p8 = await insertProperty({
+   384→    propertyId: 'PROP-2026-0008', referenceNumber: 'LL/REG/2026/100008',
+   385→    title: 'Unit 11, Silver Business Park', addressLine: 'Unit 11, Silver Business Park, Whitefield Main Road',
+   386→    city: 'Bengaluru', district: 'Bengaluru Urban', state: 'Karnataka', areaValue: 1560, areaUnit: 'sq ft',
+   387→    propertyType: 'INDUSTRIAL', description: 'Warehouse unit with clear access easement and updated khata extract.',
+   388→    submittedBy: kavita, ownerId: kavita._id, ownerWallet: W.kavita,
+   389→    status: registeredOr, createdDaysAgo: 10, updatedHoursAgo: 9,
+   390→  });
+   391→
+   392→  // ---------- application-level parties (MongoDB) vs chain owner ----------
+   393→  // PROP-2026-0001 is jointly held: Om (OWNER) + Shruti (CO_OWNER). The
+   394→  // blockchain keeps Om as the single current owner (contract unchanged);
+   395→  // transfers on this parcel therefore require BOTH parties plus the buyer.
+   396→  await insertParties(p1, [
+   397→    { user: om, role: 'OWNER', share: 60 },
+   398→    { user: shruti, role: 'CO_OWNER', share: 40, notes: 'Joint holder per registered family settlement deed.' },
+   399→  ], registrar);
+   400→  await insertParties(p3, [{ user: shruti, role: 'OWNER', share: 100 }], registrar);
+   401→  await insertParties(p4, [{ user: ganesh, role: 'OWNER', share: 100 }], registrar);
+   402→  await insertParties(p6, [{ user: shruti, role: 'OWNER', share: 100 }], registrar);
+   403→  await insertParties(p7, [{ user: ganesh, role: 'OWNER', share: 100 }], registrar);
+   404→  await insertParties(p8, [{ user: kavita, role: 'OWNER', share: 100 }], registrar);
+   405→
+   406→  const submitterOf = (p) => {
+   407→    if (p.submitted_by_id === om._id) return userRow(om);
+   408→    if (p.submitted_by_id === shruti._id) return userRow(shruti);
+   409→    if (p.submitted_by_id === ganesh._id) return userRow(ganesh);
+   410→    return userRow(kavita);
+   411→  };
+   412→  for (const p of [p1, p2, p3, p4, p5, p6, p7, p8]) {
+   413→    await auditService.record({
+   414→      actor: submitterOf(p),
+   415→      action: 'PROPERTY_CREATE', entityType: 'property', entityId: p.property_id, metadata: { seeded: true, status: p.status },
+   416→    });
+   417→  }
+   418→
+   419→  // ---------- workflow stage history (realistic multi-office trail) ----------
+   420→  const daysAgoAt = (d) => new Date(Date.now() - d * 86400000);
+   421→  const histEntries = [];
+   422→  // p4 (Shop 12): cleared survey + documents, now at the registrar desk.
+   423→  histEntries.push(['PROP-2026-0004', [
+   424→    { stage: 'SURVEY', action: 'SURVEY_PASSED', by_id: surveyor._id, by_name: surveyor.full_name, by_role: 'surveyor', notes: 'Ground visit done - boundaries match the sale deed sketch.', at: daysAgoAt(1.6) },
+   425→    { stage: 'DOCUMENT_VERIFICATION', action: 'DOCS_VERIFIED', by_id: clerk._id, by_name: clerk.full_name, by_role: 'clerk', notes: 'Title deed and lease records consistent.', at: daysAgoAt(0.9) },
+   426→  ]]);
+   427→  // p6 (House 4): surveyor cleared, clerk verification pending.
+   428→  histEntries.push(['PROP-2026-0006', [
+   429→    { stage: 'SURVEY', action: 'SURVEY_PASSED', by_id: surveyor._id, by_name: surveyor.full_name, by_role: 'surveyor', notes: 'Structure matches recorded plinth area; no encroachment observed.', at: daysAgoAt(1.2) },
+   430→  ]]);
+   431→  // p2 (Flat 503): fresh application awaiting the surveyor.
+   432→  histEntries.push(['PROP-2026-0002', [
+   433→    { stage: 'SURVEY', action: 'SUBMITTED', by_id: om._id, by_name: om.full_name, by_role: 'citizen', notes: 'Application filed with sale agreement.', at: daysAgoAt(4) },
+   434→  ]]);
+   435→  if (chainUp) {
+   436→    for (const [prop, owner] of [[p1, om], [p3, shruti], [p7, ganesh], [p8, kavita]]) {
+   437→      histEntries.push([prop.property_id, [
+   438→        { stage: 'SURVEY', action: 'SURVEY_PASSED', by_id: surveyor._id, by_name: surveyor.full_name, by_role: 'surveyor', notes: 'Parcel measured on ground; boundaries match the deed sketch.', at: daysAgoAt(9) },
+   439→        { stage: 'DOCUMENT_VERIFICATION', action: 'DOCS_VERIFIED', by_id: clerk._id, by_name: clerk.full_name, by_role: 'clerk', notes: 'Supporting documents consistent and complete.', at: daysAgoAt(8) },
+   440→        { stage: 'REGISTRAR_REVIEW', action: 'REGISTRAR_APPROVED', by_id: registrar._id, by_name: registrar.full_name, by_role: 'registrar', notes: 'Legal scrutiny passed - registered on the ledger.', at: daysAgoAt(7) },
+   441→      ]]);
+   442→    }
+   443→  }
+   444→  for (const [businessId, entries] of histEntries) {
+   445→    await Property.updateOne({ property_id: businessId }, { $set: { stage_history: entries } });
+   446→  }
+   447→  if (p5.status === 'REJECTED') {
+   448→    await auditService.record({ actor: userRow(registrar), action: 'PROPERTY_REJECT', entityType: 'property', entityId: p5.property_id, result: 'FAILURE', metadata: { seeded: true, reason: p5.review_notes } });
+   449→  }
+   450→
+   451→  // ---------- documents (real files + real SHA-256) ----------
+   452→  const d1 = await insertDocument({
+   453→    property: p1, uploadedBy: om, documentType: 'TITLE_DEED', fileName: 'title-deed-survey142.pdf',
+   454→    title: 'Title Deed - Survey 142/2 Koregaon Park',
+   455→    lines: ['Deed No: PN-KP-8891', 'Grantor: Deshpande Family Trust', 'Grantees: Om Mandwade and Shruti Pethe',
+   456→            'Area: 4200 sq ft', 'Consideration: INR 84,00,000', 'Registered at: SRO Pune-1'],
+   457→    verifiedBy: registrar, status: 'VERIFIED', daysAgo: 20,
+   458→  });
+   459→  const d2 = await insertDocument({
+   460→    property: p1, uploadedBy: om, documentType: 'SURVEY_REPORT', fileName: 'survey-report-survey142.pdf',
+   461→    title: 'Survey Report - Survey 142/2',
+   462→    lines: ['Surveyor: M. Kulkarni, Licensed Surveyor', 'Boundaries verified on ground',
+   463→            'North: Lane 7 | South: Survey 143', 'Area measured: 4200 sq ft (+/- 0.5%)'],
+   464→    verifiedBy: registrar, status: 'VERIFIED', daysAgo: 19,
+   465→  });
+   466→  const d3 = await insertDocument({
+   467→    property: p2, uploadedBy: om, documentType: 'SALE_AGREEMENT', fileName: 'sale-agreement-sunrise503.pdf',
+   468→    title: 'Agreement to Sell - Flat 503 Sunrise Residency',
+   469→    lines: ['Builder: Sunrise Builders LLP', 'Allottee: Om Mandwade', 'Flat No: 503, Wing B',
+   470→            'Carpet area: 1380 sq ft', 'Possession: completed phase II'],
+   471→    verifiedBy: null, status: 'PENDING', daysAgo: 4,
+   472→  });
+   473→  const d4 = await insertDocument({
+   474→    property: p3, uploadedBy: shruti, documentType: 'TAX_RECEIPT', fileName: 'tax-receipt-khasra88.pdf',
+   475→    title: 'Land Revenue Receipt - Khasra 88',
+   476→    lines: ['Year: 2025-26', 'Owner: Shruti Pethe', 'Assessment: INR 3,420', 'Status: PAID'],
+   477→    verifiedBy: registrar, status: 'VERIFIED', daysAgo: 12,
+   478→  });
+   479→  const d5 = await insertDocument({
+   480→    property: p4, uploadedBy: ganesh, documentType: 'TITLE_DEED', fileName: 'title-deed-shop12.pdf',
+   481→    title: 'Title Deed - Shop 12 Marine Drive Commercial',
+   482→    lines: ['Deed No: EKM-MD-2210', 'Grantor: Kovoor Investments', 'Grantee: Ganesh Patil', 'Area: 640 sq ft'],
+   483→    verifiedBy: null, status: 'PENDING', daysAgo: 2,
+   484→  });
+   485→  const d6 = await insertDocument({
+   486→    property: p6, uploadedBy: shruti, documentType: 'TAX_RECEIPT', fileName: 'occupation-cert-house4.pdf',
+   487→    title: 'Occupation Certificate - House 4 Shanti Nagar',
+   488→    lines: ['Cert No: PCMC-WK-4471', 'Owner: Shruti Pethe', 'Structure: Ground + 1', 'Issued: two years prior'],
+   489→    verifiedBy: null, status: 'PENDING', daysAgo: 3,
+   490→  });
+   491→  const d7 = await insertDocument({
+   492→    property: p7, uploadedBy: ganesh, documentType: 'TITLE_DEED', fileName: 'title-deed-ashoka3.pdf',
+   493→    title: 'Title Deed - Office 3 Ashoka Chambers',
+   494→    lines: ['Deed No: NGP-AG-7742', 'Grantor: Ashoka Estates LLP', 'Grantee: Ganesh Patil', 'Area: 920 sq ft'],
+   495→    verifiedBy: registrar, status: 'VERIFIED', daysAgo: 11,
+   496→  });
+   497→  const d8 = await insertDocument({
+   498→    property: p8, uploadedBy: kavita, documentType: 'TITLE_DEED', fileName: 'title-deed-silver11.pdf',
+   499→    title: 'Title Deed - Unit 11 Silver Business Park',
+   500→    lines: ['Deed No: BLR-WF-5518', 'Grantor: Silver Park Developers', 'Grantee: Kavita Sharma', 'Area: 1560 sq ft'],
+   501→    verifiedBy: registrar, status: 'VERIFIED', daysAgo: 9,
+   502→  });
+   503→  for (const d of [d1, d2, d3, d4, d5, d6, d7, d8]) {
+   504→    await auditService.record({
+   505→      actor: submitterOf({ submitted_by_id: d.uploaded_by }),
+   506→      action: 'DOCUMENT_UPLOAD', entityType: 'document', entityId: d._id,
+   507→      metadata: { seeded: true, propertyId: d.property_id, sha256: d.sha256_hash },
+   508→    });
+   509→    if (d.verification_status === 'VERIFIED') {
+   510→      await auditService.record({ actor: userRow(registrar), action: 'DOCUMENT_VERIFY', entityType: 'document', entityId: d._id, metadata: { seeded: true, outcome: 'VERIFIED' } });
+   511→    }
+   512→  }
+   513→
+   514→  // ---------- real on-chain registrations for REGISTERED seeds ----------
+   515→  // Chain-session aware: a long-lived Hardhat node may already know these
+   516→  // business ids from a previous demo cycle. Never fabricate - resolve the
+   517→  // actual on-chain state and reconcile it honestly:
+   518→  //   unknown id            -> register for real
+   519→  //   already ours          -> skip (idempotent reseed, no fake duplicate tx)
+   520→  //   owned by someone else -> operator re-point back to the seed owner (real tx)
+   521→  if (chainUp) {
+   522→    const { getPropertyOwnerOnChain, registerPropertyOnChain, transferOwnershipOnChain } = blockchainService;
+   523→    const KNOWN_WALLETS = [...new Set([W.om, W.shruti, W.ganesh, W.kavita, W.registrar, W.operator])];
+   524→    for (const p of [p1, p3, p7, p8]) {
+   525→      try {
+   526→        const onChainOwner = await getPropertyOwnerOnChain(p.property_id);
+   527→        let receipt = null;
+   528→        if (!onChainOwner) {
+   529→          receipt = await registerPropertyOnChain(p.property_id, p.current_owner_wallet);
+   530→          await BlockchainTransaction.create({
+   531→            property_id: p._id,
+   532→            transaction_hash: receipt.transactionHash,
+   533→            block_number: receipt.blockNumber,
+   534→            network: 'hardhat',
+   535→            contract_address: blockchainService.getContractAddress(),
+   536→            operation: 'PROPERTY_REGISTER',
+   537→            from_address: receipt.fromAddress,
+   538→            to_address: p.current_owner_wallet,
+   539→            status: 'CONFIRMED',
+   540→            timestamp: new Date(),
+   541→          });
+   542→          await auditService.record({
+   543→            actor: userRow(registrar), action: 'BLOCKCHAIN_TX', entityType: 'blockchain', entityId: receipt.transactionHash,
+   544→            metadata: { seeded: true, operation: 'PROPERTY_REGISTER', propertyId: p.property_id, block: receipt.blockNumber },
+   545→          });
+   546→          console.log(`On-chain registration: ${p.property_id} -> ${receipt.transactionHash}`);
+   547→        } else if (onChainOwner.toLowerCase() === String(p.current_owner_wallet).toLowerCase()) {
+   548→          console.log(`On-chain registration: ${p.property_id} already settled to the seed owner - skipping (idempotent)`);
+   549→        } else {
+   550→          // Chain drift from an earlier demo cycle: re-point to the seed owner.
+   551→          receipt = await transferOwnershipOnChain(p.property_id, onChainOwner, p.current_owner_wallet);
+   552→          await BlockchainTransaction.create({
+   553→            property_id: p._id,
+   554→            transaction_hash: receipt.transactionHash,
+   555→            block_number: receipt.blockNumber,
+   556→            network: 'hardhat',
+   557→            contract_address: blockchainService.getContractAddress(),
+   558→            operation: 'OWNERSHIP_TRANSFER',
+   559→            from_address: onChainOwner,
+   560→            to_address: p.current_owner_wallet,
+   561→            status: 'CONFIRMED',
+   562→            timestamp: new Date(),
+   563→          });
+   564→          await auditService.record({
+   565→            actor: userRow(registrar), action: 'BLOCKCHAIN_TX', entityType: 'blockchain', entityId: receipt.transactionHash,
+   566→            metadata: { seeded: true, operation: 'OWNERSHIP_TRANSFER', propertyId: p.property_id, block: receipt.blockNumber, note: 'chain re-pointed to seed owner' },
+   567→          });
+   568→          console.log(`On-chain re-point: ${p.property_id} -> ${receipt.transactionHash}`);
+   569→        }
+   570→        const suffixMatch = String(p.property_id).match(/(\d+)$/);
+   571→        if (suffixMatch) bumpPropertyCursor(parseInt(suffixMatch[1], 10));
+   572→      } catch (err) {
+   573→        console.warn(`On-chain registration failed for ${p.property_id}: ${err.message} (known wallets probed: ${KNOWN_WALLETS.length})`);
+   574→      }
+   575→    }
+   576→  }
+   577→
+   578→  // ---------- counters ----------
+   579→  // Floor above every business id the CURRENT chain session has ever seen
+   580→  // (disk cursor) so new registrations never collide with on-chain history.
+   581→  const year = new Date().getFullYear();
+   582→  const cursor = readCursor();
+   583→  const props = await Property.find().select('property_id').lean();
+   584→  const maxSuffix = (values) => values.reduce((m, v) => {
+   585→    const match = String(v || '').match(/(\d+)$/);
+   586→    return match ? Math.max(m, parseInt(match[1], 10)) : m;
+   587→  }, 0);
+   588→  await Counter.ensureFloor(`property_${year}`, Math.max(maxSuffix(props.map((p) => p.property_id)), cursor.property));
+   589→  const transfers = await TransferRequest.find().select('transfer_reference').lean();
+   590→  await Counter.ensureFloor(`transfer_${year}`, Math.max(maxSuffix(transfers.map((t) => t.transfer_reference)), cursor.transfer));
+   591→
+   592→  // ---------- transfers with explicit consent boards ----------
+   593→  if (chainUp) {
+   594→    // TRF-2026-0001 - LIVE multi-party consent demo on the co-owned parcel.
+   595→    // Om (seller) initiated; co-owner Shruti and buyer Ganesh must still act.
+   596→    const fraud1 = await fraudService.runFraudChecks({
+   597→      propertyId: p1.property_id, sellerId: om._id, buyerId: ganesh._id, buyerWallet: W.ganesh,
+   598→    });
+   599→    const t1 = await insertTransfer({
+   600→      reference: 'TRF-2026-0001', property: p1, seller: om, buyer: ganesh,
+   601→      status: 'CONSENT_PENDING', riskLevel: fraud1.riskLevel,
+   602→      details: 'Sale of the Koregaon Park plot to Ganesh Patil under private sale agreement. Joint holder consent required per the family settlement deed.',
+   603→      daysAgo: 1.1,
+   604→      consents: [
+   605→        { user: om, role: 'SELLER', status: 'APPROVED', decided_via: 'INITIATION', respondedDaysAgo: 1.1 },
+   606→        { user: shruti, role: 'CO_OWNER', status: 'PENDING' },
+   607→        { user: ganesh, role: 'BUYER', status: 'PENDING' },
+   608→      ],
+   609→    });
+   610→    await fraudService.persistFraudCheck(t1._id, fraud1);
+   611→    await auditService.record({ actor: userRow(om), action: 'TRANSFER_CREATE', entityType: 'transfer', entityId: 'TRF-2026-0001', metadata: { seeded: true, propertyId: p1.property_id, riskLevel: fraud1.riskLevel } });
+   612→    await auditService.record({ actor: userRow(om), action: 'CONSENT_REQUESTED', entityType: 'transfer', entityId: 'TRF-2026-0001', metadata: { seeded: true, requiredParties: 3, pendingParties: 2 } });
+   613→    await auditService.record({ actor: userRow(om), action: 'FRAUD_CHECK', entityType: 'transfer', entityId: 'TRF-2026-0001', result: fraud1.isFraudulent ? 'FAILURE' : 'SUCCESS', metadata: { seeded: true, riskLevel: fraud1.riskLevel } });
+   614→
+   615→    // TRF-2026-0002 - consent already complete; sitting at the clerk desk.
+   616→    const fraud2 = await fraudService.runFraudChecks({
+   617→      propertyId: p3.property_id, sellerId: shruti._id, buyerId: om._id, buyerWallet: W.om,
+   618→    });
+   619→    const t2 = await insertTransfer({
+   620→      reference: 'TRF-2026-0002', property: p3, seller: shruti, buyer: om,
+   621→      status: 'PENDING', riskLevel: fraud2.riskLevel,
+   622→      details: 'Devanahalli farmland sold to Om Mandwade; sale deed executed and consent of all parties recorded.',
+   623→      daysAgo: 2,
+   624→      consents: [
+   625→        { user: shruti, role: 'SELLER', status: 'APPROVED', decided_via: 'INITIATION', respondedDaysAgo: 2 },
+   626→        { user: om, role: 'BUYER', status: 'APPROVED', respondedDaysAgo: 1 },
+   627→      ],
+   628→    });
+   629→    await fraudService.persistFraudCheck(t2._id, fraud2);
+   630→    await auditService.record({ actor: userRow(shruti), action: 'TRANSFER_CREATE', entityType: 'transfer', entityId: 'TRF-2026-0002', metadata: { seeded: true, propertyId: p3.property_id } });
+   631→    await auditService.record({ actor: userRow(shruti), action: 'TRANSFER_CONSENT_COMPLETE', entityType: 'transfer', entityId: 'TRF-2026-0002', metadata: { seeded: true, nextStage: 'DOCUMENT_VERIFICATION' } });
+   632→
+   633→    // TRF-2026-0003 - clerk verified; waiting at the registrar desk (+ on-chain ready).
+   634→    const fraud3 = await fraudService.runFraudChecks({
+   635→      propertyId: p7.property_id, sellerId: ganesh._id, buyerId: kavita._id, buyerWallet: W.kavita,
+   636→    });
+   637→    const t3 = await insertTransfer({
+   638→      reference: 'TRF-2026-0003', property: p7, seller: ganesh, buyer: kavita,
+   639→      status: 'DOCS_VERIFIED', riskLevel: fraud3.riskLevel,
+   640→      details: 'Ashoka Chambers office unit sold to Kavita Sharma. Consent complete; documents verified by the clerk.',
+   641→      daysAgo: 1.5,
+   642→      docVerify: { clerk, notes: 'Title deed and khata extract consistent.' },
+   643→      consents: [
+   644→        { user: ganesh, role: 'SELLER', status: 'APPROVED', decided_via: 'INITIATION', respondedDaysAgo: 1.5 },
+   645→        { user: kavita, role: 'BUYER', status: 'APPROVED', respondedDaysAgo: 1.3 },
+   646→      ],
+   647→    });
+   648→    await fraudService.persistFraudCheck(t3._id, fraud3);
+   649→    await auditService.record({ actor: userRow(ganesh), action: 'TRANSFER_CREATE', entityType: 'transfer', entityId: 'TRF-2026-0003', metadata: { seeded: true, propertyId: p7.property_id } });
+   650→    await auditService.record({ actor: userRow(clerk), action: 'TRANSFER_DOCS_VERIFIED', entityType: 'transfer', entityId: 'TRF-2026-0003', metadata: { seeded: true, notes: 'Title deed and khata extract consistent.' } });
+   651→
+   652→    // TRF-2026-0004 - buyer (Om) still owes consent; his "Pending Actions" item.
+   653→    const fraud4 = await fraudService.runFraudChecks({
+   654→      propertyId: p8.property_id, sellerId: kavita._id, buyerId: om._id, buyerWallet: W.om,
+   655→    });
+   656→    const t4 = await insertTransfer({
+   657→      reference: 'TRF-2026-0004', property: p8, seller: kavita, buyer: om,
+   658→      status: 'CONSENT_PENDING', riskLevel: fraud4.riskLevel,
+   659→      details: 'Silver Business Park warehouse unit to be acquired by Om Mandwade. Buyer consent recorded in-app after sign-in.',
+   660→      daysAgo: 0.8,
+   661→      consents: [
+   662→        { user: kavita, role: 'SELLER', status: 'APPROVED', decided_via: 'INITIATION', respondedDaysAgo: 0.8 },
+   663→        { user: om, role: 'BUYER', status: 'PENDING' },
+   664→      ],
+   665→    });
+   666→    await fraudService.persistFraudCheck(t4._id, fraud4);
+   667→    await auditService.record({ actor: userRow(kavita), action: 'TRANSFER_CREATE', entityType: 'transfer', entityId: 'TRF-2026-0004', metadata: { seeded: true, propertyId: p8.property_id } });
+   668→    await auditService.record({ actor: userRow(kavita), action: 'CONSENT_REQUESTED', entityType: 'transfer', entityId: 'TRF-2026-0004', metadata: { seeded: true, requiredParties: 2, pendingParties: 1 } });
+   669→
+   670→    console.log('Seeded transfers: TRF-2026-0001 (CONSENT_PENDING, live demo), TRF-2026-0002 (clerk desk), TRF-2026-0003 (registrar desk), TRF-2026-0004 (buyer consent pending)');
+   671→  } else {
+   672→    console.log('Blockchain unavailable - transfer seeds skipped (they require REGISTERED parcels).');
+   673→  }
+   674→
+   675→  // ---------- login security telemetry sample (for the admin oversight view) ----------
+   676→  const loginEventDocs = [
+   677→    { email: om.email, userId: om._id, role: om.role, outcome: 'SUCCESS', reason: 'LOGIN_PASSWORD_SUCCESS_MFA_REQUIRED', ip: '10.20.0.14', userAgent: 'Mozilla/5.0 (X11; Linux x86_64) demo', created_at: daysAgoAt(0.3) },
+   678→    { email: om.email, userId: om._id, role: om.role, outcome: 'SUCCESS', reason: 'MFA_SUCCESS', ip: '10.20.0.14', userAgent: 'Mozilla/5.0 (X11; Linux x86_64) demo', created_at: daysAgoAt(0.29) },
+   679→    { email: shruti.email, userId: shruti._id, role: shruti.role, outcome: 'SUCCESS', reason: 'MFA_SUCCESS', ip: '10.20.0.22', userAgent: 'Mozilla/5.0 (Windows NT 10.0) demo', created_at: daysAgoAt(0.6) },
+   680→    { email: registrar.email, userId: registrar._id, role: registrar.role, outcome: 'SUCCESS', reason: 'MFA_SUCCESS', ip: '10.20.1.5', userAgent: 'Mozilla/5.0 (Macintosh) demo', created_at: daysAgoAt(0.5) },
+   681→    { email: 'unknown.probe@example.com', userId: null, role: null, outcome: 'FAILURE', reason: 'unknown_account', ip: '10.20.9.9', userAgent: 'curl/8.0 probe', created_at: daysAgoAt(0.4) },
+   682→  ];
+   683→  await mongoose.connection.collection('login_events').insertMany(loginEventDocs);
+   684→
+   685→  // ---------- done ----------
+   686→  console.log('\nSeed complete. Demo accounts (email OTP MFA is active - password alone cannot sign in):');
+   687→  for (const entry of ALLOWED_DEMO_USERS) {
+   688→    console.log(`  ${entry.role.padEnd(9)} : ${entry.email} / ${DEMO_PASSWORD}  (${entry.name})`);
+   689→  }
+   690→  console.log('\nDemo flow: login with password -> OTP -> verify. Multi-party consent demo: TRF-2026-0001 waits for Shruti Pethe (co-owner) and Ganesh Patil (buyer).');
+   691→}
+   692→
+   693→if (require.main === module) {
+   694→  (async () => {
+   695→    try {
+   696→      const ok = await connectMongo();
+   697→      if (!ok) throw new Error('Cannot reach MongoDB Atlas - check MONGODB_URI / Network Access');
+   698→      await seed();
+   699→      await mongoose.disconnect();
+   700→      process.exit(0);
+   701→    } catch (err) {
+   702→      console.error('Seed failed:', err.message);
+   703→      process.exit(1);
+   704→    }
+   705→  })();
+   706→}
+   707→
+   708→module.exports = { seed };
+   709→

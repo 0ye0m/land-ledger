@@ -23,11 +23,12 @@ export default function PropertiesPage() {
   useDocumentTitle('Properties');
   const navigate = useNavigate();
   const [keyword, setKeyword] = useState('');
+  const debouncedKeyword = useDebounced(keyword);
   const [status, setStatus] = useState('');
   const [propertyType, setPropertyType] = useState('');
   const [page, setPage] = useState(1);
 
-  const query = useMemo(() => buildQuery({ keyword, status, propertyType, page, pageSize: 10 }), [hashOf({ keyword, status, propertyType, page })]);
+  const query = useMemo(() => buildQuery({ keyword: debouncedKeyword, status, propertyType, page, pageSize: 10 }), [hashOf({ debouncedKeyword, status, propertyType, page })]);
   const { data, loading, error, refetch } = useApi(() => propertyService.list(query), [query]);
 
   const properties = data?.data?.properties || [];

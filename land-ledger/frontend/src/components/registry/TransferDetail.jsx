@@ -84,7 +84,7 @@ export default function TransferDetail({ role }) {
     setActionError('');
     try {
       if (action === 'approve') {
-        const res = await registrarService ? await transferService.approve(transfer.id, reason.trim()) : null;
+        const res = await transferService.approve(transfer.id, reason.trim());
         toast.success(res.message || 'Transfer approved and settled');
       } else {
         const res = await transferService.reject(transfer.id, reason.trim());
@@ -103,7 +103,7 @@ export default function TransferDetail({ role }) {
   if (loading) return <LoadingState label="Opening transfer record…" />;
   if (error) return <ErrorState error={error} onRetry={refetch} title="Transfer unavailable" />;
 
-  const steps = buildTransferSteps(transfer, { fraudCheck, tx });
+  const steps = buildTransferSteps(transfer, { fraudCheck, tx, consents });
 
   return (
     <div className="flex flex-col gap-6 fade-up">
@@ -344,7 +344,7 @@ export default function TransferDetail({ role }) {
       </section>
 
       {/* Registrar controls */}
-      {isRegistrar && transfer.status === 'PENDING' ? (
+      {isRegistrar && transfer.status === 'DOCS_VERIFIED' ? (
         <section className="registry-panel p-5 border-t-2 border-t-primary/40">
           <SectionKicker>Registrar decision</SectionKicker>
           <p className="text-[13px] muted mt-2 max-w-2xl leading-relaxed">

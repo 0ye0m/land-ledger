@@ -32,7 +32,7 @@ const dashboard = asyncHandler(async (req, res) => {
     chainActivityDocs,
   ] = await Promise.all([
     Property.countDocuments({ current_owner_id: uid, status: 'REGISTERED' }),
-    TransferRequest.countDocuments({ $or: [{ seller_id: uid }, { buyer_id: uid }], status: { $in: ['PENDING', 'APPROVED'] } }),
+    TransferRequest.countDocuments({ $or: [{ seller_id: uid }, { buyer_id: uid }], status: { $in: ['PENDING', 'CONSENT_PENDING', 'APPROVED'] } }),
     TransferRequest.countDocuments({ $or: [{ seller_id: uid }, { buyer_id: uid }], status: 'COMPLETED' }),
     ownedIds.length ? Document.countDocuments({ property_id: { $in: ownedIds }, verification_status: 'PENDING' }) : 0,
     Property.find({ $or: [{ current_owner_id: uid }, { submitted_by_id: uid }] }).sort({ updated_at: -1 }).limit(5).lean(),
@@ -103,6 +103,7 @@ const dashboard = asyncHandler(async (req, res) => {
     transaction_hash: t.transaction_hash,
     block_number: t.block_number,
     timestamp: t.timestamp,
+    error_message: t.error_message || null,
     property_id: t.property_id ? chainPropById[t.property_id] || null : null,
   }));
 

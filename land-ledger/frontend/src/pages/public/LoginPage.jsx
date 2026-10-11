@@ -36,6 +36,7 @@ export default function LoginPage() {
 
   const [challenge, setChallenge] = useState(null); // { challengeId, maskedEmail, expiresInSeconds, resendCooldownSeconds }
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
+  const submittingRef = useRef(false);
   const otpRefs = useRef([]);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [resendReadyIn, setResendReadyIn] = useState(0);
@@ -93,11 +94,13 @@ export default function LoginPage() {
   }
 
   async function doVerify(codeOverride) {
+    if (submittingRef.current) return; // never double-POST verify-otp
     const code = codeOverride || otpValue;
     if (!/^\d{6}$/.test(code)) {
       setErrors((er) => ({ ...er, form: 'Enter the 6-digit verification code.' }));
       return;
     }
+    submittingRef.current = true;
     setSubmitting(true);
     setErrors({});
     try {
@@ -105,10 +108,19 @@ export default function LoginPage() {
       const user = completeLogin(data);
       land(user);
     } catch (err) {
+      // An expired challenge can never be verified - send the user back to
+      // step 1 instead of leaving them stuck on a dead OTP screen.
+      if (err instanceof ApiError && err.errorCode === 'MFA_EXPIRED') {
+        setChallenge(null);
+        setStep('credentials');
+        setErrors({ form: 'Your verification code expired. Please sign in again to receive a new one.' });
+        return;
+      }
       setErrors((er) => ({ ...er, form: err.message }));
       setOtpDigits(['', '', '', '', '', '']);
       setTimeout(() => otpRefs.current?.[0]?.focus(), 60);
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   }
@@ -127,6 +139,12 @@ export default function LoginPage() {
       toast.info('A new verification code has been sent.');
       setTimeout(() => otpRefs.current?.[0]?.focus(), 60);
     } catch (err) {
+      if (err instanceof ApiError && (err.errorCode === 'MFA_EXPIRED' || secondsLeft <= 0)) {
+        setChallenge(null);
+        setStep('credentials');
+        setErrors({ form: 'Your verification code expired. Please sign in again to receive a new one.' });
+        return;
+      }
       setErrors((er) => ({ ...er, form: err.message }));
     } finally {
       setSubmitting(false);
@@ -319,7 +337,7 @@ export default function LoginPage() {
                   {secondsLeft > 0 ? (
                     <>Code expires in <span className="font-mono font-semibold text-foreground">{formatCountdown(secondsLeft)}</span></>
                   ) : (
-                    <span className="text-destructive font-semibold">Code expired — request a new one or sign in again.</span>
+                    <span className="text-destructive font-semibold">Code expired — sign in again to receive a new one.</span>
                   )}
                 </p>
 
@@ -328,15 +346,26 @@ export default function LoginPage() {
                 </Button>
 
                 <div className="flex items-center justify-between gap-3">
-                  <button
-                    type="button"
-                    onClick={doResend}
-                    disabled={resendReadyIn > 0 || submitting}
-                    className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold link disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <RefreshCw size={13} />
-                    {resendReadyIn > 0 ? `Resend OTP in ${resendReadyIn}s` : 'Resend OTP'}
-                  </button>
+                  {secondsLeft > 0 ? (
+                    <button
+                      type="button"
+                      onClick={doResend}
+                      disabled={resendReadyIn > 0 || submitting}
+                      className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold link disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <RefreshCw size={13} />
+                      {resendReadyIn > 0 ? `Resend OTP in ${resendReadyIn}s` : 'Resend OTP'}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => { setChallenge(null); setStep('credentials'); setErrors({}); }}
+                      className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-destructive hover:underline"
+                    >
+                      <RefreshCw size={13} />
+                      Code expired - sign in again
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => { setStep('credentials'); setErrors({}); setDevCode(null); }}

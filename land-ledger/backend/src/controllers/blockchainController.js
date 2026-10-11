@@ -2,6 +2,7 @@
 
 const Property = require('../models/Property');
 const TransferRequest = require('../models/TransferRequest');
+const User = require('../models/User');
 const BlockchainTransaction = require('../models/BlockchainTransaction');
 const { toRow, toRows } = require('../db/rows');
 const { ok, fail } = require('../utils/apiResponse');
@@ -109,8 +110,13 @@ const ownershipHistory = asyncHandler(async (req, res) => {
   const property = propDoc ? toRow(propDoc) : null;
   if (!property) return fail(res, { message: 'Property not found', errorCode: 'PROPERTY_NOT_FOUND', status: 404 });
 
-  const involved = property.current_owner_id === req.user.id || property.submitted_by_id === req.user.id;
-  if (!involved && req.user.role !== 'registrar' && property.status !== 'REGISTERED') {
+  // Same access matrix as GET /api/properties/:id (keep the two views aligned).
+  const isOwner = property.current_owner_id === req.user.id;
+  const isSubmitter = property.submitted_by_id === req.user.id;
+  const isRegistrar = req.user.role === 'registrar';
+  const isStaff = ['surveyor', 'clerk', 'admin'].includes(req.user.role);
+  const publiclyVisible = property.status === 'REGISTERED';
+  if (!isOwner && !isSubmitter && !isRegistrar && !isStaff && !publiclyVisible) {
     return fail(res, { message: 'You do not have access to this property history', errorCode: 'FORBIDDEN', status: 403 });
   }
 
@@ -119,13 +125,77 @@ const ownershipHistory = asyncHandler(async (req, res) => {
     .lean();
   const transactions = toRows(txDocs);
 
+  // Source of truth #2: the contract's OWN event log. This recovers history
+  // for parcels whose registration predates the explorer index (repeat seeds
+  // on a persistent chain node), so the chain of title is always complete.
+  let chainEvents = [];
+  try {
+    chainEvents = await blockchainService.getParcelEvents(property.property_id);
+  } catch (chainErr) {
+    // Chain unavailable -> fall back to the DB index only (never fail the view).
+    chainEvents = [];
+  }
+  const knownHashes = new Set(transactions.map((tx) => tx.transaction_hash).filter(Boolean));
+  const merged = [
+    ...transactions,
+    ...chainEvents
+      .filter((ev) => ev.transactionHash && !knownHashes.has(ev.transactionHash))
+      .map((ev) => ({
+        id: ev.transactionHash,
+        transfer_id: null,
+        transaction_hash: ev.transactionHash,
+        block_number: ev.blockNumber,
+        network: 'hardhat',
+        operation: ev.operation,
+        from_address: ev.from_address,
+        to_address: ev.to_address,
+        status: 'CONFIRMED',
+        timestamp: ev.timestamp,
+      })),
+  ].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+  // Resolve every wallet address on the chain of title to a registry account
+  // (name/email) so the UI can show WHO owned the land, not just 0x... strings.
+  // NOTE: the DB stores checksummed addresses - query with the original case;
+  // the identity MAP is keyed case-insensitively because chain events may
+  // return either casing.
+  const walletQuery = new Set();
+  const transferIds = new Set();
+  for (const tx of merged) {
+    if (tx.from_address) walletQuery.add(tx.from_address);
+    if (tx.to_address) walletQuery.add(tx.to_address);
+    if (tx.transfer_id) transferIds.add(tx.transfer_id);
+  }
+  if (property.current_owner_wallet) walletQuery.add(property.current_owner_wallet);
+
+  // The registry is small (demo allowlist of 8) - load every wallet-holding
+  // account and resolve identities in JS. This sidesteps the classic
+  // checksummed-vs-lowercase address mismatch entirely.
+  const [userDocs, transferDocs] = await Promise.all([
+    User.find({ wallet_address: { $nin: [null, ''] } }).select('full_name email wallet_address').lean(),
+    transferIds.size ? TransferRequest.find({ _id: { $in: [...transferIds] } }).select('transfer_reference seller_id buyer_id status').lean() : [],
+  ]);
+
+  const identityByWallet = {};
+  for (const u of userDocs) {
+    if (u.wallet_address) {
+      identityByWallet[String(u.wallet_address).toLowerCase()] = { name: u.full_name, email: u.email };
+    }
+  }
+  const identityOf = (wallet) => {
+    if (!wallet) return null;
+    const key = String(wallet).toLowerCase();
+    return { wallet, name: (identityByWallet[key] && identityByWallet[key].name) || null, email: (identityByWallet[key] && identityByWallet[key].email) || null };
+  };
+  const transferRefById = Object.fromEntries(transferDocs.map((t) => [t._id, t.transfer_reference]));
+
   // Derive chronological ownership entries from confirmed on-chain events only.
   const history = [];
-  for (const tx of transactions) {
+  for (const tx of merged) {
     if (tx.operation === 'PROPERTY_REGISTER') {
       history.push({
         type: 'REGISTRATION',
-        owner: tx.to_address,
+        owner: identityOf(tx.to_address),
         transactionHash: tx.transaction_hash,
         blockNumber: tx.block_number,
         timestamp: tx.timestamp,
@@ -135,8 +205,11 @@ const ownershipHistory = asyncHandler(async (req, res) => {
     } else if (tx.operation === 'OWNERSHIP_TRANSFER') {
       history.push({
         type: 'TRANSFER',
-        previousOwner: tx.from_address,
-        newOwner: tx.to_address,
+        previousOwner: identityOf(tx.from_address),
+        newOwner: identityOf(tx.to_address),
+        transfer: tx.transfer_id
+          ? { id: tx.transfer_id, reference: transferRefById[tx.transfer_id] || null }
+          : null,
         transactionHash: tx.transaction_hash,
         blockNumber: tx.block_number,
         timestamp: tx.timestamp,
@@ -150,7 +223,13 @@ const ownershipHistory = asyncHandler(async (req, res) => {
     message: history.length ? 'Ownership history loaded' : 'No on-chain ownership history yet',
     data: {
       propertyId: property.property_id,
-      currentOwnerWallet: property.current_owner_wallet,
+      currentOwner: {
+        wallet: property.current_owner_wallet,
+        ...(() => {
+          const ident = identityOf(property.current_owner_wallet);
+          return { name: ident ? ident.name : null, email: ident ? ident.email : null };
+        })(),
+      },
       history,
     },
   });

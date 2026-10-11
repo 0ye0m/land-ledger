@@ -18,7 +18,7 @@ export function EmptyState({ title, message, action: Action, actionLabel, icon: 
       </span>
       <h3 className="font-display font-bold text-[16px]">{title}</h3>
       {message ? <p className="muted text-[13px] mt-1.5 max-w-md mx-auto leading-relaxed">{message}</p> : null}
-      {Action && actionLabel ? (
+      {Action ? (
         <div className="mt-4">
           <Action />
         </div>

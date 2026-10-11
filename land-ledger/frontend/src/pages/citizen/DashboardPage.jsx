@@ -256,7 +256,13 @@ export default function CitizenDashboard() {
                       <span className="font-mono text-[11.5px] muted">{tx.property_id || '—'}</span>
                     </p>
                     <p className="mt-1">
-                      <HashChip hash={tx.status === 'CONFIRMED' ? tx.transaction_hash : `failed · ${tx.error_message || 'error'}`} />
+                      {tx.status === 'CONFIRMED' && tx.transaction_hash ? (
+                        <HashChip hash={tx.transaction_hash} />
+                      ) : (
+                        <span className="text-[11.5px] font-semibold text-destructive">
+                          Settling failed{tx.error_message ? ` — ${tx.error_message}` : ''}
+                        </span>
+                      )}
                     </p>
                   </div>
                   <StatusBadge status={tx.status === 'CONFIRMED' ? 'COMPLETED' : 'FAILED'} />

@@ -129,6 +129,20 @@ async function registerPropertyOnChain(propertyId, ownerWalletAddress) {
       throw Object.assign(new Error('Registry contract is not deployed on the connected node'), { errorCode: 'BLOCKCHAIN_UNAVAILABLE' });
     }
     const bytes32Id = ethers.id(propertyId);
+    // Idempotency: a previous partial approval may have registered the parcel
+    // on-chain already (chain write succeeded, Mongo flip failed). Re-registering
+    // would revert; instead report the existing registration to the caller.
+    if (await active.isRegistered(bytes32Id)) {
+      const existingOwner = await active.getPropertyOwner(bytes32Id);
+      return {
+        transactionHash: null,
+        blockNumber: null,
+        fromAddress: null,
+        toAddress: existingOwner,
+        gasUsed: null,
+        alreadyRegistered: true,
+      };
+    }
     const tx = await active.registerProperty(bytes32Id, ownerWalletAddress);
     const receipt = await tx.wait(1);
     if (receipt.status !== 1) throw Object.assign(new Error('Property registration transaction reverted'), { errorCode: 'TX_REVERTED' });
@@ -140,6 +154,49 @@ async function registerPropertyOnChain(propertyId, ownerWalletAddress) {
       gasUsed: receipt.gasUsed ? Number(receipt.gasUsed) : null,
     };
   });
+}
+
+/**
+ * Read the parcel's FULL event history straight from the ledger contract:
+ * every PropertyRegistered and OwnershipTransferred event ever emitted for
+ * this propertyId, with their real transaction hashes. This is the source of
+ * truth for the chain of title - it recovers history for parcels registered
+ * before the explorer index existed (e.g. repeat seeds on a persistent node).
+ */
+async function getParcelEvents(propertyId) {
+  const active = getContract();
+  if (!active) throw Object.assign(new Error('Blockchain unavailable'), { errorCode: 'BLOCKCHAIN_UNAVAILABLE' });
+  if (!(await contractCodeExists(contractAddress))) {
+    throw Object.assign(new Error('Registry contract is not deployed on the connected node'), { errorCode: 'BLOCKCHAIN_UNAVAILABLE' });
+  }
+  const bytes32Id = ethers.id(propertyId);
+  const [regs, xfers] = await Promise.all([
+    active.queryFilter(active.filters.PropertyRegistered(bytes32Id), 0, 'latest'),
+    active.queryFilter(active.filters.OwnershipTransferred(bytes32Id), 0, 'latest'),
+  ]);
+  const events = [];
+  for (const ev of regs) {
+    events.push({
+      operation: 'PROPERTY_REGISTER',
+      transactionHash: ev.transactionHash,
+      blockNumber: Number(ev.blockNumber),
+      from_address: null,
+      to_address: ev.args?.owner ? String(ev.args.owner) : null,
+      timestamp: ev.args?.timestamp ? new Date(Number(ev.args.timestamp) * 1000) : new Date(),
+    });
+  }
+  for (const ev of xfers) {
+    events.push({
+      operation: 'OWNERSHIP_TRANSFER',
+      transactionHash: ev.transactionHash,
+      blockNumber: Number(ev.blockNumber),
+      from_address: ev.args?.previousOwner ? String(ev.args.previousOwner) : null,
+      to_address: ev.args?.newOwner ? String(ev.args.newOwner) : null,
+      timestamp: ev.args?.timestamp ? new Date(Number(ev.args.timestamp) * 1000) : new Date(),
+    });
+  }
+  events.sort((a, b) => a.timestamp - b.timestamp);
+  return events;
 }
 
 /**
@@ -156,11 +213,21 @@ async function transferOwnershipOnChain(propertyId, expectedOwnerWallet, newOwne
     }
     const bytes32Id = ethers.id(propertyId);
 
+    // Self-heal registration: if the parcel was never registered on-chain,
+    // register it first and RETURN the receipt so callers can anchor the
+    // registration in the DB history (otherwise ownership history shows a
+    // transfer with no preceding REGISTRATION entry).
+    let healedRegistration = null;
     const registered = await active.isRegistered(bytes32Id);
     if (!registered) {
       logger.warn(`[blockchain] ${propertyId} not registered on-chain yet - registering before transfer settlement`);
       const regTx = await active.registerProperty(bytes32Id, expectedOwnerWallet);
-      await regTx.wait(1);
+      const regReceipt = await regTx.wait(1);
+      healedRegistration = {
+        transactionHash: regReceipt.hash,
+        blockNumber: Number(regReceipt.blockNumber),
+        owner: expectedOwnerWallet,
+      };
     }
 
     const onChainOwner = await active.getPropertyOwner(bytes32Id);
@@ -180,6 +247,7 @@ async function transferOwnershipOnChain(propertyId, expectedOwnerWallet, newOwne
       fromAddress: expectedOwnerWallet,
       toAddress: newOwnerWallet,
       gasUsed: receipt.gasUsed ? Number(receipt.gasUsed) : null,
+      healedRegistration,
     };
   });
 }
@@ -214,6 +282,7 @@ module.exports = {
   getPropertyOwnerOnChain,
   registerPropertyOnChain,
   transferOwnershipOnChain,
+  getParcelEvents,
   verifyOwnershipOnChain,
   humanError,
 };

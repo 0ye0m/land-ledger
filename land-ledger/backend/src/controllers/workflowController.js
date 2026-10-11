@@ -187,6 +187,7 @@ const surveyProperty = asyncHandler(async (req, res) => {
       { $set: { status: 'SURVEY_VERIFIED', survey_notes: notes, updated_at: new Date() } },
       { new: true }
     ).lean();
+  if (!updated) return fail(res, { message: 'This record changed while you were reviewing it - the action was not applied. Refresh and try again.', errorCode: 'INVALID_STATE', status: 409 });
     await pushPropertyHistory(property.id, { stage: 'SURVEY', action: 'SURVEY_PASSED', by_id: actor.id, by_name: actor.full_name, by_role: actor.role, notes });
     await auditService.record({
       actor: req.user, action: 'SURVEY_PASSED', entityType: 'property', entityId: property.property_id,
@@ -200,6 +201,7 @@ const surveyProperty = asyncHandler(async (req, res) => {
     { $set: { status: 'REJECTED', rejection_stage: 'SURVEY', review_notes: notes, updated_at: new Date() } },
     { new: true }
   ).lean();
+  if (!updated) return fail(res, { message: 'This record changed while you were reviewing it - the action was not applied. Refresh and try again.', errorCode: 'INVALID_STATE', status: 409 });
   await pushPropertyHistory(property.id, { stage: 'SURVEY', action: 'SURVEY_REJECTED', by_id: actor.id, by_name: actor.full_name, by_role: actor.role, notes });
   await auditService.record({
     actor: req.user, action: 'SURVEY_REJECTED', entityType: 'property', entityId: property.property_id,
@@ -230,6 +232,7 @@ const verifyPropertyDocs = asyncHandler(async (req, res) => {
       { $set: { status: 'DOCS_VERIFIED', updated_at: new Date() } },
       { new: true }
     ).lean();
+  if (!updated) return fail(res, { message: 'This record changed while you were reviewing it - the action was not applied. Refresh and try again.', errorCode: 'INVALID_STATE', status: 409 });
     await pushPropertyHistory(property.id, { stage: 'DOCUMENT_VERIFICATION', action: 'DOCS_VERIFIED', by_id: actor.id, by_name: actor.full_name, by_role: actor.role, notes });
     await auditService.record({
       actor: req.user, action: 'DOCS_VERIFIED_PASS', entityType: 'property', entityId: property.property_id,
@@ -243,6 +246,7 @@ const verifyPropertyDocs = asyncHandler(async (req, res) => {
     { $set: { status: 'REJECTED', rejection_stage: 'DOCUMENT_VERIFICATION', review_notes: notes, updated_at: new Date() } },
     { new: true }
   ).lean();
+  if (!updated) return fail(res, { message: 'This record changed while you were reviewing it - the action was not applied. Refresh and try again.', errorCode: 'INVALID_STATE', status: 409 });
   await pushPropertyHistory(property.id, { stage: 'DOCUMENT_VERIFICATION', action: 'DOCS_REJECTED', by_id: actor.id, by_name: actor.full_name, by_role: actor.role, notes });
   await auditService.record({
     actor: req.user, action: 'DOCS_VERIFIED_FAIL', entityType: 'property', entityId: property.property_id,
@@ -279,6 +283,7 @@ const verifyTransferDocs = asyncHandler(async (req, res) => {
       { $set: { status: 'DOCS_VERIFIED', doc_verified_by: actor.id, doc_verified_at: new Date(), doc_notes: notes, updated_at: new Date() } },
       { new: true }
     ).lean();
+  if (!updated) return fail(res, { message: 'This record changed while you were reviewing it - the action was not applied. Refresh and try again.', errorCode: 'INVALID_STATE', status: 409 });
     await auditService.record({
       actor: req.user, action: 'TRANSFER_DOCS_VERIFIED', entityType: 'transfer', entityId: transfer.transfer_reference,
       metadata: { notes: notes || 'transfer documents in order' },
@@ -291,6 +296,7 @@ const verifyTransferDocs = asyncHandler(async (req, res) => {
     { $set: { status: 'REJECTED', rejection_stage: 'DOCUMENT_VERIFICATION', rejection_reason: notes, rejected_by: actor.id, updated_at: new Date() } },
     { new: true }
   ).lean();
+  if (!updated) return fail(res, { message: 'This record changed while you were reviewing it - the action was not applied. Refresh and try again.', errorCode: 'INVALID_STATE', status: 409 });
   await auditService.record({
     actor: req.user, action: 'TRANSFER_DOCS_REJECTED', entityType: 'transfer', entityId: transfer.transfer_reference,
     result: 'FAILURE', metadata: { reason: notes },
@@ -320,6 +326,7 @@ const overrideRejectProperty = asyncHandler(async (req, res) => {
     { $set: { status: 'REJECTED', rejection_stage: stage, review_notes: reason, updated_at: new Date() } },
     { new: true }
   ).lean();
+  if (!updated) return fail(res, { message: 'This record changed while you were reviewing it - the action was not applied. Refresh and try again.', errorCode: 'INVALID_STATE', status: 409 });
   await pushPropertyHistory(property.id, { stage, action: 'ADMIN_OVERRIDE_REJECT', by_id: actor.id, by_name: actor.full_name, by_role: actor.role, notes: reason });
   await auditService.record({
     actor: req.user, action: 'PROPERTY_OVERRIDE_REJECT', entityType: 'property', entityId: property.property_id,
@@ -346,6 +353,7 @@ const overrideRejectTransfer = asyncHandler(async (req, res) => {
     { $set: { status: 'REJECTED', rejection_stage: stage, rejection_reason: reason, rejected_by: actor.id, updated_at: new Date() } },
     { new: true }
   ).lean();
+  if (!updated) return fail(res, { message: 'This record changed while you were reviewing it - the action was not applied. Refresh and try again.', errorCode: 'INVALID_STATE', status: 409 });
   await auditService.record({
     actor: req.user, action: 'TRANSFER_OVERRIDE_REJECT', entityType: 'transfer', entityId: transfer.transfer_reference,
     result: 'FAILURE', metadata: { reason, stoppedAtStage: stage },

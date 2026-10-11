@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowRightLeft, Plus } from 'lucide-react';
 import { transferService } from '../../services';
-import { useApi, useDocumentTitle, hashOf } from '../../hooks/index.js';
+import { useApi, useDocumentTitle, hashOf, useDebounced } from '../../hooks/index.js';
 import PageHeader from '../../components/registry/PageHeader.jsx';
 import DataTable from '../../components/registry/DataTable.jsx';
 import { StatusBadge, RiskBadge } from '../../components/registry/Badges.jsx';
@@ -16,14 +16,17 @@ import { formatDate, buildQuery } from '../../utils/format.js';
 export default function TransfersView({ role }) {
   useDocumentTitle('Transfers');
   const navigate = useNavigate();
+  // Deep-link support: /registrar/transfers?risk=HIGH opens pre-filtered.
+  const [searchParams] = useSearchParams();
   const [keyword, setKeyword] = useState('');
-  const [status, setStatus] = useState('');
-  const [risk, setRisk] = useState('');
+  const debouncedKeyword = useDebounced(keyword);
+  const [status, setStatus] = useState(searchParams.get('status') || '');
+  const [risk, setRisk] = useState(searchParams.get('risk') || '');
   const [page, setPage] = useState(1);
 
   const query = useMemo(
-    () => buildQuery({ propertyId: keyword, status, risk, page, pageSize: 10 }),
-    [hashOf({ keyword, status, risk, page })]
+    () => buildQuery({ propertyId: debouncedKeyword, status, risk, page, pageSize: 10 }),
+    [hashOf({ debouncedKeyword, status, risk, page })]
   );
   const { data, loading, error, refetch } = useApi(() => transferService.list(query), [query]);
   const rows = data?.data?.transfers || [];
@@ -92,7 +95,7 @@ export default function TransfersView({ role }) {
               setStatus(v);
               setPage(1);
             }}
-            options={['PENDING', 'APPROVED', 'REJECTED', 'COMPLETED', 'FAILED']}
+            options={['CONSENT_PENDING', 'PENDING', 'APPROVED', 'REJECTED', 'COMPLETED', 'FAILED']}
             placeholder="All statuses"
             ariaLabel="Filter by status"
           />

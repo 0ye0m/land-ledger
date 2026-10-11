@@ -41,6 +41,18 @@ export function useApi(fetcher, deps = [], { immediate = true } = {}) {
   return { data, loading, error, refetch, setData };
 }
 
+/** Debounce a fast-changing value (search inputs) so queries fire on pause,
+ * not on every keystroke - each keystroke previously meant one API round-trip
+ * with a server-side case-insensitive regex scan. */
+export function useDebounced(value, delayMs = 300) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delayMs);
+    return () => clearTimeout(id);
+  }, [value, delayMs]);
+  return debounced;
+}
+
 /** Re-runs when hash of deps changes. */
 export function hashOf(obj) {
   return JSON.stringify(obj);

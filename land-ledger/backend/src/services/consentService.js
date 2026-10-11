@@ -74,8 +74,10 @@ async function openConsentForTransfer({ transfer, propertyBusinessId }) {
   });
   const created = await TransferConsent.insertMany(rows, { ordered: true });
 
+  // Idempotent: the transfer is created directly in CONSENT_PENDING (see
+  // transferController) - this update only guards legacy PENDING rows.
   await TransferRequest.updateOne(
-    { _id: transfer.id, status: 'PENDING' },
+    { _id: transfer.id, status: { $in: ['PENDING', 'CONSENT_PENDING'] } },
     { $set: { status: 'CONSENT_PENDING' } }
   );
 

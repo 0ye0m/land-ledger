@@ -5,6 +5,7 @@ const User = require('../models/User');
 const Document = require('../models/Document');
 const TransferRequest = require('../models/TransferRequest');
 const BlockchainTransaction = require('../models/BlockchainTransaction');
+const PropertyParty = require('../models/PropertyParty');
 const Counter = require('../models/Counter');
 const { toRow, toRows, caseInsensitive } = require('../db/rows');
 const { ok, fail } = require('../utils/apiResponse');
@@ -136,7 +137,11 @@ const createTransfer = asyncHandler(async (req, res) => {
     seller_wallet: sellerWallet,
     buyer_id: buyerUser.id,
     buyer_wallet: buyerUser.wallet_address,
-    status: 'PENDING',
+    // Buyer is ALWAYS a required consent party (see consentService.requiredPartiesFor),
+    // so a fresh transfer can never legitimately skip the consent gate. Creating it
+    // directly in CONSENT_PENDING closes the crash window where a PENDING transfer
+    // with zero consent rows could be accepted by the clerk desk.
+    status: 'CONSENT_PENDING',
     risk_level: preflight.riskLevel,
     request_details: value.requestDetails || null,
   });
@@ -174,7 +179,7 @@ const createTransfer = asyncHandler(async (req, res) => {
   return ok(res, {
     message: consentPending
       ? 'Transfer created - it is now waiting for the required parties to consent before office review begins'
-      : 'Transfer request created successfully and sent for registrar review',
+      : 'Transfer created and cleared for office review',
     status: 201,
     data: {
       transfer,
@@ -347,7 +352,7 @@ const approveTransfer = asyncHandler(async (req, res) => {
     await BlockchainTransaction.create({
       property_id: transfer.property_id,
       transfer_id: transfer.id,
-      transaction_hash: `failed-${Date.now()}`,
+      transaction_hash: null, // never mined - no real hash exists
       block_number: null,
       network: 'hardhat',
       contract_address: null,
@@ -384,12 +389,48 @@ const approveTransfer = asyncHandler(async (req, res) => {
     timestamp: new Date(),
   });
 
-  // Settlement bookkeeping (guarded): flip owner, then mark transfer COMPLETED.
-  await Property.updateOne(
-    { _id: transfer.property_id, status: 'REGISTERED' },
-    { $set: { current_owner_id: transfer.buyer_id, current_owner_wallet: transfer.buyer_wallet } }
-  );
-  await TransferRequest.updateOne({ _id: transfer.id, status: 'APPROVED' }, { $set: { status: 'COMPLETED' } });
+  // Self-heal anchor: when the settlement first registered the parcel
+  // on-chain, persist that REGISTRATION receipt so ownership history has a
+  // complete chain (registration -> transfer).
+  if (receipt.healedRegistration && receipt.healedRegistration.transactionHash) {
+    await BlockchainTransaction.create({
+      property_id: transfer.property_id,
+      transfer_id: transfer.id,
+      transaction_hash: receipt.healedRegistration.transactionHash,
+      block_number: receipt.healedRegistration.blockNumber,
+      network: 'hardhat',
+      contract_address: blockchainService.getContractAddress(),
+      operation: 'PROPERTY_REGISTER',
+      from_address: null,
+      to_address: receipt.healedRegistration.owner,
+      status: 'CONFIRMED',
+      timestamp: new Date(),
+    });
+  }
+
+  // Belt-and-suspenders: only flip ownership if the transfer is STILL approved
+  // now that the chain receipt is back (it cannot be rejected concurrently -
+  // reject no longer accepts APPROVED - but this guards any future path).
+  const stillApproved = await TransferRequest.exists({ _id: transfer.id, status: 'APPROVED' });
+  if (stillApproved) {
+    // Settlement bookkeeping (guarded): flip owner, mark COMPLETED, and
+    // reconcile the application-level party board to the new ownership.
+    await Property.updateOne(
+      { _id: transfer.property_id, status: 'REGISTERED' },
+      { $set: { current_owner_id: transfer.buyer_id, current_owner_wallet: transfer.buyer_wallet } }
+    );
+    await TransferRequest.updateOne({ _id: transfer.id, status: 'APPROVED' }, { $set: { status: 'COMPLETED' } });
+
+    // Post-transfer reconciliation: the buyer is now the sole application-level
+    // owner; departed seller/co-owners must NOT remain required consent parties
+    // for future transfers of a property they no longer own.
+    await PropertyParty.deleteMany({ property_id: transfer.property_id });
+    await PropertyParty.create({
+      property_id: transfer.property_id,
+      user_id: transfer.buyer_id,
+      party_role: 'OWNER',
+    });
+  }
 
   await auditService.record({
     actor: req.user, action: 'BLOCKCHAIN_TX', entityType: 'blockchain', entityId: receipt.transactionHash,
@@ -414,8 +455,8 @@ const rejectTransfer = asyncHandler(async (req, res) => {
   }
   const transfer = await getTransferFull(req.params.id);
   if (!transfer) return fail(res, { message: 'Transfer not found', errorCode: 'TRANSFER_NOT_FOUND', status: 404 });
-  if (!['DOCS_VERIFIED', 'APPROVED'].includes(transfer.status)) {
-    return fail(res, { message: `Only transfers awaiting or under registrar review can be rejected here (current: ${transfer.status}). Pending files are rejected by the clerk.`, errorCode: 'INVALID_STATE', status: 409 });
+  if (!['DOCS_VERIFIED'].includes(transfer.status)) {
+    return fail(res, { message: `Only transfers awaiting registrar review can be rejected here (current: ${transfer.status}). A settled transfer is final; pending files are rejected by the clerk.`, errorCode: 'INVALID_STATE', status: 409 });
   }
 
   const reason = String(req.body.reason || '').trim();
@@ -423,11 +464,17 @@ const rejectTransfer = asyncHandler(async (req, res) => {
     return fail(res, { message: 'A rejection reason is required', errorCode: 'REASON_REQUIRED', status: 422 });
   }
 
+  // Reject is only allowed at DOCS_VERIFIED: once APPROVED, the on-chain
+  // settlement may already be in flight, and a rejection after a mined tx
+  // would leave the chain and the database permanently out of sync.
   const updatedDoc = await TransferRequest.findOneAndUpdate(
-    { _id: transfer.id, status: { $in: ['DOCS_VERIFIED', 'APPROVED'] } },
+    { _id: transfer.id, status: 'DOCS_VERIFIED' },
     { $set: { status: 'REJECTED', rejected_by: req.user.id, rejection_reason: reason, rejection_stage: 'REGISTRAR_REVIEW' } },
     { new: true }
   ).lean();
+  if (!updatedDoc) {
+    return fail(res, { message: 'Transfer is no longer awaiting registrar review', errorCode: 'INVALID_STATE', status: 409 });
+  }
 
   await auditService.record({
     actor: req.user, action: 'TRANSFER_REJECT', entityType: 'transfer', entityId: transfer.transfer_reference,

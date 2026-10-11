@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
-  ArrowLeft, FilePlus2, ArrowRightLeft, ShieldCheck, ShieldAlert, Database, Link2, RefreshCw, Download, ExternalLink, History,
+  ArrowLeft, FilePlus2, ArrowRightLeft, ShieldCheck, ShieldAlert, Database, Link2, RefreshCw, Download, ExternalLink, History, Check,
 } from 'lucide-react';
 import { propertyService, documentService, registrarService } from '../../services';
+import { getToken } from '../../services/api.js';
 import { REGISTRATION_STAGES } from '../../utils/constants';
 import { CheckCircle2, Circle, XCircle } from 'lucide-react';
 import { useApi, useDocumentTitle } from '../../hooks/index.js';
@@ -69,7 +70,7 @@ export default function PropertyDetail({ role }) {
       fd.append('propertyId', property.id);
       fd.append('documentType', uploadForm.documentType);
       fd.append('file', uploadForm.file);
-      const token = localStorage.getItem('landledger.token');
+      const token = getToken();
       const res = await fetch('/api/documents/upload', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd });
       const payload = await res.json();
       if (!res.ok || payload.success === false) throw new Error(payload.message || 'Upload failed');
@@ -307,6 +308,14 @@ export default function PropertyDetail({ role }) {
           </div>
         </section>
 
+        {/* Ownership chain - the full chain of title, straight from the ledger */}
+        <section className="lg:col-span-2">
+          <SectionKicker>Ownership chain · who owned this land</SectionKicker>
+          <div className="registry-panel mt-3 p-5">
+            <OwnershipChain propertyId={property.property_id} isRegistrar={isRegistrar} />
+          </div>
+        </section>
+
         {/* Blockchain history */}
         <section className="lg:col-span-2">
           <SectionKicker>Blockchain history</SectionKicker>
@@ -480,6 +489,7 @@ const ACTION_LABELS = {
 function WorkflowTracker({ property }) {
   const history = Array.isArray(property.stage_history) ? property.stage_history : [];
   const rejected = property.status === 'REJECTED';
+  const registered = property.status === 'REGISTERED';
   const currentIndex = rejected ? -1 : (STAGE_INDEX[property.status] ?? 0);
 
   return (
@@ -489,7 +499,7 @@ function WorkflowTracker({ property }) {
         {/* Stage rail */}
         <div className="flex flex-wrap gap-x-2 gap-y-2">
           {REGISTRATION_STAGES.map((s, i) => {
-            const done = !rejected && i < currentIndex;
+            const done = registered || (!rejected && i < currentIndex);
             const current = !rejected && i === currentIndex;
             const reached = done || current;
             return (
@@ -537,5 +547,113 @@ function WorkflowTracker({ property }) {
         )}
       </div>
     </section>
+  );
+}
+
+/**
+ * OwnershipChain - the full chain of title for this parcel, read from the
+ * ledger (GET /api/properties/:id/ownership-history). Shows every confirmed
+ * on-chain event in order: first registration, then each purchase, with the
+ * holder's NAME resolved from the registry (not just a wallet string), the
+ * transfer reference it came from, and the real transaction hash.
+ */
+function OwnershipChain({ propertyId, isRegistrar }) {
+  const { data, loading, error } = useApi(() => propertyService.ownershipHistory(propertyId), [propertyId]);
+  const payload = data && data.data ? data.data : null;
+  const history = (payload && Array.isArray(payload.history)) ? payload.history : [];
+  const currentOwner = payload ? payload.currentOwner : null;
+
+  if (loading) return <LoadingState block={false} label="Loading chain of title…" />;
+  if (error) {
+    return <p className="text-[12.5px] text-destructive">Ownership history could not be loaded for this parcel.</p>;
+  }
+  if (!history.length) {
+    return (
+      <EmptyState
+        title="No on-chain ownership events yet"
+        message="The chain of title appears here as soon as the parcel is registered on the ledger - every registration and every purchase will be listed below in order, with the holder's name and the transaction that settled it."
+        icon={History}
+      />
+    );
+  }
+
+  return (
+    <div>
+      <ol className="timeline">
+        {history.map((h, i) => (
+          <li key={h.transactionHash || i} className="timeline-step">
+            <div className="timeline-rail">
+              <span className="timeline-dot done" role="img" aria-label="completed">
+                <Check size={9} className="text-[rgb(var(--ll-accent-foreground))]" />
+              </span>
+              {i < history.length - 1 ? <span className="timeline-line" /> : null}
+            </div>
+            <div className="min-w-0 pb-1">
+              <p className="timeline-title">
+                <span className="text-[10px] font-bold text-muted-foreground tracking-[0.1em]">{String(i + 1).padStart(2, '0')}</span>
+                {h.type === 'REGISTRATION' ? 'Registered on the ledger' : 'Purchased · ownership transferred'}
+              </p>
+              <div className="timeline-meta flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                {h.type === 'REGISTRATION' ? (
+                  <span className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-muted-foreground">First holder:</span>
+                    <OwnerTag party={h.owner} />
+                  </span>
+                ) : (
+                  <span className="flex flex-wrap items-center gap-1.5">
+                    <OwnerTag party={h.previousOwner} fallback="previous holder" />
+                    <ArrowRightLeft size={13} className="text-muted-foreground flex-none" />
+                    <OwnerTag party={h.newOwner} fallback="new holder" />
+                    {h.transfer && h.transfer.reference ? (
+                      <Link
+                        to={isRegistrar ? `/registrar/transfers/${h.transfer.reference}` : `/citizen/transfers/${h.transfer.reference}`}
+                        className="font-mono text-[11px] font-semibold link ml-1"
+                      >
+                        {h.transfer.reference}
+                      </Link>
+                    ) : null}
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] muted mt-0.5">
+                {h.timestamp ? formatDate(h.timestamp, { withTime: true }) : ''}
+                {h.blockNumber != null ? ` · block ${h.blockNumber}` : ''}
+                {` · network ${h.network || 'hardhat'}`}
+              </p>
+              {h.transactionHash ? (
+                <div className="mt-1.5">
+                  <HashChip hash={h.transactionHash} />
+                </div>
+              ) : null}
+            </div>
+          </li>
+        ))}
+      </ol>
+
+      {currentOwner ? (
+        <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3 mt-3">
+          <span className="text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">Current holder</span>
+          <OwnerTag party={currentOwner} />
+          <span className="text-[11px] muted ml-auto inline-flex items-center gap-1">
+            <ShieldCheck size={12} className="text-[rgb(var(--ll-accent))]" /> settled on-chain
+          </span>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/** Name + wallet chip for a chain-of-title participant. */
+function OwnerTag({ party, fallback }) {
+  if (!party || (!party.name && !party.wallet)) {
+    return <span className="text-muted-foreground">{fallback || 'Unknown holder'}</span>;
+  }
+  return (
+    <span className="inline-flex flex-col leading-tight">
+      <span className="font-semibold text-[12.5px] text-foreground">{party.name || 'Unknown holder'}</span>
+      {party.wallet ? (
+        <span className="font-mono text-[10.5px] text-muted-foreground">{truncateText(party.wallet, 16)}</span>
+      ) : null}
+    </span>
   );
 }

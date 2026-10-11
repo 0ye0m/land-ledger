@@ -14,7 +14,10 @@ const btxSchema = new mongoose.Schema(
     _id: { type: String, default: () => crypto.randomUUID() },
     property_id: { type: String, default: null, index: true },
     transfer_id: { type: String, default: null, index: true },
-    transaction_hash: { type: String, required: true, index: true },
+    // REAL mined transaction hash when CONFIRMED/PENDING. FAILED rows keep
+    // null - a tx that never mined has no hash, and fabricating one poisons
+    // every downstream hash consumer (explorer, history, audit).
+    transaction_hash: { type: String, default: null, index: true },
     block_number: { type: Number, default: null },
     network: { type: String, default: 'hardhat' },
     contract_address: { type: String, default: null },

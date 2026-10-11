@@ -235,11 +235,6 @@ const approveProperty = asyncHandler(async (req, res) => {
     return fail(res, { message: `Only applications cleared by document verification can be approved (current stage: ${property.status})`, errorCode: 'INVALID_STATE', status: 409 });
   }
 
-  await auditService.record({
-    actor: req.user, action: 'PROPERTY_APPROVE', entityType: 'property', entityId: property.property_id,
-    metadata: { title: property.title, phase: 'approved_pending_ledger' },
-  });
-
   // Blockchain registration occurs only after approval.
   const ownerWallet = property.current_owner_wallet;
   if (!ownerWallet || !/^0x[a-fA-F0-9]{40}$/.test(ownerWallet)) {
@@ -258,6 +253,12 @@ const approveProperty = asyncHandler(async (req, res) => {
     const suffixMatch = String(property.property_id).match(/(\d+)$/);
     if (suffixMatch) require('../utils/chainCursor').bumpPropertyCursor(parseInt(suffixMatch[1], 10));
   } catch (err) {
+    // The approval did NOT complete end-to-end - audit it as a failure so the
+    // trail never claims success for a registration that never happened.
+    await auditService.record({
+      actor: req.user, action: 'PROPERTY_APPROVE', entityType: 'property', entityId: property.property_id,
+      result: 'FAILURE', metadata: { title: property.title, error: blockchainService.humanError(err) },
+    });
     await auditService.record({
       actor: req.user, action: 'BLOCKCHAIN_TX_FAILED', entityType: 'property', entityId: property.property_id,
       result: 'FAILURE', metadata: { operation: 'PROPERTY_REGISTER', error: blockchainService.humanError(err) },
@@ -269,7 +270,9 @@ const approveProperty = asyncHandler(async (req, res) => {
     });
   }
 
-  const txCreated = await BlockchainTransaction.create({
+  // Only create an explorer row for a REAL mined registration transaction;
+  // an alreadyRegistered self-heal carries no new tx.
+  const txCreated = receipt.alreadyRegistered ? null : await BlockchainTransaction.create({
     property_id: property.id,
     transaction_hash: receipt.transactionHash,
     block_number: receipt.blockNumber,
@@ -287,10 +290,29 @@ const approveProperty = asyncHandler(async (req, res) => {
     { new: true }
   ).lean();
 
+  if (!updatedDoc) {
+    // Chain registration succeeded but the property left DOCS_VERIFIED
+    // concurrently (e.g. admin override-reject). The parcel is registered
+    // on-chain; the next transfer's self-heal reconciles ownership, so report
+    // the state mismatch honestly instead of returning property:null.
+    return fail(res, {
+      message: 'The property left legal review while registration was in progress. The ledger entry exists - refresh and re-check the record.',
+      errorCode: 'INVALID_STATE',
+      status: 409,
+    });
+  }
+
+  // Success-only audit points (never claim success before the outcome).
   await auditService.record({
-    actor: req.user, action: 'BLOCKCHAIN_TX', entityType: 'blockchain', entityId: receipt.transactionHash,
-    metadata: { operation: 'PROPERTY_REGISTER', propertyId: property.property_id, block: receipt.blockNumber },
+    actor: req.user, action: 'PROPERTY_APPROVE', entityType: 'property', entityId: property.property_id,
+    metadata: { title: property.title, txHash: receipt.transactionHash, alreadyRegistered: Boolean(receipt.alreadyRegistered) },
   });
+  if (receipt.transactionHash) {
+    await auditService.record({
+      actor: req.user, action: 'BLOCKCHAIN_TX', entityType: 'blockchain', entityId: receipt.transactionHash,
+      metadata: { operation: 'PROPERTY_REGISTER', propertyId: property.property_id, block: receipt.blockNumber },
+    });
+  }
   await auditService.record({
     actor: req.user, action: 'PROPERTY_REGISTERED', entityType: 'property', entityId: property.property_id,
     metadata: { txHash: receipt.transactionHash },
@@ -298,7 +320,7 @@ const approveProperty = asyncHandler(async (req, res) => {
 
   return ok(res, {
     message: 'Property approved and registered on the ledger',
-    data: { property: toRow(updatedDoc), blockchainTransaction: toRow(txCreated.toObject()) },
+    data: { property: toRow(updatedDoc), blockchainTransaction: txCreated ? toRow(txCreated.toObject()) : null },
   });
 });
 

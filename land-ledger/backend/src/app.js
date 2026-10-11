@@ -39,8 +39,12 @@ function createApp() {
   }));
   app.use(cors({
     origin(origin, cb) {
+      // Same-origin requests (deployed preview, vite dev proxy) send no Origin
+      // header for server-to-server style calls - allow those. Everything else
+      // must be explicitly allowlisted; never reflect arbitrary origins with
+      // credentials enabled.
       if (!origin || env.corsOrigin.includes(origin) || origin.includes('preview') || origin.includes('localhost')) return cb(null, true);
-      cb(null, true); // sandbox-friendly; production should tighten this list
+      cb(null, false);
     },
     credentials: true,
   }));
@@ -80,13 +84,13 @@ function createApp() {
   app.use('/api/registrar', registrarRoutes);
   app.use('/api/workflow', workflowRoutes);
   app.use('/api/consents', consentRoutes);
-  app.get('/api/audit', require('./middleware/auth').requireAuth, require('./middleware/auth').requireRole('registrar'), require('./controllers/registrarController').auditLogs);
+  app.get('/api/audit', require('./middleware/auth').requireAuth, require('./middleware/auth').requireRole('registrar', 'admin'), require('./controllers/registrarController').auditLogs);
 
-  // Uploaded documents storage (UUID filenames; authenticated download also available).
-  const uploadRoot = path.resolve(process.cwd(), env.uploads.dir);
-  if (fs.existsSync(uploadRoot)) {
-    app.use('/uploads', express.static(uploadRoot, { maxAge: '1d', immutable: true }));
-  }
+  // NOTE: /uploads is intentionally NOT mounted as a static directory.
+  // Uploaded files are served ONLY through the authenticated, ACL-checked
+  // /api/documents/:id/download endpoint (which also audits DOCUMENT_DOWNLOAD).
+  // Serving the raw directory would let anyone with a leaked storage_path
+  // fetch identity proofs and bypass the SHA-256 audit trail.
 
   // Integrated frontend: serve the built Vite SPA (single-port deployment).
   const distDir = path.resolve(process.cwd(), '..', 'frontend', 'dist');

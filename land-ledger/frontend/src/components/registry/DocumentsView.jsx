@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck, RefreshCw, Download, FileText, CheckCircle2, XCircle } from 'lucide-react';
 import { documentService } from '../../services';
-import { useApi, useDocumentTitle, hashOf } from '../../hooks/index.js';
+import { useApi, useDocumentTitle, hashOf, useDebounced } from '../../hooks/index.js';
 import PageHeader from '../../components/registry/PageHeader.jsx';
 import DataTable from '../../components/registry/DataTable.jsx';
 import { StatusBadge, HashChip } from '../../components/registry/Badges.jsx';
@@ -22,6 +22,7 @@ export default function DocumentsView({ role }) {
   useDocumentTitle('Documents');
   const toast = useToast();
   const [keyword, setKeyword] = useState('');
+  const debouncedKeyword = useDebounced(keyword);
   const [status, setStatus] = useState('');
   const [docType, setDocType] = useState('');
   const [page, setPage] = useState(1);
@@ -29,7 +30,7 @@ export default function DocumentsView({ role }) {
   const [busyId, setBusyId] = useState(null);
   const [verifyingId, setVerifyingId] = useState(null);
 
-  const query = useMemo(() => buildQuery({ keyword, status, documentType: docType, page, pageSize: 10 }), [hashOf({ keyword, status, docType, page })]);
+  const query = useMemo(() => buildQuery({ keyword: debouncedKeyword, status, documentType: docType, page, pageSize: 10 }), [hashOf({ debouncedKeyword, status, docType, page })]);
   const { data, loading, error, refetch } = useApi(() => documentService.list(query), [query]);
   const docs = data?.data?.documents || [];
   const isRegistrar = role === 'registrar';

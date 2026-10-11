@@ -6,7 +6,7 @@ const TransferRequest = require('../models/TransferRequest');
 const User = require('../models/User');
 const BlockchainTransaction = require('../models/BlockchainTransaction');
 const Counter = require('../models/Counter');
-const { toRow, toRows, caseInsensitive } = require('../db/rows');
+const { toRow, toRows, sanitizeDocument, caseInsensitive } = require('../db/rows');
 const { ok, fail } = require('../utils/apiResponse');
 const { asyncHandler } = require('../utils/asyncHandler');
 const { validateProperty } = require('../validators');
@@ -31,7 +31,7 @@ async function decorateProperties(rows) {
   const docCountById = Object.fromEntries(docCounts.map((d) => [d._id, d.n]));
 
   const activeTransfers = await TransferRequest.aggregate([
-    { $match: { property_id: { $in: propertyIds }, status: { $in: ['PENDING', 'APPROVED'] } } },
+    { $match: { property_id: { $in: propertyIds }, status: { $in: ['PENDING', 'CONSENT_PENDING', 'APPROVED'] } } },
     { $group: { _id: '$property_id', n: { $sum: 1 } } },
   ]);
   const activeTransferById = Object.fromEntries(activeTransfers.map((t) => [t._id, t.n]));
@@ -171,9 +171,11 @@ const getProperty = asyncHandler(async (req, res) => {
   const isOwner = property.current_owner_id === req.user.id;
   const isSubmitter = property.submitted_by_id === req.user.id;
   const isRegistrar = req.user.role === 'registrar';
+  // Surveyor/clerk act on the file in their queues; admin has oversight mandate.
+  const isStaff = ['surveyor', 'clerk', 'admin'].includes(req.user.role);
   const publiclyVisible = property.status === 'REGISTERED';
 
-  if (!isRegistrar && !isOwner && !isSubmitter && !publiclyVisible) {
+  if (!isRegistrar && !isStaff && !isOwner && !isSubmitter && !publiclyVisible) {
     return fail(res, { message: 'You do not have access to this property record', errorCode: 'FORBIDDEN', status: 403 });
   }
 
@@ -196,7 +198,7 @@ const getProperty = asyncHandler(async (req, res) => {
   const nameById = Object.fromEntries(people.map((u) => [u._id, u.full_name]));
 
   const documents = toRows(documentDocs).map((d) => ({
-    ...d,
+    ...sanitizeDocument(d),
     uploaded_by_name: d.uploaded_by ? nameById[d.uploaded_by] || null : null,
     verified_by_name: d.verified_by ? nameById[d.verified_by] || null : null,
   }));

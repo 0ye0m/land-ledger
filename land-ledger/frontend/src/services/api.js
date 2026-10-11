@@ -63,6 +63,15 @@ export async function api(path, { method = 'GET', body, formData, signal } = {})
   }
 
   if (!res.ok || (payload && payload.success === false)) {
+    // Global session-expiry handling: an expired/invalid JWT mid-session should
+    // drop the stale token and return the user to sign-in, not leave every
+    // page showing a dead retry loop.
+    if (res.status === 401 && ['UNAUTHENTICATED', 'INVALID_TOKEN', 'USER_NOT_FOUND'].includes((payload && payload.errorCode) || '')) {
+      setToken(null);
+      if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+        window.location.assign('/login');
+      }
+    }
     throw new ApiError({
       message: (payload && payload.message) || `Request failed with status ${res.status}`,
       errorCode: (payload && payload.errorCode) || 'REQUEST_FAILED',

@@ -125,14 +125,20 @@ land-ledger/
 
 The token carries only `{ sub, role }`; **every protected request reloads the user from MongoDB**, so role changes/disabled accounts take effect immediately. `requireRole('registrar')` guards all registrar endpoints. Citizens can never approve anything, change their role, or modify chain ownership; registrars themselves remain subject to smart-contract authorization (the operator account is the only account that can mutate the registry on-chain).
 
-**Demo accounts (seeded):**
+**Demo accounts (seeded, allowlisted only - password login alone cannot sign in; a 6-digit email OTP is required):**
 
 | Role | Email | Password |
 | --- | --- | --- |
-| Registrar | `meera.krishnan@landledger.gov` | `Registrar@123` |
-| Citizen | `asha.rao@example.com` | `Citizen@123` |
-| Citizen | `vikram.mehta@example.com` | `Citizen@123` |
-| Citizen | `priya.nair@example.com` | `Citizen@123` |
+| Citizen | `mandwadeom2616@gmail.com` | `LandLedger@123` |
+| Citizen | `shrutipethe111@gmail.com` | `LandLedger@123` |
+| Surveyor | `panpaliyaag@rknec.edu` | `LandLedger@123` |
+| Clerk | `tekdiwalnishant@gmail.com` | `LandLedger@123` |
+| Registrar | `omdummy101@gmail.com` | `LandLedger@123` |
+| Admin | `omdummy102@gmail.com` | `LandLedger@123` |
+| Citizen | `alphadummy103@gmail.com` | `LandLedger@123` |
+| Citizen | `alpha20051610@gmail.com` | `LandLedger@123` |
+
+The full account/role map lives in `land-ledger/docs/DEMO-GUIDE.md`.
 
 ---
 

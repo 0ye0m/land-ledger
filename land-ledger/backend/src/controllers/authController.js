@@ -2,6 +2,7 @@
 
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const MfaChallenge = require('../models/MfaChallenge');
 const { toRow } = require('../db/rows');
 const { ok, fail } = require('../utils/apiResponse');
 const { asyncHandler } = require('../utils/asyncHandler');
@@ -164,14 +165,27 @@ const verifyOtp = asyncHandler(async (req, res) => {
         ? 'Too many incorrect codes. This verification request is now locked - please sign in again.'
         : otpService.GENERIC_INVALID;
 
+    // Telemetry only (never returned to the client): attribute the failure to
+    // the challenged account so per-account OTP brute force is visible in
+    // login_events instead of anonymous null-email rows.
+    let failEmail = null;
+    try {
+      const challengeDoc = await MfaChallenge.findById(challengeId).select('user_id').lean();
+      if (challengeDoc && challengeDoc.user_id) {
+        const owner = await User.findById(challengeDoc.user_id).select('email').lean();
+        failEmail = owner ? owner.email : null;
+      }
+    } catch (telemetryErr) {
+      // best-effort; never block the auth response on telemetry
+    }
+
     await record({
       actor: null, action: 'MFA_VERIFY_FAILURE', entityType: 'mfa', entityId: challengeId,
       result: 'FAILURE', metadata: { reason: result.reason, errorCode: code },
     });
-    logLogin(req, { user, email: null, outcome: 'FAILURE', reason: code === 'MFA_EXPIRED' ? 'MFA_EXPIRED' : 'MFA_FAILED' });
+    logLogin(req, { user: null, email: failEmail, outcome: 'FAILURE', reason: code === 'MFA_EXPIRED' ? 'MFA_EXPIRED' : 'MFA_FAILED' });
 
-    const status = code === 'MFA_EXPIRED' || code === 'MFA_ATTEMPTS_EXCEEDED' ? 401 : 401;
-    return fail(res, { message, errorCode: code, status });
+    return fail(res, { message, errorCode: code, status: 401 });
   }
 
   await User.updateOne({ _id: user.id }, { $set: { last_activity_at: new Date() } });

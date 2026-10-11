@@ -27,4 +27,16 @@ function caseInsensitive(text) {
   return new RegExp(escapeRegExp(text), 'i');
 }
 
-module.exports = { toRow, toRows, escapeRegExp, caseInsensitive };
+/**
+ * Strip server-only fields from a document row before it leaves the API.
+ * storage_path is an internal filesystem reference; downloads MUST go through
+ * the authenticated /api/documents/:id/download endpoint (ACL + hash audit),
+ * never a raw path the client could hit directly.
+ */
+function sanitizeDocument(row) {
+  if (!row) return null;
+  const { storage_path, ...rest } = row;
+  return rest;
+}
+
+module.exports = { toRow, toRows, escapeRegExp, caseInsensitive, sanitizeDocument };

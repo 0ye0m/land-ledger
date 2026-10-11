@@ -93,7 +93,7 @@ async function runFraudChecks(input) {
 
   // 4. Duplicate active transfer requests
   if (property) {
-    const dupFilter = { property_id: property.id, status: { $in: ['PENDING', 'APPROVED'] } };
+    const dupFilter = { property_id: property.id, status: { $in: ['PENDING', 'CONSENT_PENDING', 'APPROVED'] } };
     if (input.excludeTransferId) dupFilter._id = { $ne: input.excludeTransferId };
     const active = await TransferRequest.countDocuments(dupFilter);
     if (active > 0) {

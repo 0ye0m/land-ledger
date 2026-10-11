@@ -5,7 +5,7 @@ const path = require('path');
 const Document = require('../models/Document');
 const Property = require('../models/Property');
 const User = require('../models/User');
-const { toRow, toRows, caseInsensitive } = require('../db/rows');
+const { toRow, toRows, sanitizeDocument, caseInsensitive } = require('../db/rows');
 const { ok, fail } = require('../utils/apiResponse');
 const { asyncHandler } = require('../utils/asyncHandler');
 const { sha256File } = require('../utils/hash');
@@ -124,7 +124,8 @@ const listDocuments = asyncHandler(async (req, res) => {
   const propById = Object.fromEntries(props.map((p) => [p._id, p]));
   const nameById = Object.fromEntries(people.map((u) => [u._id, u.full_name]));
 
-  const documents = toRows(docs).map((d) => {
+  const documents = toRows(docs).map((raw) => {
+    const d = sanitizeDocument(raw);
     const p = propById[d.property_id];
     return {
       ...d,
@@ -140,6 +141,9 @@ const listDocuments = asyncHandler(async (req, res) => {
 
 async function getDocumentAccessible(req, res) {
   // _id is a plain String field (uuid) - no cast errors for malformed ids.
+  // Returns the RAW row (storage_path included) - internal file operations
+  // (integrity check, verify, download) need it. API RESPONSES are sanitized
+  // at their own serialization points (see getDocument).
   const docDoc = await Document.findById(req.params.id).lean();
   const docRow = docDoc ? toRow(docDoc) : null;
   if (!docRow) {
@@ -181,7 +185,7 @@ const getDocument = asyncHandler(async (req, res) => {
   return ok(res, {
     message: 'Document loaded',
     data: {
-      document: doc,
+      document: sanitizeDocument(doc),
       uploadedBy: uploader ? { full_name: uploader.full_name, email: uploader.email } : null,
       verifiedBy: verifier ? { full_name: verifier.full_name, email: verifier.email } : null,
     },
@@ -286,7 +290,14 @@ const downloadDocument = asyncHandler(async (req, res) => {
   await auditService.record({ actor: req.user, action: 'DOCUMENT_DOWNLOAD', entityType: 'document', entityId: doc.id });
   res.setHeader('Content-Type', doc.mime_type || 'application/octet-stream');
   res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(doc.file_name)}"`);
-  fs.createReadStream(absolute).pipe(res);
+  const stream = fs.createReadStream(absolute);
+  // A read error after the existsSync check (TOCTOU, permissions) must not
+  // become an unhandled 'error' event that crashes the process.
+  stream.on('error', () => {
+    if (!res.headersSent) fail(res, { message: 'Failed to read stored file', errorCode: 'FILE_READ_FAILED', status: 500 });
+    else res.end();
+  });
+  stream.pipe(res);
 });
 
 module.exports = { uploadDocument, listDocuments, getDocument, verifyIntegrity, verifyDocument, downloadDocument, DOC_TYPES };
