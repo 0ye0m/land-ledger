@@ -540,3 +540,19 @@ Work Log:
 
 Stage Summary:
 - First recycle where ZERO manual repair was needed - revive.sh + committed dist + SMTP self-heal = fully autonomous recovery; playbook stable
+
+---
+Task ID: 30
+Agent: Super Z (main)
+Task: Full project audit + fixes + ownership-chain provenance + process visibility (user request: "users can see what is happening + land association + chain history of who purchased it")
+
+Work Log:
+- Recycle #7 revived; two parallel Explore audits (backend + frontend) produced 31 findings with file:line evidence
+- BACKEND FIXES: CONSENT_PENDING added to duplicate-transfer + active-count + dashboard metric sets; OTP attempts now atomic findOneAndUpdate $inc (brute-force race closed); 8 workflow decision blocks + transfer reject now 409 on lost races (no more property:null + phantom stage history); transfer create starts directly CONSENT_PENDING (crash window closed) + clerk consent-row assertion; rejectTransfer no longer accepts APPROVED (reject/settlement race closed); settlement re-reads APPROVED before owner flip + reconciles property_parties to the buyer (stale co-owners no longer gate future transfers); self-heal registration receipt returned + persisted (REGISTRATION anchor); FAILED txs keep transaction_hash null (no fabricated hashes); registrar approve: isRegistered idempotency + PROPERTY_APPROVE audited only at real outcome + null-flip 409; /uploads static mount REMOVED + storage_path stripped from all API responses (downloads only via ACL'd endpoint); CORS no longer reflects arbitrary origins; property detail + ownership-history opened to surveyor/clerk/admin; registrar audit/activity/login-events opened to admin; download stream error handler; verify-otp login_events now carry the challenged account email; dead ternary + unreachable message cleaned; dead e2e-demo-flow.js deleted; README creds table -> 8 allowlisted identities
+- FRONTEND FIXES: registrar panel gate PENDING->DOCS_VERIFIED (was dead CTA); global 401 -> clear token + redirect; expired OTP flips back to step 1 + "sign in again" (resend dead-end gone); doVerify in-flight guard (no double POST); EmptyState action gate; REGISTERED renders as completed on rail; CONSENT_PENDING filter option; failed txs render plain text (no fake hash chips); deep-link ?risk=&status= filters; 300ms search debounce (3 views); getToken() for uploads; registrar dead ternary removed
+- FEATURES: buildTransferSteps rewritten to real state machine (Party consent + Document verification stages now visible with x/y approvals + who acts next); OwnershipChain section on property detail - chronological chain of title with NAMES resolved from registry, transfer reference links, real tx hashes; backend ownershipHistory endpoint rebuilt: merges DB index with the CONTRACT'S OWN EVENT LOG (queryFilter PropertyRegistered/OwnershipTransferred) so parcels registered before the explorer index still show complete provenance; wallet->identity resolution made case-proof (load all 8 registry wallets)
+- Mid-fix regression caught: sanitizeDocument broke internal file ops (storage_path needed server-side) -> raw accessor + response-only sanitization; param-rename bug (d vs raw) crashed property detail -> E2E caught it, fixed
+- GAUNTLET: backend 44/44, contract 20/20, E2E 56/56, vite build clean; browser-verified: workflow rail all-complete styling, stage history with names/notes, Ownership chain section with first holder + current holder + real hash
+
+Stage Summary:
+- Users now SEE the process (every stage + who acts next) and the land's full ownership history (who purchased it, from the ledger's own events); 15+ real defects fixed across backend/frontend/db; all suites green; committed + pristine reseed
