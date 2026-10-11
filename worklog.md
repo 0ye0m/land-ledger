@@ -556,3 +556,27 @@ Work Log:
 
 Stage Summary:
 - Users now SEE the process (every stage + who acts next) and the land's full ownership history (who purchased it, from the ledger's own events); 15+ real defects fixed across backend/frontend/db; all suites green; committed + pristine reseed
+
+---
+Task ID: 31
+Agent: Super Z (main)
+Task: HackerEarth-style circular theme-morph animation + "not able to open some options / website abnormalled" diagnosis and fixes
+
+Work Log:
+- Workspace was ALIVE (no recycle) - health OK, DB + blockchain connected, latestBlock 11
+- Reproduced user bug headlessly on dev-mode 3100 boot: first nav click works, EVERY subsequent click dead; console showed ReferenceError: useDebounced is not defined
+- ROOT CAUSE: Task-30 added useDebounced(keyword) to pages/citizen/PropertiesPage.jsx but never imported it; vite compiles unresolved identifiers to bare globals -> ReferenceError the moment citizen Properties mounts -> ENTIRE React tree crashes -> all navigation/opts appear broken ("website abnormalled" = post-crash state)
+- Static sweep (scripts/check-imports.mjs) confirmed no other file has a missing custom-hook import; fixed the one-line import
+- THEME MORPH: ThemeToggle.jsx rewritten - document.startViewTransition wraps the flip, transition.ready then WAAPI clip-path circle(0px at x y) -> circle(endRadius) on ::view-transition-new(root), 1200ms cubic-bezier(0.25,1,0.5,1), origin = actual click point (keyboard fallback anchors button center); graceful fallbacks: no API / prefers-reduced-motion -> instant flip; index.css: view-transition pseudos animation:none + mix-blend normal, new layer z-index guard
+- Headless verification: startViewTransition invoked both directions, clip animation captured (circle(0px at 1058px 35px), dur 1200, pseudoElement ::view-transition-new(root)), dark/light persist to localStorage
+- SECOND BUG (audit): express.static maxAge 1h on index.html - after any rebuild users' browsers hold stale HTML referencing renamed chunks -> blank page until cache expiry (browser-cache twin of the git blank-page bug); LIVE-REPRODUCED in headless (old entry 404 -> SPA fallback HTML-as-JS -> root 0 children)
+- FIX: index.html + SPA fallback now Cache-Control: no-cache (ETag revalidate), hashed /assets/* public max-age 7d immutable
+- THIRD cleanup: land-ledger/scripts/e2e-demo-flow.js (dead v1 spec script, old identities) removed per Task-30 cleanup intent
+- BUILD GUARD: build-frontend.js now statically checks every custom hook (useApi/useDocumentTitle/hashOf/useDebounced/applyTheme) is imported-or-defined before vite build; aborts on unresolved globals
+- Rebuilt dist (new entry index-CG_uqHli.js), committed fully
+- FULL CLICK-THROUGH (headless, dev boot): citizen all pages + detail routes + register + transfers/new; registrar all 8 pages + 3 detail routes; surveyor/clerk/admin dashboards with correct role routing; public register + 404; mobile 390px drawer opens with all 6 links - ZERO console errors everywhere
+- GAUNTLET after fixes: backend 44/44, contract 20/20, E2E scripts/test-workflow.js 56/56 (protocol: reseed --force -> dedicated 3100 boot MFA_DEV_MODE=1 SMTP_HOST= -> single clean run); pristine reseed restored after; main app restarted via start-cloud, health green
+- Commits: 7e7fd22 then amended -> 5b3987d (screenshot artifact removed from git, download/ gitignored)
+
+Stage Summary:
+- The "broken options" was ONE missing import crashing React on citizen Properties; fixed + permanently guarded at build time; theme switch now has the premium circular morph (HackerEarth-style) with zero structural changes; SPA cache policy hardened against the stale-HTML blank-page class; all suites green; demo state pristine (TRF-2026-0001 CONSENT_PENDING)
