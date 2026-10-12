@@ -1,4 +1,4 @@
-import { get, post } from './api';
+import { get, post, getToken } from './api';
 
 /**
  * Build a query string, silently dropping undefined / null / empty values.
@@ -50,6 +50,37 @@ export const documentService = {
   verifyIntegrity: (id) => post(`/documents/${id}/verify-integrity`),
   verify: (id, outcome) => post(`/documents/${id}/verify`, { outcome }),
   downloadUrl: (id) => `/api/documents/${id}/download`,
+  /**
+   * Open a document in a new tab with proper authentication.
+   * The download endpoint requires an Authorization header, which a plain
+   * <a href> navigation can never attach (the JWT lives in localStorage,
+   * not cookies) - so navigation landed on a raw JSON 401. We fetch the
+   * bytes as a blob and open a temporary object URL instead.
+   * Returns { ok, message } so callers can toast the outcome.
+   */
+  open: async (id) => {
+    try {
+      const res = await fetch(`/api/documents/${id}/download`, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      if (!res.ok) {
+        let message = 'Unable to open document';
+        try {
+          const j = await res.json();
+          message = j.message || message;
+        } catch { /* non-JSON error body */ }
+        return { ok: false, message };
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank', 'noopener');
+      // Give the new tab time to load before releasing the blob.
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, message: err?.message || 'Unable to open document' };
+    }
+  },
 };
 
 export const transferService = {

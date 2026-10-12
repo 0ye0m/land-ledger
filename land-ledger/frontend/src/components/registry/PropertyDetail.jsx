@@ -18,6 +18,7 @@ import { Textarea } from '../../components/ui/Input.jsx';
 import { formatDate, formatArea, formatFileSize, truncateText } from '../../utils/format.js';
 import { DOCUMENT_TYPES, PROPERTY_TYPES, STATUS_LABELS } from '../../utils/constants.js';
 import { useToast } from '../../context/ToastContext.jsx';
+import DocLink from './DocLink.jsx';
 
 function DetailCell({ label, children }) {
   return (
@@ -264,9 +265,9 @@ export default function PropertyDetail({ role }) {
                     <Button variant="outline" size="sm" icon={RefreshCw} loading={busyDocId === d.id} onClick={() => runIntegrityCheck(d)}>
                       Verify integrity
                     </Button>
-                    <a className="btn btn-ghost btn-sm" href={documentService.downloadUrl(d.id)} target="_blank" rel="noreferrer">
+                    <DocLink id={d.id} title="Download document">
                       <Download size={13} /> Download
-                    </a>
+                    </DocLink>
                     {d.verified_by_name ? (
                       <span className="inline-flex items-center gap-1 text-[11.5px] text-muted-foreground self-center">
                         <Link2 size={11} /> verified by {d.verified_by_name}

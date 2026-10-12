@@ -156,8 +156,13 @@ async function getDocumentAccessible(req, res) {
     fail(res, { message: 'Document not found', errorCode: 'DOCUMENT_NOT_FOUND', status: 404 });
     return null;
   }
+  // Office roles work WITH these documents all day: the clerk verifies them,
+  // the surveyor inspects the field evidence, the registrar legally reviews
+  // them and the admin oversees. Citizens only see what they own/uploaded.
+  // Every access is audited downstream (DOCUMENT_DOWNLOAD etc.).
+  const OFFICE_ROLES = new Set(['registrar', 'clerk', 'surveyor', 'admin']);
   const allowed =
-    req.user.role === 'registrar' ||
+    OFFICE_ROLES.has(req.user.role) ||
     docRow.uploaded_by === req.user.id ||
     prop.current_owner_id === req.user.id ||
     prop.submitted_by_id === req.user.id;

@@ -11,6 +11,7 @@ import Modal from '../../components/ui/Modal.jsx';
 import Button from '../../components/ui/Button.jsx';
 import { Textarea } from '../../components/ui/Input.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
+import DocLink from './DocLink.jsx';
 import { formatDate, formatFileSize, truncateText } from '../../utils/format.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { CONSENT_STATUS_LABELS, CONSENT_PARTY_ROLE_LABELS } from '../../utils/constants.js';
@@ -333,9 +334,9 @@ export default function TransferDetail({ role }) {
                 </div>
                 <div className="flex items-center gap-2.5">
                   <StatusBadge status={d.verification_status} />
-                  <a className="btn btn-ghost btn-sm" href={documentService.downloadUrl(d.id)} target="_blank" rel="noreferrer">
+                  <DocLink id={d.id} title="Download document">
                     <Download size={13} />
-                  </a>
+                  </DocLink>
                 </div>
               </li>
             ))}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import DocLink from '../../components/registry/DocLink.jsx';
 import { ArrowRightLeft, FileCheck2, FileText, ShieldAlert, CheckCircle2, XCircle } from 'lucide-react';
 import { workflowService, documentService } from '../../services';
 import { useApi, useDocumentTitle } from '../../hooks/index.js';
@@ -264,9 +265,8 @@ function DocEvidence({ propertyId, onCheck, busyId }) {
             <Button variant="outline" size="sm" icon={ShieldAlert} loading={busyId === d.id} onClick={() => onCheck(d.id)}>
               Hash check
             </Button>
-            <a className="btn btn-ghost btn-sm" href={documentService.downloadUrl(d.id)} target="_blank" rel="noreferrer">
-              View
-            </a>
+            <DocLink id={d.id} />
+
           </div>
         </li>
       ))}

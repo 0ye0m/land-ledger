@@ -13,6 +13,7 @@ import Button from '../ui/Button.jsx';
 import { formatDate, formatFileSize, buildQuery, truncateText } from '../../utils/format.js';
 import { DOCUMENT_TYPES } from '../../utils/constants.js';
 import { useToast } from '../../context/ToastContext.jsx';
+import DocLink from './DocLink.jsx';
 
 /**
  * Document registry (shared citizen/registrar).
@@ -95,9 +96,9 @@ export default function DocumentsView({ role }) {
           <Button variant="outline" size="sm" icon={RefreshCw} loading={busyId === d.id} onClick={() => checkIntegrity(d)} title="Re-check SHA-256 integrity">
             Re-check
           </Button>
-          <a className="btn btn-ghost btn-sm" href={documentService.downloadUrl(d.id)} target="_blank" rel="noreferrer" title="Download">
+          <DocLink id={d.id} title="Download document">
             <Download size={13} />
-          </a>
+          </DocLink>
         </div>
       ),
     },
@@ -253,9 +254,9 @@ export default function DocumentsView({ role }) {
               <Button variant="outline" size="sm" icon={RefreshCw} loading={busyId === detailDoc.id} onClick={() => checkIntegrity(detailDoc)}>
                 Verify integrity now
               </Button>
-              <a className="btn btn-secondary btn-sm" href={documentService.downloadUrl(detailDoc.id)} target="_blank" rel="noreferrer">
+              <DocLink id={detailDoc.id} className="btn btn-secondary btn-sm" title="Download document">
                 <Download size={13} /> Download
-              </a>
+              </DocLink>
             </div>
           </div>
         ) : null}

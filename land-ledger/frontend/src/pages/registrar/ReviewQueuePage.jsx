@@ -9,6 +9,7 @@ import { LoadingState, ErrorState, EmptyState } from '../../components/registry/
 import Modal from '../../components/ui/Modal.jsx';
 import Button from '../../components/ui/Button.jsx';
 import { Textarea } from '../../components/ui/Input.jsx';
+import DocLink from '../../components/registry/DocLink.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
 import { formatDate, timeAgo, formatFileSize, truncateText } from '../../utils/format.js';
 
@@ -331,9 +332,7 @@ function DocEvidence({ detail, onCheck, busyId }) {
             <Button variant="outline" size="sm" icon={ShieldAlert} loading={busyId === d.id} onClick={() => onCheck(d.id)}>
               Hash check
             </Button>
-            <a className="btn btn-ghost btn-sm" href={documentService.downloadUrl(d.id)} target="_blank" rel="noreferrer">
-              View
-            </a>
+            <DocLink id={d.id} />
           </div>
         </li>
       ))}

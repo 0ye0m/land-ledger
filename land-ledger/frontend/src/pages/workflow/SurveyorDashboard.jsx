@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import DocLink from '../../components/registry/DocLink.jsx';
 import { ClipboardList, MapPin, Ruler, FileText, Compass, CheckCircle2, XCircle } from 'lucide-react';
 import { workflowService, documentService } from '../../services';
 import { useApi, useDocumentTitle } from '../../hooks/index.js';
@@ -204,7 +205,7 @@ function DocList({ propertyId }) {
       {docs.map((d) => (
         <li key={d.id} className="rounded border border-border px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2">
           <p className="font-semibold text-[12.5px] truncate">{truncateText(d.file_name, 42)}</p>
-          <a className="btn btn-ghost btn-sm" href={documentService.downloadUrl(d.id)} target="_blank" rel="noreferrer">View</a>
+          <DocLink id={d.id} />
         </li>
       ))}
     </ul>
