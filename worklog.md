@@ -601,3 +601,18 @@ Work Log:
 
 Stage Summary:
 - Complete demo package delivered: 63 ordered screenshots + 7min full-story screen recording (mp4+webm) + DEMO-GUIDE.txt; two real workflow-blocking bugs found and fixed during capture (office-role doc ACL + auth-less navigation links); all suites green; demo state pristine
+
+---
+Task ID: 32-cleanup
+Agent: Super Z (main)
+Task: User "can't find the screen recording and ss" - verify + finalize demo package
+
+Work Log:
+- Health check: app green on 3000 (db + blockchain connected, latestBlock 9)
+- Verified deliverables intact: land-ledger-full-demo.mp4 (12.8MB, ffprobe 434.87s valid), .webm (23MB), demo-screenshots/ 61 PNG + DEMO-GUIDE.txt
+- Found 2 stale error-state captures left from pre-fix re-capture pass: 43-clerk-hash-result.png (403 "no access" toast) + 44-clerk-document-view.png (raw JSON 401 page) - DELETED so the demo set only shows the fixed app
+- Verified kept versions are post-fix: 43-clerk-hash-check-result.png shows "Integrity verified - SHA-256 fingerprints match"; 44-clerk-document-view-works.png shows PDF viewer rendering Agreement to Sell
+- DEMO-GUIDE.txt count corrected 63 -> 61 PNG
+
+Stage Summary:
+- Final demo package: download/land-ledger-full-demo.mp4 (primary, 7:15) + .webm + demo-screenshots/ (61 ordered PNG + guide); no error-state screenshots remain; app healthy, pristine demo state untouched
