@@ -633,3 +633,20 @@ Work Log:
 
 Stage Summary:
 - Single unmissable file now carries the whole demo: land-ledger-demo-walkthrough.pdf (74pg deck with every screenshot + narration); HTML source shipped alongside; recording + 61 PNGs remain in download/; app untouched, no code changes
+
+---
+Task ID: 33-b
+Agent: Super Z (main)
+Task: User "still bro .." - still cannot see demo files in downloaded project zip; create land-ledger/demo/ folder and move all demo assets into it
+
+Work Log:
+- Diagnosed root cause from user's pasted zip screenshots: project zip only contains git-tracked files; .gitignore has download/ so only 19 old force-added files (slides/, pptx, README) appeared - the mp4/webm/screenshots/PDF were silently excluded
+- Verified nothing was lost: mp4 (12.8MB), webm (23MB), demo-screenshots/ (61 PNG + DEMO-GUIDE.txt, 7.2MB), walkthrough pdf+html all intact on server; app healthy (HTTP 200, processes up since 07:26)
+- Verified walkthrough PDF integrity: 74 pages, 765x540pt, valid metadata; visual spot-check pages 1, 2, 30 (cover, run sheet, screenshot+caption page) all correct
+- Created land-ledger/demo/ and moved: land-ledger-full-demo.mp4, land-ledger-full-demo.webm, land-ledger-demo-walkthrough.pdf, land-ledger-demo-walkthrough.html, demo-screenshots/ (61 PNG + guide)
+- Wrote land-ledger/demo/README.md (package index, 6 demo accounts, 10-act flow)
+- git add + commit 75d9e95: 67 files tracked under land-ledger/demo/ - now survives sandbox recycle AND is included in user's project zip downloads
+- download/ retains only old tracked artifacts (slides/, pptx, README.md)
+
+Stage Summary:
+- Demo package now lives at land-ledger/demo/ (committed, 67 files, ~50MB) instead of gitignored download/; user gets it via project zip re-download; recording + 74-page walkthrough PDF + all screenshots in one folder
