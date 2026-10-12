@@ -1,0 +1,163 @@
+# Demo walkthrough PDF - content data part 2 (sections 6-10 + howto + ending)
+
+SECTIONS_2 = [
+    dict(num="06", title="Multi-party consent", rng="SCREENS 26-33",
+         intro=("A land transfer is never one person's decision. Om's co-owner Shruti and the buyer Ganesh must both "
+                "consent, each with a recorded note attached to their approval. Watch the transfer's status flip the "
+                "moment the last signature lands - no office involvement, pure protocol."),
+         steps=[
+            ("26-shruti-dashboard-pending-consent.png", "Shruti's pending consent",
+             "Cut to co-owner Shruti Pethe: her dashboard flags one pending action. Her consent is required before Om's transfer can move an inch."),
+            ("27-shruti-consent-confirm.png", "Consent dialog",
+             "Opening the request brings up the approve dialog with the full transfer context - parties, property, amount. She signs off knowingly, not blindly."),
+            ("28-shruti-consent-note-filled.png", "Consent note",
+             "She adds a consent note as she approves. Every approval is attributable and worded - accountability is built into the click."),
+            ("29-shruti-consent-approved-toast.png", "Approval recorded",
+             "The toast confirms her consent is on file. One signature down."),
+            ("30-shruti-consent-recorded.png", "Consent table updated",
+             "The parties table now shows Shruti APPROVED with her note and timestamp. One approval left before the case can move."),
+            ("31-ganesh-buyer-view.png", "The buyer's view",
+             "Ganesh Patil, the buyer, signs in and sees the same transfer from his side. He is the one buying - his consent is the final gate."),
+            ("32-ganesh-consent-approved.png", "Buyer approves",
+             "Ganesh approves. Both required parties have consented, each with their own note on the record."),
+            ("33-transfer-status-after-consents.png", "Status advances",
+             "The transfer advances on its own now that every required party has consented - the case leaves the consent stage and starts moving through the offices."),
+         ]),
+    dict(num="07", title="Surveyor on the ground", rng="SCREENS 34-39",
+         intro=("Before any document is trusted, someone walks the land. Surveyor Akshay Panpaliya records boundary status "
+                "and encroachment findings from the ground visit, and his structured notes become a permanent part of the "
+                "case file that every later office reads."),
+         steps=[
+            ("34-surveyor-queue.png", "Field survey queue",
+             "The surveyor's field queue: properties cleared for ground inspection, each with location and applicant details for planning the visit."),
+            ("35-surveyor-property-detail.png", "Survey case file",
+             "The case file for inspection: boundaries, area, sketch and the applicant's submitted data, ready for field comparison."),
+            ("36-surveyor-field-inspection-dialog.png", "Field inspection dialog",
+             "The field inspection dialog - boundary status, encroachment findings and site evidence go in from the ground visit itself."),
+            ("37-surveyor-record-form.png", "Recording the verdict",
+             "Recording the verdict: boundaries clear or issues found, captured in structured fields so every inspection stays comparable across cases."),
+            ("38-surveyor-form-filled.png", "Survey notes filled",
+             "Notes filled: ground visit done, boundaries match the sale deed sketch, no encroachment observed. The words later offices will rely on."),
+            ("39-surveyor-survey-passed.png", "Survey queue clear",
+             "Queue clear - the survey passes and the case moves on to the document verification office with the surveyor's findings attached."),
+         ]),
+    dict(num="08", title="The verification desk", rng="SCREENS 40-46",
+         intro=("The clerk's desk is where fraud dies. Nishant Tekdiwal re-computes every document's SHA-256 fingerprint "
+                "against the seal applied at upload, and opens the actual PDF to read it. One mismatch and the case stops "
+                "right here - this act is your strongest integrity talking point."),
+         steps=[
+            ("40-clerk-verification-desk.png", "Verification desk",
+             "The clerk's desk: survey-cleared files waiting for document checks, each showing its applicant and the next office in line."),
+            ("41-clerk-inspect-dialog.png", "File inspection",
+             "Inspecting the registration file: applicant, survey notes, location and the documentary evidence with its SHA-256 fingerprint on display."),
+            ("42-clerk-hash-check.png", "Hash check",
+             "One click re-computes the document's SHA-256 and compares it against the fingerprint sealed at submission time."),
+            ("43-clerk-hash-check-result.png", "SHA-256 match",
+             "Integrity verified - the fingerprints match. The document is byte-for-byte what the citizen uploaded; nothing was swapped en route."),
+            ("44-clerk-document-view-works.png", "The actual PDF",
+             "View opens the real Agreement to Sell in a new tab - the document itself, not a placeholder. Office staff have full document access by design."),
+            ("45-clerk-verify-confirm.png", "Verify with a note",
+             "Confirming verification with a note: documents in order. The formal record that this office checked the paperwork."),
+            ("46-clerk-verified-toast.png", "Cleared for registrar",
+             "Cleared for the registrar - the desk is done and the case advances to legal review."),
+         ]),
+    dict(num="09", title="The registrar and the ledger", rng="SCREENS 47-58",
+         intro=("The registrar holds the pen that writes to the blockchain. His approval mints the registration on-chain - "
+                "block, transaction hash, timestamp - and the property's ownership history updates forever. This is the "
+                "payoff moment of the entire demo; let the ledger screenshot sit on screen while you say it."),
+         steps=[
+            ("47-registrar-dashboard.png", "Registrar's dashboard",
+             "The registrar's operations dashboard: registry-wide status, queues and chain health at the top of the office hierarchy."),
+            ("48-registrar-review-queue.png", "Legal review queue",
+             "The legal review queue: verification-cleared cases awaiting the registrar's final decision."),
+            ("49-registrar-inspect-file.png", "Final inspection",
+             "Final inspection of the file - every prior office's work, from survey notes to hash verification, is visible before he signs."),
+            ("50-registrar-approve-dialog.png", "Approve and register",
+             "The decisive moment: approve and register on ledger. This dialog commits the registration to the blockchain."),
+            ("51-registrar-registered-result.png", "Registered",
+             "Registered. The property's status flips to REGISTERED and the transaction is anchored on-chain in the same action."),
+            ("52-registrar-ledger.png", "Ledger explorer",
+             "The ledger explorer confirms it: a fresh block carrying the registration event, visible to every office and citizen."),
+            ("53-registrar-ledger-blocks.png", "Blocks and tx hashes",
+             "Blocks with transaction hashes and timestamps - the registry's history, immutable and inspectable, block by block."),
+            ("54-registrar-audit-log.png", "Audit log",
+             "The audit log: every action by every role, who did what and when. Accountability here is a feature, not an afterthought."),
+            ("55-registrar-properties.png", "All properties",
+             "All properties across the registry with live status badges - the institution's full book of record on one screen."),
+            ("56-registrar-transfer-detail.png", "Transfer legal review",
+             "The transfer's legal review view: the registrar sees the complete case before approving the ownership change."),
+            ("57-registrar-transfer-stages.png", "Stage pipeline",
+             "The stage pipeline lays out the whole journey - consent, survey, verification, registration - each stage with its owner and timestamp."),
+            ("58-registrar-property-detail-registered.png", "On-chain proof",
+             "The property file after registration: REGISTERED status plus the on-chain proof - transaction hash, block and time. The system's final word."),
+         ]),
+    dict(num="10", title="Institution oversight", rng="SCREENS 59-61",
+         intro=("Admin sees the whole institution at once: roster, queues, cross-office metrics and the full audit log. "
+                "The same system that serves a single citizen also gives the institution running it complete oversight - "
+                "close the tour here."),
+         steps=[
+            ("59-admin-oversight-board.png", "Control tower",
+             "The admin control tower: cross-office metrics, queues and system health in one institution-wide view."),
+            ("60-admin-roster-metrics.png", "Roster and metrics",
+             "The user roster with roles and activity metrics - who holds which office, and how much work flows through each."),
+            ("61-admin-audit-log.png", "System-wide audit",
+             "The system-wide audit log closes the tour: every consequential action, permanently recorded. Trust is the product."),
+         ]),
+]
+
+HOWTO = dict(
+    kicker="RUN SHEET",
+    title="How to run this demo",
+    lead=("This deck mirrors the companion recording shot for shot, so you can present from either. "
+          "Follow the ten acts in order; every screenshot has a caption you can read out or paraphrase."),
+    acts_note="The ten acts, in narration order:",
+    acts=[
+        ("01", "The public face", "Landing, features, how it works - set the stage."),
+        ("02", "Sign-in and MFA", "Password plus a real six-digit email code."),
+        ("03", "The citizen's world", "Om's dashboard, property, ownership chain."),
+        ("04", "Citizen workflows", "Documents, the transfer case, the ledger."),
+        ("05", "The theme morph", "The circular reveal - show it, then move on."),
+        ("06", "Multi-party consent", "Shruti and Ganesh approve; status advances."),
+        ("07", "Surveyor on the ground", "Field inspection recorded in structured notes."),
+        ("08", "The verification desk", "SHA-256 checks; the actual PDF opens."),
+        ("09", "Registrar and the ledger", "Approved and written to the blockchain."),
+        ("10", "Institution oversight", "Admin's control tower and audit trail."),
+    ],
+    quick_title="Quick start",
+    quick=[
+        "Open the published link - the landing page is your opening slide.",
+        "Sign in as Om Mandwade using a demo chip; read the OTP from the real email that arrives.",
+        "Walk Acts 3-5 from this deck; flip the theme on camera in Act 5.",
+        "Play the consent scene live: Shruti and Ganesh approve TRF-2026-0001 from their own accounts.",
+        "Finish with the offices - surveyor, clerk, registrar - then close on Admin.",
+    ],
+    video_title="Watch it first",
+    video=("land-ledger-full-demo.mp4 - 7 minutes 15 seconds, the full story performed live on a pristine seed, "
+           "in the same order as this deck."),
+)
+
+ENDING = dict(
+    title="Your demo kit",
+    sub="Everything below ships alongside this document - nothing else to prepare.",
+    pristine_title="Pristine demo state (already restored)",
+    pristine=[
+        ("TRF-2026-0001", "Waiting for party consent - Shruti and Ganesh can approve live"),
+        ("TRF-2026-0002", "Sitting at the clerk's verification desk"),
+        ("TRF-2026-0003", "Sitting at the registrar's legal review"),
+        ("TRF-2026-0004", "Buyer consent pending"),
+    ],
+    accounts_title="Demo accounts",
+    accounts=[
+        ("Citizen", "Om Mandwade", "mandwadeom2616@gmail.com"),
+        ("Citizen", "Shruti Pethe", "shrutipethe111@gmail.com"),
+        ("Surveyor", "Akshay Panpaliya", "panpaliyaag@rknec.edu"),
+        ("Clerk", "Nishant Tekdiwal", "tekdiwalnishant@gmail.com"),
+        ("Registrar", "Prakash Joshi", "omdummy101@gmail.com"),
+        ("Admin", "Sunita Deshmukh", "omdummy102@gmail.com"),
+        ("Citizen", "Ganesh Patil", "alphadummy103@gmail.com"),
+        ("Citizen", "Kavita Sharma", "alpha20051610@gmail.com"),
+    ],
+    password_note="Password for every account: LandLedger@123 - MFA codes arrive by real email.",
+    video_note="Companion recording: land-ledger-full-demo.mp4 (7:15) - same story, same order, performed live.",
+    closing="LAND LEDGER - every record sealed, every action accountable.",
+)

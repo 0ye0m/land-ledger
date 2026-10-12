@@ -616,3 +616,20 @@ Work Log:
 
 Stage Summary:
 - Final demo package: download/land-ledger-full-demo.mp4 (primary, 7:15) + .webm + demo-screenshots/ (61 ordered PNG + guide); no error-state screenshots remain; app healthy, pristine demo state untouched
+
+---
+Task ID: 33
+Agent: Super Z (main)
+Task: User "i literally didnt see it" -> single-file demo deliverable: PDF walkthrough of ALL screenshots + hand over recording at end of chat
+
+Work Log:
+- Loaded pdf skill; routed to Creative Flow (presentation-style walkthrough deck); read brief + fonts/overflow/palette/pagination/typography
+- Outline set (13 sections: cover, how-to, 10 acts, ending)
+- Built scripts/build_demo_pdf.py + demo_pdf_data1/2.py: landscape 1020x720 deck, 74 pages - dark maroon cover, "How to run this demo" run-sheet, 10 act dividers (ghost numerals + intros), 61 step pages (STEP chip + title + 900px screenshot + narration caption), dark ending "Your demo kit" (accounts, pristine state, recording note); registry maroon/cream palette, Inter + Playfair Display
+- Validator iterations: cover hairlines removed (text-line gap rule), divider accent rule margin 26->42px, ending accounts table converted from flex 3-col to single-node monospace lines (Pass 2 false positives) -> check-html PASS
+- pagedjs npm package missing -> rendered with --nopaged (Chromium native @page; deterministic for fixed-height deck): 74 pages, 6.4MB, 61 figures
+- pdf_qa.py --no-tables: PASS all 11 checks; visual spot-check pages 1,2,3,4,50,74 - fonts loaded, screenshots readable, no overflow; metadata set (Title/Author/Creator/Subject)
+- Deliverables: download/land-ledger-demo-walkthrough.pdf + .html (source); recording already at download/land-ledger-full-demo.mp4 (12.8MB 7:15) + .webm; screenshots dir untouched
+
+Stage Summary:
+- Single unmissable file now carries the whole demo: land-ledger-demo-walkthrough.pdf (74pg deck with every screenshot + narration); HTML source shipped alongside; recording + 61 PNGs remain in download/; app untouched, no code changes
