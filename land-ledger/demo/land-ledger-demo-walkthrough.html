@@ -1,0 +1,806 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Land Ledger - Full Product Demo Walkthrough</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,900;1,500&display=swap" rel="stylesheet"><style>
+@page { size: 1020px 720px; margin: 0; }
+:root {
+  --m950:#2c100c; --m900:#38160f; --m700:#7a2e26; --terra:#b0654f;
+  --cream:#faf6f1; --paper:#ffffff; --ink:#2b211c; --muted:#6f5f54; --line:#e9ddd1;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0; width: 1020px;
+  background: #2c100c; color: #f3ece4;
+  font-family: 'Inter', 'Liberation Sans', sans-serif;
+  line-break: strict; word-break: normal; overflow-wrap: break-word;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+@media screen {
+  html { display: flex; justify-content: center; background: #2c100c; padding: 24px 0; }
+  body { box-shadow: 0 10px 60px rgba(0,0,0,.5); }
+}
+.page {
+  width: 1020px; height: 720px; position: relative;
+  break-after: page; page-break-after: always;
+  background: #faf6f1; color: #2b211c;
+}
+.page.last { break-after: auto; page-break-after: auto; }
+img { display: block; }
+
+/* ---------- COVER ---------- */
+.cover { display: flex; flex-direction: column; justify-content: center; padding: 0 96px; background: #38160f; color: #f3ece4; }
+.cov-brand { position: absolute; top: 62px; left: 96px; display: flex; align-items: center; gap: 12px; }
+.cov-mark { width: 16px; height: 16px; background: #b0654f; }
+.cov-brand span { font-size: 14px; font-weight: 700; letter-spacing: .42em; color: #cf9a86; }
+.cov-kicker { font-size: 13px; font-weight: 600; letter-spacing: .34em; color: #b0654f; }
+.cov-title { margin: 20px 0 0; font-family: 'Playfair Display', 'Liberation Serif', serif; font-weight: 900; font-size: 62px; line-height: 1.08; color: #f7f1ea; }
+.cov-sub { margin-top: 24px; font-size: 17px; line-height: 1.65; color: rgba(243,236,228,.72); max-width: 660px; }
+.cov-chips { margin-top: 36px; display: flex; flex-wrap: wrap; gap: 10px; max-width: 100%; }
+.chip { border: 1px solid rgba(207,154,134,.4); color: #e8d9cf; font-size: 11px; font-weight: 600; letter-spacing: .18em; padding: 9px 14px; }
+.cov-foot { position: absolute; bottom: 60px; left: 96px; right: 96px; display: flex; justify-content: space-between; font-size: 11px; font-weight: 500; letter-spacing: .08em; color: rgba(243,236,228,.55); }
+
+/* ---------- DIVIDER ---------- */
+.divider { padding: 0 96px; display: flex; flex-direction: column; justify-content: center; }
+.div-num { position: absolute; top: 30px; right: 60px; font-family: 'Playfair Display', 'Liberation Serif', serif; font-weight: 900; font-size: 290px; line-height: 1; color: rgba(122,46,38,.08); }
+.div-act { font-size: 12px; font-weight: 700; letter-spacing: .3em; color: #b0654f; }
+.div-title { margin: 18px 0 0; font-family: 'Playfair Display', 'Liberation Serif', serif; font-weight: 900; font-size: 46px; line-height: 1.12; color: #38160f; max-width: 780px; }
+.div-rule { width: 72px; height: 4px; background: #7a2e26; margin: 42px 0; }
+.div-intro { font-size: 16.5px; line-height: 1.7; color: #4a3c33; max-width: 720px; }
+.div-foot { position: absolute; bottom: 40px; left: 96px; right: 96px; display: flex; justify-content: space-between; font-size: 10px; font-weight: 600; letter-spacing: .22em; color: #93796a; }
+
+/* ---------- STEP ---------- */
+.step { padding: 24px 50px 16px; }
+.st-head { display: flex; align-items: center; gap: 14px; }
+.st-chip { background: #7a2e26; color: #f8efe7; font-size: 11px; font-weight: 800; letter-spacing: .16em; padding: 7px 10px; white-space: nowrap; }
+.st-title { font-size: 19px; font-weight: 800; color: #38160f; white-space: nowrap; }
+.st-sec { margin-left: auto; font-size: 10px; font-weight: 700; letter-spacing: .2em; color: #93796a; white-space: nowrap; }
+.st-shot { width: 900px; margin: 12px auto 0; border: 1px solid #e9ddd1; background: #ffffff; }
+.st-shot img { width: 100%; height: auto; }
+.st-cap { width: 900px; margin: 10px auto 0; font-size: 13.5px; line-height: 1.55; color: #57483d; text-align: left; }
+
+/* ---------- HOW TO ---------- */
+.howto { padding: 46px 64px 40px; }
+.how-kicker { font-size: 12px; font-weight: 700; letter-spacing: .3em; color: #b0654f; }
+.how-title { margin: 12px 0 0; font-family: 'Playfair Display', 'Liberation Serif', serif; font-weight: 900; font-size: 40px; color: #38160f; }
+.how-lead { margin-top: 14px; font-size: 14.5px; line-height: 1.65; color: #57483d; max-width: 860px; }
+.how-cols { display: flex; gap: 40px; margin-top: 22px; }
+.how-left { flex: 1.12; min-width: 0; }
+.how-right { flex: .88; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.how-h { font-size: 11px; font-weight: 800; letter-spacing: .24em; color: #7a2e26; padding-bottom: 8px; border-bottom: 2px solid #7a2e26; }
+.act-row { display: flex; gap: 14px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid #e9ddd1; }
+.act-n { font-family: 'Playfair Display', 'Liberation Serif', serif; font-weight: 900; font-size: 15px; color: #b0654f; width: 28px; flex-shrink: 0; }
+.act-t { font-size: 13.5px; font-weight: 700; color: #2b211c; white-space: nowrap; }
+.act-d { font-size: 12.5px; color: #6f5f54; margin-left: auto; text-align: right; }
+.panel { background: #ffffff; border: 1px solid #e9ddd1; padding: 18px 20px; }
+.panel-h { font-size: 12px; font-weight: 800; letter-spacing: .18em; color: #7a2e26; margin-bottom: 10px; }
+.q-step { display: flex; gap: 10px; font-size: 12.5px; line-height: 1.5; color: #4a3c33; margin-bottom: 8px; }
+.q-n { font-weight: 800; color: #b0654f; flex-shrink: 0; }
+.video-note { font-size: 12.5px; line-height: 1.6; color: #4a3c33; }
+.video-note b { color: #2b211c; }
+
+/* ---------- ENDING ---------- */
+.ending { padding: 54px 72px 44px; background: #38160f; color: #f3ece4; display: flex; flex-direction: column; }
+.end-kicker { font-size: 12px; font-weight: 700; letter-spacing: .3em; color: #b0654f; }
+.end-title { margin: 12px 0 0; font-family: 'Playfair Display', 'Liberation Serif', serif; font-weight: 900; font-size: 44px; color: #f7f1ea; }
+.end-sub { margin-top: 12px; font-size: 14.5px; color: rgba(243,236,228,.7); }
+.end-cols { display: flex; gap: 36px; margin-top: 26px; flex: 1; min-height: 0; }
+.end-left { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.end-right { flex: 1.25; min-width: 0; }
+.dark-panel { background: rgba(243,236,228,.06); border: 1px solid rgba(207,154,134,.28); padding: 18px 20px; }
+.dp-h { font-size: 11px; font-weight: 800; letter-spacing: .2em; color: #cf9a86; margin-bottom: 12px; }
+.pr-row { display: flex; gap: 14px; font-size: 12.5px; line-height: 1.5; color: rgba(243,236,228,.85); margin-bottom: 9px; }
+.pr-id { font-weight: 800; color: #e8b9a5; white-space: nowrap; }
+.acc-head { font-size: 10px; font-weight: 800; letter-spacing: .18em; color: #cf9a86; padding-bottom: 8px; border-bottom: 1px solid rgba(207,154,134,.28); }
+.acc-row { font-size: 12px; line-height: 1.45; color: rgba(243,236,228,.88); padding: 6.5px 0; border-bottom: 1px solid rgba(207,154,134,.14); white-space: nowrap; }
+.acc-mail { font-family: 'Liberation Mono', monospace; font-size: 11px; color: rgba(243,236,228,.75); }
+.pw-note, .vid-note { margin-top: 12px; font-size: 12px; line-height: 1.6; color: rgba(243,236,228,.72); }
+.end-close { border-top: 1px solid rgba(243,236,228,.18); padding-top: 16px; margin-top: 4px; display: flex; justify-content: space-between; align-items: baseline; }
+.end-close .brand { font-size: 13px; font-weight: 700; letter-spacing: .34em; color: #cf9a86; }
+.end-close .tag { font-family: 'Playfair Display', 'Liberation Serif', serif; font-size: 15px; font-style: italic; color: rgba(243,236,228,.8); }
+</style></head><body><div class="page cover">
+<div class="cov-brand"><div class="cov-mark"></div><span>LAND LEDGER</span></div>
+<div class="cov-kicker">FULL PRODUCT DEMO WALKTHROUGH</div>
+<h1 class="cov-title">Every record sealed.<br>Every action accountable.</h1>
+<div class="cov-sub">A complete guided tour of the platform - ten acts, sixty-one screens, five roles, one blockchain-backed land registry. Read it as a script, present it as a story.</div>
+<div class="cov-chips">
+<div class="chip">10 ACTS</div>
+<div class="chip">61 SCREENS</div>
+<div class="chip">5 ROLES</div>
+<div class="chip">LIVE MFA</div>
+<div class="chip">ON-CHAIN PROOF</div>
+</div>
+<div class="cov-foot"><span>Prepared 12 October 2026</span><span>Companion recording: land-ledger-full-demo.mp4 (7:15)</span></div>
+</div>
+<div class="page howto">
+<div class="how-kicker">RUN SHEET</div>
+<h2 class="how-title">How to run this demo</h2>
+<p class="how-lead">This deck mirrors the companion recording shot for shot, so you can present from either. Follow the ten acts in order; every screenshot has a caption you can read out or paraphrase.</p>
+<div class="how-cols">
+<div class="how-left">
+<div class="how-h">THE TEN ACTS, IN NARRATION ORDER:</div>
+<div class="act-row"><div class="act-n">01</div><div class="act-t">The public face</div><div class="act-d">Landing, features, how it works - set the stage.</div></div>
+<div class="act-row"><div class="act-n">02</div><div class="act-t">Sign-in and MFA</div><div class="act-d">Password plus a real six-digit email code.</div></div>
+<div class="act-row"><div class="act-n">03</div><div class="act-t">The citizen's world</div><div class="act-d">Om's dashboard, property, ownership chain.</div></div>
+<div class="act-row"><div class="act-n">04</div><div class="act-t">Citizen workflows</div><div class="act-d">Documents, the transfer case, the ledger.</div></div>
+<div class="act-row"><div class="act-n">05</div><div class="act-t">The theme morph</div><div class="act-d">The circular reveal - show it, then move on.</div></div>
+<div class="act-row"><div class="act-n">06</div><div class="act-t">Multi-party consent</div><div class="act-d">Shruti and Ganesh approve; status advances.</div></div>
+<div class="act-row"><div class="act-n">07</div><div class="act-t">Surveyor on the ground</div><div class="act-d">Field inspection recorded in structured notes.</div></div>
+<div class="act-row"><div class="act-n">08</div><div class="act-t">The verification desk</div><div class="act-d">SHA-256 checks; the actual PDF opens.</div></div>
+<div class="act-row"><div class="act-n">09</div><div class="act-t">Registrar and the ledger</div><div class="act-d">Approved and written to the blockchain.</div></div>
+<div class="act-row"><div class="act-n">10</div><div class="act-t">Institution oversight</div><div class="act-d">Admin's control tower and audit trail.</div></div>
+</div>
+<div class="how-right">
+<div class="panel">
+<div class="panel-h">QUICK START</div>
+<div class="q-step"><div class="q-n">1.</div><div>Open the published link - the landing page is your opening slide.</div></div>
+<div class="q-step"><div class="q-n">2.</div><div>Sign in as Om Mandwade using a demo chip; read the OTP from the real email that arrives.</div></div>
+<div class="q-step"><div class="q-n">3.</div><div>Walk Acts 3-5 from this deck; flip the theme on camera in Act 5.</div></div>
+<div class="q-step"><div class="q-n">4.</div><div>Play the consent scene live: Shruti and Ganesh approve TRF-2026-0001 from their own accounts.</div></div>
+<div class="q-step"><div class="q-n">5.</div><div>Finish with the offices - surveyor, clerk, registrar - then close on Admin.</div></div>
+</div>
+<div class="panel">
+<div class="panel-h">WATCH IT FIRST</div>
+<div class="video-note"><b>land-ledger-full-demo.mp4</b> - 7 minutes 15 seconds, the full story performed live on a pristine seed, in the same order as this deck. Screenshots in these pages are frames from that same capture session.</div>
+</div>
+</div></div></div>
+<div class="page divider">
+<div class="div-num">01</div>
+<div class="div-act">ACT 01 &middot; SCREENS 01-03</div>
+<h2 class="div-title">The public face</h2>
+<div class="div-rule"></div>
+<p class="div-intro">Before any login, the product has to make its case. The landing page compresses the whole promise - tamper-evident land records, accountable offices and real blockchain proof - into a single scroll. These three screens are your opening minute, so let them breathe.</p>
+<div class="div-foot"><span>LAND LEDGER</span><span>FULL PRODUCT DEMO WALKTHROUGH</span></div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 01 / 61</span>
+<span class="st-title">Landing - the opening promise</span>
+<span class="st-sec">ACT 01 &middot; THE PUBLIC FACE</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/01-landing-hero.png" alt="Landing - the opening promise"></div>
+<div class="st-cap">LAND LEDGER introduces itself as a blockchain-backed land registry: every record sealed, every action accountable. One line sets the stage before anyone signs in.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 02 / 61</span>
+<span class="st-title">Feature cards</span>
+<span class="st-sec">ACT 01 &middot; THE PUBLIC FACE</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/02-landing-features.png" alt="Feature cards"></div>
+<div class="st-cap">The feature grid summarises the product: on-chain proof, role-based offices, multi-party consent, document integrity and an immutable audit trail. Point at two or three, promise the rest.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 03 / 61</span>
+<span class="st-title">How it works</span>
+<span class="st-sec">ACT 01 &middot; THE PUBLIC FACE</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/03-landing-how-it-works.png" alt="How it works"></div>
+<div class="st-cap">Register a property, pass office verification, settle the transfer - the three-step journey tells evaluators the whole workflow before they ever touch the app.</div>
+</div>
+<div class="page divider">
+<div class="div-num">02</div>
+<div class="div-act">ACT 02 &middot; SCREENS 04-06</div>
+<h2 class="div-title">The gate: sign-in and MFA</h2>
+<div class="div-rule"></div>
+<p class="div-intro">Every account - citizen or officer - passes the same gate: a password plus a six-digit code delivered to a real inbox over live SMTP. The whole scene takes twenty seconds to demo and instantly separates this platform from a mockup. In the companion recording, the code is typed on camera.</p>
+<div class="div-foot"><span>LAND LEDGER</span><span>FULL PRODUCT DEMO WALKTHROUGH</span></div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 04 / 61</span>
+<span class="st-title">Sign-in</span>
+<span class="st-sec">ACT 02 &middot; THE GATE: SIGN-IN AND MFA</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/04-login-page.png" alt="Sign-in"></div>
+<div class="st-cap">The sign-in screen ships with quick-fill demo account chips - the same eight accounts listed on the final page of this deck. No hunting for credentials mid-demo.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 05 / 61</span>
+<span class="st-title">Credentials entered</span>
+<span class="st-sec">ACT 02 &middot; THE GATE: SIGN-IN AND MFA</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/05-login-filled.png" alt="Credentials entered"></div>
+<div class="st-cap">Om Mandwade's credentials are in. Submitting does not open the app yet - it issues a time-boxed challenge to the registered email address.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 06 / 61</span>
+<span class="st-title">MFA - the six-digit gate</span>
+<span class="st-sec">ACT 02 &middot; THE GATE: SIGN-IN AND MFA</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/06-mfa-otp-screen.png" alt="MFA - the six-digit gate"></div>
+<div class="st-cap">A six-digit code arrives by real email; the session only opens once it is verified. Two-factor authentication is enforced for every role, not just admins.</div>
+</div>
+<div class="page divider">
+<div class="div-num">03</div>
+<div class="div-act">ACT 03 &middot; SCREENS 07-13</div>
+<h2 class="div-title">The citizen's world</h2>
+<div class="div-rule"></div>
+<p class="div-intro">Om Mandwade owns Flat 503 in Sunrise Residency. His world is the citizen app: a dashboard that says what needs attention, a property with its full history, and documents sealed with fingerprints. This act builds the emotional stake before any paperwork starts moving.</p>
+<div class="div-foot"><span>LAND LEDGER</span><span>FULL PRODUCT DEMO WALKTHROUGH</span></div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 07 / 61</span>
+<span class="st-title">Citizen dashboard</span>
+<span class="st-sec">ACT 03 &middot; THE CITIZEN'S WORLD</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/07-citizen-dashboard.png" alt="Citizen dashboard"></div>
+<div class="st-cap">Om lands on a working dashboard, not a placeholder: pending actions, key stats and shortcuts surface immediately, so a citizen always knows the next move.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 08 / 61</span>
+<span class="st-title">Dashboard activity</span>
+<span class="st-sec">ACT 03 &middot; THE CITIZEN'S WORLD</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/08-citizen-dashboard-activity.png" alt="Dashboard activity"></div>
+<div class="st-cap">Scrolling down: recent properties, transfer activity and the latest chain events give a live snapshot of everything tied to this account.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 09 / 61</span>
+<span class="st-title">Properties list</span>
+<span class="st-sec">ACT 03 &middot; THE CITIZEN'S WORLD</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/09-citizen-properties-list.png" alt="Properties list"></div>
+<div class="st-cap">Every parcel this citizen owns or is associated with, with status badges, search and filters. Flat 503 sits here as the star of the demo.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 10 / 61</span>
+<span class="st-title">Property detail</span>
+<span class="st-sec">ACT 03 &middot; THE CITIZEN'S WORLD</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/10-property-detail-overview.png" alt="Property detail"></div>
+<div class="st-cap">The property file for Flat 503: owner card, survey data, location and the on-chain record anchored when the property was registered.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 11 / 61</span>
+<span class="st-title">Ownership chain</span>
+<span class="st-sec">ACT 03 &middot; THE CITIZEN'S WORLD</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/11-property-detail-ownership.png" alt="Ownership chain"></div>
+<div class="st-cap">The ownership chain reconstructs the land's full history from ledger events - first holder, every transfer since, and the current owner. Provenance you can read, not trust.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 12 / 61</span>
+<span class="st-title">Stage timeline</span>
+<span class="st-sec">ACT 03 &middot; THE CITIZEN'S WORLD</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/12-property-detail-timeline.png" alt="Stage timeline"></div>
+<div class="st-cap">The stage timeline shows exactly who acted, when, and what note they left. The process is visible to the citizen, not hidden in a back office.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 13 / 61</span>
+<span class="st-title">Property documents</span>
+<span class="st-sec">ACT 03 &middot; THE CITIZEN'S WORLD</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/13-property-detail-documents.png" alt="Property documents"></div>
+<div class="st-cap">Documents attached to the property carry SHA-256 fingerprints; each file opens or downloads in one click, and office staff verify the same bytes later.</div>
+</div>
+<div class="page divider">
+<div class="div-num">04</div>
+<div class="div-act">ACT 04 &middot; SCREENS 14-22</div>
+<h2 class="div-title">Citizen workflows</h2>
+<div class="div-rule"></div>
+<p class="div-intro">Here the citizen does real work: registering property, managing documents and - the heart of this demo - initiating the transfer of his flat to Ganesh Patil. Transfer TRF-2026-0001 is the case we follow for the rest of the deck, and consent from every required party must land before any office touches it.</p>
+<div class="div-foot"><span>LAND LEDGER</span><span>FULL PRODUCT DEMO WALKTHROUGH</span></div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 14 / 61</span>
+<span class="st-title">Register property</span>
+<span class="st-sec">ACT 04 &middot; CITIZEN WORKFLOWS</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/14-register-property-form.png" alt="Register property"></div>
+<div class="st-cap">A new property application: location, survey details and supporting documents in one guided form, filled and ready to submit. This is how land enters the registry.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 15 / 61</span>
+<span class="st-title">Document vault</span>
+<span class="st-sec">ACT 04 &middot; CITIZEN WORKFLOWS</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/15-citizen-documents.png" alt="Document vault"></div>
+<div class="st-cap">The citizen's vault: every uploaded file with its hash, type and status - the same bytes the clerk will hash-check later in Act 8.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 16 / 61</span>
+<span class="st-title">Transfers list</span>
+<span class="st-sec">ACT 04 &middot; CITIZEN WORKFLOWS</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/16-citizen-transfers.png" alt="Transfers list"></div>
+<div class="st-cap">The transfers list, with TRF-2026-0001 waiting on buyer consent - the live case this demo follows end to end.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 17 / 61</span>
+<span class="st-title">Transfer TRF-2026-0001</span>
+<span class="st-sec">ACT 04 &middot; CITIZEN WORKFLOWS</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/17-transfer-consent-detail.png" alt="Transfer TRF-2026-0001"></div>
+<div class="st-cap">The transfer file: seller, buyer, the property being sold, and the consent of every required party tracked in one place.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 18 / 61</span>
+<span class="st-title">Consent parties</span>
+<span class="st-sec">ACT 04 &middot; CITIZEN WORKFLOWS</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/21-transfer-parties-consent.png" alt="Consent parties"></div>
+<div class="st-cap">The parties panel zooms in on consent states - who has approved, who is still to act. Nothing advances until every required signature is on file.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 19 / 61</span>
+<span class="st-title">Transfer timeline</span>
+<span class="st-sec">ACT 04 &middot; CITIZEN WORKFLOWS</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/22-transfer-timeline.png" alt="Transfer timeline"></div>
+<div class="st-cap">The transfer's stage timeline records each step with actor and timestamp - a paper trail the blockchain will ultimately stamp.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 20 / 61</span>
+<span class="st-title">New transfer form</span>
+<span class="st-sec">ACT 04 &middot; CITIZEN WORKFLOWS</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/18-new-transfer-form.png" alt="New transfer form"></div>
+<div class="st-cap">Initiating a transfer: pick the property, name the buyer, agree the amount. The workflow builds its own consent checklist from the ownership data.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 21 / 61</span>
+<span class="st-title">Citizen ledger view</span>
+<span class="st-sec">ACT 04 &middot; CITIZEN WORKFLOWS</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/19-citizen-ledger.png" alt="Citizen ledger view"></div>
+<div class="st-cap">The blockchain ledger as citizens see it: read-only blocks with hashes and timestamps proving no record was altered after the fact.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 22 / 61</span>
+<span class="st-title">Profile</span>
+<span class="st-sec">ACT 04 &middot; CITIZEN WORKFLOWS</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/20-citizen-profile.png" alt="Profile"></div>
+<div class="st-cap">The profile page closes the citizen tour: identity, contact and role - the account that anchors all of this activity.</div>
+</div>
+<div class="page divider">
+<div class="div-num">05</div>
+<div class="div-act">ACT 05 &middot; SCREENS 23-25</div>
+<h2 class="div-title">The theme morph</h2>
+<div class="div-rule"></div>
+<p class="div-intro">One design flourish worth showing on purpose: the theme toggle fires a circular reveal that expands from the exact pixel you clicked, driven by the browser's View Transitions API with a WAAPI clip-path animation. It is pure polish - and evaluators remember it.</p>
+<div class="div-foot"><span>LAND LEDGER</span><span>FULL PRODUCT DEMO WALKTHROUGH</span></div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 23 / 61</span>
+<span class="st-title">The circular morph</span>
+<span class="st-sec">ACT 05 &middot; THE THEME MORPH</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/23-theme-morph-mid-animation.png" alt="The circular morph"></div>
+<div class="st-cap">A frame captured mid-morph: the new dark theme blooms outward from the toggle as a growing circle. Origin is the click point itself - keyboard triggers anchor to the button.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 24 / 61</span>
+<span class="st-title">Dashboard in dark</span>
+<span class="st-sec">ACT 05 &middot; THE THEME MORPH</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/24-dashboard-dark-mode.png" alt="Dashboard in dark"></div>
+<div class="st-cap">Twelve hundred milliseconds later the whole dashboard is dark: every surface re-themed, no layout shifted, and the preference persists for the next visit.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 25 / 61</span>
+<span class="st-title">Property detail in dark</span>
+<span class="st-sec">ACT 05 &middot; THE THEME MORPH</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/25-property-detail-dark.png" alt="Property detail in dark"></div>
+<div class="st-cap">The same property file in dark - panels, badges and the on-chain record all legible, proving the re-theme is complete rather than cosmetic.</div>
+</div>
+<div class="page divider">
+<div class="div-num">06</div>
+<div class="div-act">ACT 06 &middot; SCREENS 26-33</div>
+<h2 class="div-title">Multi-party consent</h2>
+<div class="div-rule"></div>
+<p class="div-intro">A land transfer is never one person's decision. Om's co-owner Shruti and the buyer Ganesh must both consent, each with a recorded note attached to their approval. Watch the transfer's status flip the moment the last signature lands - no office involvement, pure protocol.</p>
+<div class="div-foot"><span>LAND LEDGER</span><span>FULL PRODUCT DEMO WALKTHROUGH</span></div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 26 / 61</span>
+<span class="st-title">Shruti's pending consent</span>
+<span class="st-sec">ACT 06 &middot; MULTI-PARTY CONSENT</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/26-shruti-dashboard-pending-consent.png" alt="Shruti's pending consent"></div>
+<div class="st-cap">Cut to co-owner Shruti Pethe: her dashboard flags one pending action. Her consent is required before Om's transfer can move an inch.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 27 / 61</span>
+<span class="st-title">Consent dialog</span>
+<span class="st-sec">ACT 06 &middot; MULTI-PARTY CONSENT</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/27-shruti-consent-confirm.png" alt="Consent dialog"></div>
+<div class="st-cap">Opening the request brings up the approve dialog with the full transfer context - parties, property, amount. She signs off knowingly, not blindly.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 28 / 61</span>
+<span class="st-title">Consent note</span>
+<span class="st-sec">ACT 06 &middot; MULTI-PARTY CONSENT</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/28-shruti-consent-note-filled.png" alt="Consent note"></div>
+<div class="st-cap">She adds a consent note as she approves. Every approval is attributable and worded - accountability is built into the click.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 29 / 61</span>
+<span class="st-title">Approval recorded</span>
+<span class="st-sec">ACT 06 &middot; MULTI-PARTY CONSENT</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/29-shruti-consent-approved-toast.png" alt="Approval recorded"></div>
+<div class="st-cap">The toast confirms her consent is on file. One signature down.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 30 / 61</span>
+<span class="st-title">Consent table updated</span>
+<span class="st-sec">ACT 06 &middot; MULTI-PARTY CONSENT</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/30-shruti-consent-recorded.png" alt="Consent table updated"></div>
+<div class="st-cap">The parties table now shows Shruti APPROVED with her note and timestamp. One approval left before the case can move.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 31 / 61</span>
+<span class="st-title">The buyer's view</span>
+<span class="st-sec">ACT 06 &middot; MULTI-PARTY CONSENT</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/31-ganesh-buyer-view.png" alt="The buyer's view"></div>
+<div class="st-cap">Ganesh Patil, the buyer, signs in and sees the same transfer from his side. He is the one buying - his consent is the final gate.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 32 / 61</span>
+<span class="st-title">Buyer approves</span>
+<span class="st-sec">ACT 06 &middot; MULTI-PARTY CONSENT</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/32-ganesh-consent-approved.png" alt="Buyer approves"></div>
+<div class="st-cap">Ganesh approves. Both required parties have consented, each with their own note on the record.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 33 / 61</span>
+<span class="st-title">Status advances</span>
+<span class="st-sec">ACT 06 &middot; MULTI-PARTY CONSENT</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/33-transfer-status-after-consents.png" alt="Status advances"></div>
+<div class="st-cap">The transfer advances on its own now that every required party has consented - the case leaves the consent stage and starts moving through the offices.</div>
+</div>
+<div class="page divider">
+<div class="div-num">07</div>
+<div class="div-act">ACT 07 &middot; SCREENS 34-39</div>
+<h2 class="div-title">Surveyor on the ground</h2>
+<div class="div-rule"></div>
+<p class="div-intro">Before any document is trusted, someone walks the land. Surveyor Akshay Panpaliya records boundary status and encroachment findings from the ground visit, and his structured notes become a permanent part of the case file that every later office reads.</p>
+<div class="div-foot"><span>LAND LEDGER</span><span>FULL PRODUCT DEMO WALKTHROUGH</span></div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 34 / 61</span>
+<span class="st-title">Field survey queue</span>
+<span class="st-sec">ACT 07 &middot; SURVEYOR ON THE GROUND</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/34-surveyor-queue.png" alt="Field survey queue"></div>
+<div class="st-cap">The surveyor's field queue: properties cleared for ground inspection, each with location and applicant details for planning the visit.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 35 / 61</span>
+<span class="st-title">Survey case file</span>
+<span class="st-sec">ACT 07 &middot; SURVEYOR ON THE GROUND</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/35-surveyor-property-detail.png" alt="Survey case file"></div>
+<div class="st-cap">The case file for inspection: boundaries, area, sketch and the applicant's submitted data, ready for field comparison.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 36 / 61</span>
+<span class="st-title">Field inspection dialog</span>
+<span class="st-sec">ACT 07 &middot; SURVEYOR ON THE GROUND</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/36-surveyor-field-inspection-dialog.png" alt="Field inspection dialog"></div>
+<div class="st-cap">The field inspection dialog - boundary status, encroachment findings and site evidence go in from the ground visit itself.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 37 / 61</span>
+<span class="st-title">Recording the verdict</span>
+<span class="st-sec">ACT 07 &middot; SURVEYOR ON THE GROUND</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/37-surveyor-record-form.png" alt="Recording the verdict"></div>
+<div class="st-cap">Recording the verdict: boundaries clear or issues found, captured in structured fields so every inspection stays comparable across cases.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 38 / 61</span>
+<span class="st-title">Survey notes filled</span>
+<span class="st-sec">ACT 07 &middot; SURVEYOR ON THE GROUND</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/38-surveyor-form-filled.png" alt="Survey notes filled"></div>
+<div class="st-cap">Notes filled: ground visit done, boundaries match the sale deed sketch, no encroachment observed. The words later offices will rely on.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 39 / 61</span>
+<span class="st-title">Survey queue clear</span>
+<span class="st-sec">ACT 07 &middot; SURVEYOR ON THE GROUND</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/39-surveyor-survey-passed.png" alt="Survey queue clear"></div>
+<div class="st-cap">Queue clear - the survey passes and the case moves on to the document verification office with the surveyor's findings attached.</div>
+</div>
+<div class="page divider">
+<div class="div-num">08</div>
+<div class="div-act">ACT 08 &middot; SCREENS 40-46</div>
+<h2 class="div-title">The verification desk</h2>
+<div class="div-rule"></div>
+<p class="div-intro">The clerk's desk is where fraud dies. Nishant Tekdiwal re-computes every document's SHA-256 fingerprint against the seal applied at upload, and opens the actual PDF to read it. One mismatch and the case stops right here - this act is your strongest integrity talking point.</p>
+<div class="div-foot"><span>LAND LEDGER</span><span>FULL PRODUCT DEMO WALKTHROUGH</span></div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 40 / 61</span>
+<span class="st-title">Verification desk</span>
+<span class="st-sec">ACT 08 &middot; THE VERIFICATION DESK</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/40-clerk-verification-desk.png" alt="Verification desk"></div>
+<div class="st-cap">The clerk's desk: survey-cleared files waiting for document checks, each showing its applicant and the next office in line.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 41 / 61</span>
+<span class="st-title">File inspection</span>
+<span class="st-sec">ACT 08 &middot; THE VERIFICATION DESK</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/41-clerk-inspect-dialog.png" alt="File inspection"></div>
+<div class="st-cap">Inspecting the registration file: applicant, survey notes, location and the documentary evidence with its SHA-256 fingerprint on display.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 42 / 61</span>
+<span class="st-title">Hash check</span>
+<span class="st-sec">ACT 08 &middot; THE VERIFICATION DESK</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/42-clerk-hash-check.png" alt="Hash check"></div>
+<div class="st-cap">One click re-computes the document's SHA-256 and compares it against the fingerprint sealed at submission time.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 43 / 61</span>
+<span class="st-title">SHA-256 match</span>
+<span class="st-sec">ACT 08 &middot; THE VERIFICATION DESK</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/43-clerk-hash-check-result.png" alt="SHA-256 match"></div>
+<div class="st-cap">Integrity verified - the fingerprints match. The document is byte-for-byte what the citizen uploaded; nothing was swapped en route.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 44 / 61</span>
+<span class="st-title">The actual PDF</span>
+<span class="st-sec">ACT 08 &middot; THE VERIFICATION DESK</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/44-clerk-document-view-works.png" alt="The actual PDF"></div>
+<div class="st-cap">View opens the real Agreement to Sell in a new tab - the document itself, not a placeholder. Office staff have full document access by design.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 45 / 61</span>
+<span class="st-title">Verify with a note</span>
+<span class="st-sec">ACT 08 &middot; THE VERIFICATION DESK</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/45-clerk-verify-confirm.png" alt="Verify with a note"></div>
+<div class="st-cap">Confirming verification with a note: documents in order. The formal record that this office checked the paperwork.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 46 / 61</span>
+<span class="st-title">Cleared for registrar</span>
+<span class="st-sec">ACT 08 &middot; THE VERIFICATION DESK</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/46-clerk-verified-toast.png" alt="Cleared for registrar"></div>
+<div class="st-cap">Cleared for the registrar - the desk is done and the case advances to legal review.</div>
+</div>
+<div class="page divider">
+<div class="div-num">09</div>
+<div class="div-act">ACT 09 &middot; SCREENS 47-58</div>
+<h2 class="div-title">The registrar and the ledger</h2>
+<div class="div-rule"></div>
+<p class="div-intro">The registrar holds the pen that writes to the blockchain. His approval mints the registration on-chain - block, transaction hash, timestamp - and the property's ownership history updates forever. This is the payoff moment of the entire demo; let the ledger screenshot sit on screen while you say it.</p>
+<div class="div-foot"><span>LAND LEDGER</span><span>FULL PRODUCT DEMO WALKTHROUGH</span></div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 47 / 61</span>
+<span class="st-title">Registrar's dashboard</span>
+<span class="st-sec">ACT 09 &middot; THE REGISTRAR AND THE LEDGER</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/47-registrar-dashboard.png" alt="Registrar's dashboard"></div>
+<div class="st-cap">The registrar's operations dashboard: registry-wide status, queues and chain health at the top of the office hierarchy.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 48 / 61</span>
+<span class="st-title">Legal review queue</span>
+<span class="st-sec">ACT 09 &middot; THE REGISTRAR AND THE LEDGER</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/48-registrar-review-queue.png" alt="Legal review queue"></div>
+<div class="st-cap">The legal review queue: verification-cleared cases awaiting the registrar's final decision.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 49 / 61</span>
+<span class="st-title">Final inspection</span>
+<span class="st-sec">ACT 09 &middot; THE REGISTRAR AND THE LEDGER</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/49-registrar-inspect-file.png" alt="Final inspection"></div>
+<div class="st-cap">Final inspection of the file - every prior office's work, from survey notes to hash verification, is visible before he signs.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 50 / 61</span>
+<span class="st-title">Approve and register</span>
+<span class="st-sec">ACT 09 &middot; THE REGISTRAR AND THE LEDGER</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/50-registrar-approve-dialog.png" alt="Approve and register"></div>
+<div class="st-cap">The decisive moment: approve and register on ledger. This dialog commits the registration to the blockchain.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 51 / 61</span>
+<span class="st-title">Registered</span>
+<span class="st-sec">ACT 09 &middot; THE REGISTRAR AND THE LEDGER</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/51-registrar-registered-result.png" alt="Registered"></div>
+<div class="st-cap">Registered. The property's status flips to REGISTERED and the transaction is anchored on-chain in the same action.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 52 / 61</span>
+<span class="st-title">Ledger explorer</span>
+<span class="st-sec">ACT 09 &middot; THE REGISTRAR AND THE LEDGER</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/52-registrar-ledger.png" alt="Ledger explorer"></div>
+<div class="st-cap">The ledger explorer confirms it: a fresh block carrying the registration event, visible to every office and citizen.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 53 / 61</span>
+<span class="st-title">Blocks and tx hashes</span>
+<span class="st-sec">ACT 09 &middot; THE REGISTRAR AND THE LEDGER</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/53-registrar-ledger-blocks.png" alt="Blocks and tx hashes"></div>
+<div class="st-cap">Blocks with transaction hashes and timestamps - the registry's history, immutable and inspectable, block by block.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 54 / 61</span>
+<span class="st-title">Audit log</span>
+<span class="st-sec">ACT 09 &middot; THE REGISTRAR AND THE LEDGER</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/54-registrar-audit-log.png" alt="Audit log"></div>
+<div class="st-cap">The audit log: every action by every role, who did what and when. Accountability here is a feature, not an afterthought.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 55 / 61</span>
+<span class="st-title">All properties</span>
+<span class="st-sec">ACT 09 &middot; THE REGISTRAR AND THE LEDGER</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/55-registrar-properties.png" alt="All properties"></div>
+<div class="st-cap">All properties across the registry with live status badges - the institution's full book of record on one screen.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 56 / 61</span>
+<span class="st-title">Transfer legal review</span>
+<span class="st-sec">ACT 09 &middot; THE REGISTRAR AND THE LEDGER</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/56-registrar-transfer-detail.png" alt="Transfer legal review"></div>
+<div class="st-cap">The transfer's legal review view: the registrar sees the complete case before approving the ownership change.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 57 / 61</span>
+<span class="st-title">Stage pipeline</span>
+<span class="st-sec">ACT 09 &middot; THE REGISTRAR AND THE LEDGER</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/57-registrar-transfer-stages.png" alt="Stage pipeline"></div>
+<div class="st-cap">The stage pipeline lays out the whole journey - consent, survey, verification, registration - each stage with its owner and timestamp.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 58 / 61</span>
+<span class="st-title">On-chain proof</span>
+<span class="st-sec">ACT 09 &middot; THE REGISTRAR AND THE LEDGER</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/58-registrar-property-detail-registered.png" alt="On-chain proof"></div>
+<div class="st-cap">The property file after registration: REGISTERED status plus the on-chain proof - transaction hash, block and time. The system's final word.</div>
+</div>
+<div class="page divider">
+<div class="div-num">10</div>
+<div class="div-act">ACT 10 &middot; SCREENS 59-61</div>
+<h2 class="div-title">Institution oversight</h2>
+<div class="div-rule"></div>
+<p class="div-intro">Admin sees the whole institution at once: roster, queues, cross-office metrics and the full audit log. The same system that serves a single citizen also gives the institution running it complete oversight - close the tour here.</p>
+<div class="div-foot"><span>LAND LEDGER</span><span>FULL PRODUCT DEMO WALKTHROUGH</span></div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 59 / 61</span>
+<span class="st-title">Control tower</span>
+<span class="st-sec">ACT 10 &middot; INSTITUTION OVERSIGHT</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/59-admin-oversight-board.png" alt="Control tower"></div>
+<div class="st-cap">The admin control tower: cross-office metrics, queues and system health in one institution-wide view.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 60 / 61</span>
+<span class="st-title">Roster and metrics</span>
+<span class="st-sec">ACT 10 &middot; INSTITUTION OVERSIGHT</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/60-admin-roster-metrics.png" alt="Roster and metrics"></div>
+<div class="st-cap">The user roster with roles and activity metrics - who holds which office, and how much work flows through each.</div>
+</div>
+<div class="page step">
+<div class="st-head">
+<span class="st-chip">STEP 61 / 61</span>
+<span class="st-title">System-wide audit</span>
+<span class="st-sec">ACT 10 &middot; INSTITUTION OVERSIGHT</span>
+</div>
+<div class="st-shot"><img src="demo-screenshots/61-admin-audit-log.png" alt="System-wide audit"></div>
+<div class="st-cap">The system-wide audit log closes the tour: every consequential action, permanently recorded. Trust is the product.</div>
+</div>
+<div class="page ending last">
+<div class="end-kicker">HANDOVER</div>
+<h2 class="end-title">Your demo kit</h2>
+<div class="end-sub">Everything below ships alongside this document - nothing else to prepare.</div>
+<div class="end-cols">
+<div class="end-left">
+<div class="dark-panel">
+<div class="dp-h">PRISTINE DEMO STATE (ALREADY RESTORED)</div>
+<div class="pr-row"><div class="pr-id">TRF-2026-0001</div><div>Waiting for party consent - Shruti and Ganesh can approve live</div></div>
+<div class="pr-row"><div class="pr-id">TRF-2026-0002</div><div>Sitting at the clerk's verification desk</div></div>
+<div class="pr-row"><div class="pr-id">TRF-2026-0003</div><div>Sitting at the registrar's legal review</div></div>
+<div class="pr-row"><div class="pr-id">TRF-2026-0004</div><div>Buyer consent pending</div></div>
+</div>
+<div class="dark-panel">
+<div class="dp-h">RECORDING</div>
+<div class="pr-row"><div>Companion recording: land-ledger-full-demo.mp4 (7:15) - same story, same order, performed live.</div></div>
+</div>
+</div>
+<div class="end-right">
+<div class="dark-panel">
+<div class="dp-h">DEMO ACCOUNTS</div>
+<div class="acc-head">ROLE &nbsp;&middot;&nbsp; NAME &nbsp;&middot;&nbsp; EMAIL</div>
+<div class="acc-row"><span class="acc-mail">CITIZEN   &nbsp;|&nbsp; Om Mandwade       &nbsp;|&nbsp; mandwadeom2616@gmail.com</span></div>
+<div class="acc-row"><span class="acc-mail">CITIZEN   &nbsp;|&nbsp; Shruti Pethe      &nbsp;|&nbsp; shrutipethe111@gmail.com</span></div>
+<div class="acc-row"><span class="acc-mail">SURVEYOR  &nbsp;|&nbsp; Akshay Panpaliya  &nbsp;|&nbsp; panpaliyaag@rknec.edu</span></div>
+<div class="acc-row"><span class="acc-mail">CLERK     &nbsp;|&nbsp; Nishant Tekdiwal  &nbsp;|&nbsp; tekdiwalnishant@gmail.com</span></div>
+<div class="acc-row"><span class="acc-mail">REGISTRAR &nbsp;|&nbsp; Prakash Joshi     &nbsp;|&nbsp; omdummy101@gmail.com</span></div>
+<div class="acc-row"><span class="acc-mail">ADMIN     &nbsp;|&nbsp; Sunita Deshmukh   &nbsp;|&nbsp; omdummy102@gmail.com</span></div>
+<div class="acc-row"><span class="acc-mail">CITIZEN   &nbsp;|&nbsp; Ganesh Patil      &nbsp;|&nbsp; alphadummy103@gmail.com</span></div>
+<div class="acc-row"><span class="acc-mail">CITIZEN   &nbsp;|&nbsp; Kavita Sharma     &nbsp;|&nbsp; alpha20051610@gmail.com</span></div>
+<div class="pw-note">Password for every account: LandLedger@123 - MFA codes arrive by real email.</div>
+</div>
+</div></div>
+<div class="end-close"><span class="tag">Every record sealed, every action accountable.</span><span class="brand">LAND LEDGER</span></div>
+</div></body></html>

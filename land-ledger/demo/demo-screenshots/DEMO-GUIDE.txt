@@ -1,0 +1,124 @@
+LAND LEDGER - FULL DEMO CAPTURE PACKAGE
+========================================
+Recorded: 12 Oct 2026 | Viewport 1440x900 | All actions performed LIVE
+
+VIDEO (choose either - same content):
+  ../land-ledger-full-demo.mp4   (12.8 MB, 7:15, plays everywhere)
+  ../land-ledger-full-demo.webm  (23 MB, 7:15, original capture)
+
+VIDEO STORYBOARD (what you will see):
+  00:00  Landing page tour (hero, features, how-it-works)
+  00:35  Sign-in page - demo account chips
+  00:50  Citizen Om: email + password -> MFA OTP screen -> typed OTP -> dashboard
+  01:40  Citizen dashboard: pending actions, recent properties, transfer activity
+  02:10  Properties list -> property detail (owner card, on-chain ownership record)
+  02:40  Ownership chain of title + stage timeline (who did what, when)
+  03:20  Transfers -> TRF-2026-0001 detail (parties, consent states, timeline)
+  04:00  Ledger records (blockchain explorer)
+  04:25  THEME MORPH - circular reveal animation to dark mode + back
+  05:00  Shruti signs in -> approves co-owner consent (with note)
+  05:40  Ganesh signs in -> approves buyer consent -> status advances to
+         AWAITING DOC VERIFICATION
+  06:10  Surveyor Akshay: field inspection dialog -> boundaries clear -> notes ->
+         confirm -> "Survey queue is clear"
+  06:40  Clerk Nishant: inspect file -> HASH CHECK (SHA-256 match) -> verify docs
+         -> "Documents in order" -> cleared for registrar
+  07:00  Registrar Prakash: review queue -> approve & REGISTER ON LEDGER
+         (real blockchain transaction) -> ledger explorer -> audit log
+  07:10  (end card) sign out
+
+NOTE: video shows OTP codes being typed - in YOUR live demo the OTP arrives
+by real email (SMTP is live on the published link).
+
+SCREENSHOTS (61 PNG, numbered in demo order) - suggested narration order:
+
+PUBLIC + LOGIN
+  01-landing-hero.png              Landing hero
+  02-landing-features.png          Feature cards
+  03-landing-how-it-works.png      Register / Verify / Settle flow
+  04-login-page.png                Sign-in with demo chips
+  05-login-filled.png              Credentials entered
+  06-mfa-otp-screen.png            6-digit email OTP step (2FA live)
+
+CITIZEN - OM MANDWADE
+  07-citizen-dashboard.png         Overview + pending actions
+  08-citizen-dashboard-activity.png Recent properties/transfers/chain activity
+  09-citizen-properties-list.png   Properties with status badges + search/filters
+  10-property-detail-overview.png  Property header, owner, on-chain record
+  11-property-detail-ownership.png Ownership / association panel
+  12-property-detail-timeline.png  Stage history - who acted, when
+  13-property-detail-documents.png Documents + integrity
+  14-register-property-form.png    New property application (filled)
+  15-citizen-documents.png         Citizen document vault
+  16-citizen-transfers.png         Transfer list
+  17-transfer-consent-detail.png   TRF-2026-0001 consent parties
+  18-new-transfer-form.png         New transfer initiation
+  19-citizen-ledger.png            Blockchain ledger records
+  20-citizen-profile.png           Profile
+
+THEME (the new HackerEarth-style morph)
+  23-theme-morph-mid-animation.png Mid-morph frame (circular reveal)
+  24-dashboard-dark-mode.png       Full dark mode
+  25-property-detail-dark.png      Property detail in dark
+
+MULTI-PARTY CONSENT (live demo - TRF-2026-0001)
+  26-shruti-dashboard-pending-consent.png  Pending consent card
+  27-shruti-consent-confirm.png            Approve dialog
+  28-shruti-consent-note-filled.png        Consent note
+  29-shruti-consent-approved-toast.png     Approval recorded
+  30-shruti-consent-recorded.png           Consent table shows APPROVED
+  31-ganesh-buyer-view.png                 Buyer view
+  32-ganesh-consent-approved.png           Buyer approval
+  33-transfer-status-after-consents.png    Status: AWAITING DOC VERIFICATION
+
+SURVEYOR - AKSHAY PANPALIYA
+  34-surveyor-queue.png                    Field survey queue
+  35-surveyor-property-detail.png          Case file
+  36-surveyor-field-inspection-dialog.png  Inspection dialog + attachment
+  37-surveyor-record-form.png              Boundaries clear / issue found
+  38-surveyor-form-filled.png              Notes filled
+  39-surveyor-survey-passed.png            "Survey queue is clear"
+
+CLERK - NISHANT TEKDIWAL
+  40-clerk-verification-desk.png           Registration + transfer files
+  41-clerk-inspect-dialog.png              File inspection
+  42-clerk-hash-check.png                  Before hash check
+  43-clerk-hash-check-result.png           "SHA-256 fingerprints match"
+  44-clerk-document-view-works.png         Actual PDF opens (Agreement to Sell)
+  45-clerk-verify-confirm.png              "Documents in order" + note
+  46-clerk-verified-toast.png              Cleared for registrar
+
+REGISTRAR - PRAKASH JOSHI
+  47-registrar-dashboard.png               Registry operations
+  48-registrar-review-queue.png            Legal review queue
+  49-registrar-inspect-file.png            File inspection
+  50-registrar-approve-dialog.png          "Approve & register on ledger"
+  51-registrar-registered-result.png       Registered result
+  52-registrar-ledger.png                  Blockchain explorer
+  53-registrar-ledger-blocks.png           Blocks + tx hashes
+  54-registrar-audit-log.png               Immutable audit trail
+  55-registrar-properties.png              All properties
+  56-registrar-transfer-detail.png         Transfer legal review
+  57-registrar-transfer-stages.png         Stage pipeline
+  58-registrar-property-detail-registered.png REGISTERED + on-chain proof
+
+ADMIN - SUNITA DESHMUKH
+  59-admin-oversight-board.png             Control tower
+  60-admin-roster-metrics.png              User roster + metrics
+  61-admin-audit-log.png                   System-wide audit
+
+DEMO ACCOUNTS (password for all: LandLedger@123)
+  Citizen   : mandwadeom2616@gmail.com  (Om Mandwade)
+  Citizen   : shrutipethe111@gmail.com  (Shruti Pethe)
+  Surveyor  : panpaliyaag@rknec.edu     (Akshay Panpaliya)
+  Clerk     : tekdiwalnishant@gmail.com (Nishant Tekdiwal)
+  Registrar : omdummy101@gmail.com      (Prakash Joshi)
+  Admin     : omdummy102@gmail.com      (Sunita Deshmukh)
+  Citizen   : alphadummy103@gmail.com   (Ganesh Patil)
+  Citizen   : alpha20051610@gmail.com   (Kavita Sharma)
+
+PRISTINE DEMO STATE (already restored after capture):
+  TRF-2026-0001  WAITING FOR PARTY CONSENT (Shruti + Ganesh can approve live)
+  TRF-2026-0002  at clerk desk
+  TRF-2026-0003  at registrar desk
+  TRF-2026-0004  buyer consent pending
