@@ -580,3 +580,24 @@ Work Log:
 
 Stage Summary:
 - The "broken options" was ONE missing import crashing React on citizen Properties; fixed + permanently guarded at build time; theme switch now has the premium circular morph (HackerEarth-style) with zero structural changes; SPA cache policy hardened against the stale-HTML blank-page class; all suites green; demo state pristine (TRF-2026-0001 CONSENT_PENDING)
+
+---
+Task ID: 32
+Agent: Super Z (main)
+Task: "start workspace and preview + capture all screenshots + screen recording for the full demo - dont miss a thing"
+
+Work Log:
+- Recycle #8 revived autonomously (dist survived, chain fresh block 1) -> reseeded --force so all properties re-anchored on the NEW chain contract (0x5FbD..., latestBlock 5->6) - keeps on-chain proof coherent for demo
+- Capture instance on 3100 (MFA_DEV_MODE, devCode) + real preview on 3000 both green
+- 63 staged screenshots (1440x900) in download/demo-screenshots/ numbered in demo order + DEMO-GUIDE.txt (storyboard, accounts, narration order): landing x3, login+MFA x3, citizen Om 14 shots (dashboard, properties, ownership chain, timeline, docs, register form, transfers, consent parties, new transfer, ledger, profile), theme morph + dark x3, Shruti consent x5, Ganesh consent x3, surveyor x6, clerk x7, registrar x12 (incl. approve-and-register-on-ledger + REGISTERED property with tx hash), admin x3
+- GOTCHA: agent-browser resolves RELATIVE screenshot paths against its daemon CWD (land-ledger/backend) - 42 shots landed there mid-pass; recovered via mv; switched to absolute paths
+- 7min15s 30fps continuous screen recording of the FULL story performed LIVE on pristine reseed: landing -> Om login (typed OTP) -> dashboard tour -> property detail (ownership chain) -> transfer consent detail -> ledger -> theme morph on camera -> Shruti approves -> Ganesh approves (status flips AWAITING DOC VERIFICATION) -> surveyor passes field survey -> clerk hash-check + docs-in-order -> registrar approves & REGISTERS ON CHAIN -> ledger explorer -> audit -> admin oversight -> sign out. Saved webm + mp4 (ffmpeg h264, faststart; first mp4 attempt truncated by daemon kill between tool calls - re-encoded foreground, validated 434.87s)
+- BUG #1 FOUND DURING CAPTURE: clerk clicking View/Hash check on a registration file got 403 "You do not have access to this document" - documentController ACL only allowed registrar/uploader/owner/submitter; the CLERK whose job is document verification was locked out (and surveyor too). Fix: OFFICE_ROLES set (registrar/clerk/surveyor/admin) in getDocumentAccessible; citizens unchanged (tests confirm)
+- BUG #2 FOUND DURING CAPTURE: every View/Download link was a plain <a href=/api/documents/:id/download target=_blank> - browser navigation cannot attach the Authorization header (JWT in localStorage, not cookies) -> raw JSON 401 page. Fix: documentService.open() fetch-with-header + blob URL + window.open; shared DocLink component (busy state + toast on failure) swapped into all 7 call sites across 6 files
+- Both bugs verified fixed headlessly: clerk hash check -> "Integrity verified - SHA-256 fingerprints match"; View -> PDF renders in new tab (Agreement to Sell PDF)
+- GAUNTLET after fixes: backend 44/44 (403 test targets citizens - unaffected), contract 20/20, E2E 56/56 on fresh reseed
+- Pristine reseed restored after capture (TRF-2026-0001 CONSENT_PENDING ready for user's live demo); main app restarted via start-cloud, health green
+- Commit 89deb96 (ACL + DocLink + dist); screenshots/video gitignored under download/
+
+Stage Summary:
+- Complete demo package delivered: 63 ordered screenshots + 7min full-story screen recording (mp4+webm) + DEMO-GUIDE.txt; two real workflow-blocking bugs found and fixed during capture (office-role doc ACL + auth-less navigation links); all suites green; demo state pristine
