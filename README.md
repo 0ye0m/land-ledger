@@ -1,12 +1,81 @@
-# LAND LEDGER
+# 🏛️ LAND LEDGER
 
-**A secure digital property registry platform** — property records, verified documents, protected ownership transfers, rule-based fraud detection, registrar review and blockchain-backed settlement in one accountable registry.
+**A blockchain-backed digital property registry** — multi-party consent, surveyor field verification, clerk document scrutiny, registrar review and on-chain ownership settlement, with a full audit trail on every action.
+
+![tests](https://img.shields.io/badge/contract_tests-20%2F20-success) ![api](https://img.shields.io/badge/API_tests-44%2F44-success) ![e2e](https://img.shields.io/badge/E2E_workflow-56%2F56-success) ![react](https://img.shields.io/badge/React-18-blue) ![node](https://img.shields.io/badge/Node-20%2B-green) ![solidity](https://img.shields.io/badge/Solidity-0.8.24-orange) ![db](https://img.shields.io/badge/MongoDB-Atlas-green) ![chain](https://img.shields.io/badge/Hardhat-2-yellow)
+
+![LAND LEDGER — public registry landing page](land-ledger/demo/demo-screenshots/01-landing-hero.png)
+
+---
+
+**📖 Jump to:** [Live demo](#-live-demo) · [Verified evidence](#-verified-evidence) · [The 5-role pipeline](#-the-5-role-pipeline) · [Architecture](#-system-architecture) · [Quickstart](#-local-setup) · [API](#-rest-api) · [Smart contract](#-smart-contract)
+
+---
+
+## 🎬 Live demo
+
+No public host is pinned to this README — instead the repo ships a **complete recorded demo**, so what you see is exactly what the code does:
+
+| Asset | What it is |
+| --- | --- |
+| ▶️ [`land-ledger/demo/land-ledger-full-demo.mp4`](land-ledger/demo/land-ledger-full-demo.mp4) | **Full screen recording — 7 min 15 s.** Click it on GitHub and it plays right here: landing → MFA sign-in → citizen → consent → surveyor → clerk → registrar → on-chain seal → admin oversight. |
+| 📕 [`land-ledger/demo/land-ledger-demo-walkthrough.pdf`](land-ledger/demo/land-ledger-demo-walkthrough.pdf) | **74-page storyboard** — all 61 screenshots in demo order with captions, run sheet and demo accounts. Present from this instead of the live app. |
+| 🖼️ [`land-ledger/demo/demo-screenshots/`](land-ledger/demo/demo-screenshots) | All **61 numbered PNGs** (`01-landing-hero.png` → `61-admin-audit-log.png`) + `DEMO-GUIDE.txt` with minute-by-minute narration timestamps. |
+| 🌐 [`land-ledger/demo/land-ledger-demo-walkthrough.html`](land-ledger/demo/land-ledger-demo-walkthrough.html) | Browser version of the same walkthrough. |
+
+**Demo accounts** (all seeded — password for every account: `LandLedger@123`):
+
+| Role | Name | Email |
+| --- | --- | --- |
+| Citizen | Om Mandwade | `mandwadeom2616@gmail.com` |
+| Citizen | Shruti Pethe | `shrutipethe111@gmail.com` |
+| Surveyor | Akshay Panpaliya | `panpaliyaag@rknec.edu` |
+| Clerk | Nishant Tekdiwal | `tekdiwalnishant@gmail.com` |
+| Registrar | Rohan Kulkarni | `omdummy101@gmail.com` |
+| Admin | Sneha Patil | `omdummy102@gmail.com` |
+
+> Password login alone can never sign in — every account requires a **6-digit email OTP** (two-factor) on top.
+
+### The journey in pictures
+
+| | |
+| --- | --- |
+| ![Citizen dashboard](land-ledger/demo/demo-screenshots/07-citizen-dashboard.png) | ![MFA OTP screen](land-ledger/demo/demo-screenshots/06-mfa-otp-screen.png) |
+| **Citizen cockpit** — properties, transfers, ledger at a glance | **Two-factor sign-in** — password + 6-digit email OTP |
+| ![Property detail](land-ledger/demo/demo-screenshots/10-property-detail-overview.png) | ![Consent board](land-ledger/demo/demo-screenshots/21-transfer-parties-consent.png) |
+| **Property dossier** — ownership, timeline, documents | **Multi-party consent board** — every party must approve |
+| ![Surveyor inspection](land-ledger/demo/demo-screenshots/38-surveyor-form-filled.png) | ![Clerk hash check](land-ledger/demo/demo-screenshots/43-clerk-hash-check-result.png) |
+| **Surveyor field inspection** — on-ground verification record | **Clerk verification desk** — SHA-256 integrity re-check |
+| ![Registrar approves](land-ledger/demo/demo-screenshots/51-registrar-registered-result.png) | ![Ledger blocks](land-ledger/demo/demo-screenshots/53-registrar-ledger-blocks.png) |
+| **Registrar decision** — approval seals it on-chain | **The ledger** — real transaction hashes and blocks |
+| ![Admin oversight](land-ledger/demo/demo-screenshots/59-admin-oversight-board.png) | ![Dark mode](land-ledger/demo/demo-screenshots/24-dashboard-dark-mode.png) |
+| **Admin control tower** — roster, metrics, override powers | **Full dark theme** — one click, whole app morphs |
+
+*61 more in [`land-ledger/demo/demo-screenshots/`](land-ledger/demo/demo-screenshots).*
+
+---
+
+## ✅ Verified evidence
+
+Every number below is reproducible from a clean clone:
+
+| Suite | What it proves | Command | Result |
+| --- | --- | --- | --- |
+| **Smart contract** | `LandRegistry.sol` — registration, ownership transfer, operator-only writes, duplicate/zero-address guards | `cd land-ledger/blockchain && npx hardhat test` | **20 passing** |
+| **Backend API** | auth + MFA, RBAC, properties, documents + SHA-256 tamper detection, transfers, multi-party consent, fraud engine | `cd land-ledger/backend && node --test --test-concurrency=1` | **44 passing** |
+| **Workflow E2E** | the entire 5-role pipeline against a running API — OTP sign-in, consent gate, stage guards, on-chain registration **and** settlement | `API=http://127.0.0.1:3100 node scripts/test-workflow.js` | **56/56 checks** |
+
+**On-chain evidence** — `land-ledger/blockchain/deployments/local.json` records the deployed contract:
+
+- Contract: `0x5FbDB2315678afecb367f032d93F642f64180aa3` (deterministic first-deployment address)
+- Deployment tx: `0xbece2ff3e7dcf5bb155622b5ddf8f15fc5175cfed2f7d9ec4b4c97e985a259ae` — a real, inspectable transaction
+- Every ownership change stores its **real tx hash + block number**; MongoDB is updated only after chain confirmation. No fake hashes, ever.
 
 ---
 
 ## 1. Product overview
 
-Land Ledger solves the core problem of fragmented, difficult-to-verify property ownership records. It creates a structured, traceable workflow from **property registration → document verification → registrar review → ledger settlement**, producing a clear chain of ownership that citizens can trace and registrars can operate with confidence.
+Land Ledger solves the core problem of fragmented, difficult-to-verify property ownership records. It creates a structured, traceable workflow from **property registration → multi-party consent → field verification → document scrutiny → registrar review → ledger settlement**, producing a clear chain of ownership that citizens can trace and registrars can operate with confidence.
 
 The product communicates trust, accountability, verification, ownership, traceability, security, document integrity and registry operations. The UI is an *institutional registry* design: warm paper backgrounds, dark navy ink, deep coral registry accent, section kickers, square registry marks, structured data tables and a subtle dotted paper texture — with a complete dark theme.
 
@@ -17,12 +86,46 @@ The product communicates trust, accountability, verification, ownership, traceab
 | Ownership records scattered across offices | One normalized cloud registry per property |
 | Documents cannot be proven unmodified | SHA-256 fingerprint at upload, re-checkable at any time |
 | Duplicate/fraudulent sale attempts | Rule-based fraud & conflict engine at submission **and** decision time |
+| Deals pushed through without all parties | Multi-party consent gate — every listed party must approve before the desk sees it |
 | Opaque, manipulable ownership changes | Ownership changes only via smart-contract settlement, stored with real transaction hashes |
 | No accountability | Append-only audit log of every consequential action |
 
 ---
 
-## 2. System architecture
+## 2. The 5-role pipeline
+
+A transfer moves through five human desks — the API enforces who can touch what at every stage:
+
+```
+                    ┌──────────────────────────────────────────────────────┐
+                    │  CONSENT_PENDING — every listed party must approve    │
+                    │  (consent board, one decision each, notes optional)   │
+                    └──────────────────────────┬───────────────────────────┘
+                                               ▼
+                    ┌──────────────────────────────────────────────────────┐
+                    │  PENDING — clerk verification desk                    │
+                    │  document scrutiny + SHA-256 integrity re-checks      │
+                    └──────────────────────────┬───────────────────────────┘
+                                               ▼
+                    ┌──────────────────────────────────────────────────────┐
+                    │  DOCS_VERIFIED — registrar review                     │
+                    │  fraud gate re-runs → APPROVE or REJECT (reason req.) │
+                    └──────────────────────────┬───────────────────────────┘
+                                               ▼  APPROVE
+                    ┌──────────────────────────────────────────────────────┐
+                    │  COMPLETED — smart-contract settlement                │
+                    │  real tx hash + block stored, ownership updated       │
+                    └───────────────────────────────────────────────────────┘
+
+  Surveyor runs in parallel: field inspection queue → survey record (pass/fail)
+  Admin watches everything: oversight board, metrics, override-reject
+```
+
+Status model: `CONSENT_PENDING → PENDING → DOCS_VERIFIED → APPROVED → COMPLETED` (plus `REJECTED` / `FAILED` exits). A stage cannot be skipped — the API rejects out-of-order actions.
+
+---
+
+## 3. System architecture
 
 ```
 ┌────────────────────────┐        ┌─────────────────────────────┐
@@ -37,7 +140,7 @@ The product communicates trust, accountability, verification, ownership, traceab
           │ MongoDB Atlas    │    │ Document storage │   │ Hardhat network     │
           │ users/properties │    │ filesystem +     │   │ LandRegistry.sol    │
           │ documents/trans- │    │ SHA-256 in DB    │   │ via ethers.js v6    │
-          │ ers/fraud/chain/ │    └──────────────────┘   │ operator wallet     │
+          │ fers/fraud/chain/│    └──────────────────┘   │ operator wallet     │
           │ audit (7 collec- │                           └─────────────────────┘
           │ tions, M0 free)  │
           └──────────────────┘
@@ -47,16 +150,19 @@ In the sandbox/integrated deployment the Express server also serves the built SP
 
 ---
 
-## 3. Feature overview
+## 4. Feature overview
 
 - **Public homepage** — hero, 2×2 capability grid, register → verify → settle process band, footer.
-- **Authentication** — citizen self-registration, JWT sessions, bcrypt password hashing, login screen with convenient demo-account preview buttons (still real backend auth).
-- **Role-based access control** — `citizen` and `registrar` roles resolved server-side from the database on every request; frontend routes guarded, API endpoints guarded again behind the UI.
-- **Property registry** — searchable/filterable/paginated table, full detail page, registration workflow (PENDING_REVIEW → REGISTERED / REJECTED), registrar approve (triggers on-chain registration) / reject (reason required).
-- **Document management** — upload (extension + MIME + size validation), SHA-256 fingerprint stored with metadata, integrity re-check that detects tampering, registrar formal verification, authenticated download.
+- **Authentication with MFA** — citizen self-registration, bcrypt hashing, login returns an MFA **challenge** (never a token), 6-digit email OTP via `verify-otp` (rate-limited, resend endpoint), JWT issued only after the OTP. Demo preview buttons on the login screen still run the real backend flow.
+- **5 roles, server-enforced** — `citizen`, `surveyor`, `clerk`, `registrar`, `admin` resolved from the database on every request; routes and endpoints double-guarded.
+- **Property registry** — searchable/filterable/paginated table, full detail page, registration workflow, registrar approve (triggers on-chain registration) / reject (reason required).
+- **Multi-party consent** — transfer lists its parties; each approves/rejects with an optional note on the consent board; the request only advances when all parties have consented.
+- **Surveyor desk** — field-inspection queue, structured survey record (pass/fail with findings) per property.
+- **Clerk desk** — verification queue, per-document scrutiny with one-click SHA-256 integrity re-check (shows match/mismatch), formal document verification.
+- **Document management** — upload (extension + MIME + size validation), SHA-256 fingerprint stored with metadata, tamper detection, authenticated download.
 - **Ownership transfers** — full workflow with ownership validation, duplicate/conflict detection, document + hash verification, rule-based fraud checks, registrar approval, on-chain settlement, real transaction hash + block stored, MongoDB updated **only after confirmation**.
 - **Fraud & conflict engine** — 9 deterministic checks returning `isFraudulent / riskLevel / reasons / checksPerformed` (LOW/MEDIUM/HIGH).
-- **Registrar review queue** — pending registrations + transfers, high-risk first, inspect modal with document evidence and hash checks.
+- **Admin oversight** — cross-registry metrics, user roster, override-reject with reason.
 - **Blockchain ledger page** — network status, contract address, latest block, transaction registry with details modal; honest "Blockchain unavailable" state.
 - **Ownership history** — derived exclusively from confirmed on-chain events.
 - **Audit log** — chronological event register with actor, role, action, entity, result and metadata (never credentials).
@@ -65,7 +171,7 @@ In the sandbox/integrated deployment the Express server also serves the built SP
 
 ---
 
-## 4. Technology stack (mandated)
+## 5. Technology stack
 
 | Layer | Technology |
 | --- | --- |
@@ -73,7 +179,7 @@ In the sandbox/integrated deployment the Express server also serves the built SP
 | Backend | Node.js 20+, Express 4, REST APIs |
 | Database | MongoDB Atlas (M0 free tier), Mongoose 8 ODM |
 | Blockchain | Solidity 0.8.24, Hardhat 2, ethers.js v6, local Hardhat network |
-| Auth | JWT (jsonwebtoken), bcrypt |
+| Auth | JWT (jsonwebtoken), bcrypt, email OTP two-factor (Nodemailer SMTP) |
 | DevOps | Docker, Docker Compose, Kubernetes manifests, Jenkinsfile |
 | Monitoring | Prometheus (prom-client), Grafana |
 
@@ -81,93 +187,85 @@ No Next.js, no meta-frameworks, no TanStack packages — per product requirement
 
 ---
 
-## 5. Folder structure
+## 6. Folder structure
 
 ```
 land-ledger/
-├── frontend/                 # React + Vite SPA
-│   ├── src/{components,pages,layouts,routes,services,context,hooks,types,utils,assets}
+├── frontend/                 # React + Vite SPA (5 role desks)
+│   ├── src/{components,pages,layouts,routes,services,context,hooks,utils}
 │   ├── nginx.conf            # production container proxy
 │   └── Dockerfile
 ├── backend/                  # Express REST API
 │   ├── src/{controllers,routes,middleware,services,validators,utils,config}
-│   ├── src/db/{pool,migrate,seed}.js
-│   ├── tests/                # node:test suites (auth/property/document/transfer/fraud)
+│   ├── src/services/{consentService,fraudService,workflowService,...}.js
+│   ├── tests/                # node:test suites (auth/consent/documents/
+│   │                         #  fraud/properties/transfers) — 44 tests
 │   └── Dockerfile
 ├── blockchain/               # Solidity + Hardhat
 │   ├── contracts/LandRegistry.sol
 │   ├── scripts/deploy.js
 │   ├── test/landRegistry.test.js   # 20 contract tests
 │   └── deployments/local.json      # artifact consumed by the backend
-├── database/
-│   ├── migrations/001_init.sql
-│   └── seed/ (seed logic lives in backend/src/db/seed.js)
-├── k8s/                      # namespace, configmap, secrets, statefulset, deployments, ingress
-├── monitoring/
-│   ├── prometheus/prometheus.yml
-│   └── grafana/{provisioning,dashboards}
-├── scripts/
-│   ├── dev-up.sh             # idempotent local bootstrap
-│   └── e2e-demo-flow.js      # 31-step demonstration flow
+├── database/                 # legacy schema reference
+├── docs/                     # DEMO-GUIDE.md (account/role map)
+├── demo/                     # 🎬 full demo package — mp4 recording (7:15),
+│                             # 74-page walkthrough PDF + HTML, 61 screenshots
+├── k8s/                      # namespace, configmap, secrets, statefulset,
+│                             # deployments, ingress
+├── monitoring/               # prometheus.yml + grafana provisioning/dashboards
 ├── docker-compose.yml
-├── Jenkinsfile
-├── .env.example
-└── README.md
+└── Jenkinsfile
+
+scripts/                      # repo-level tooling
+├── test-workflow.js          # 56-check multi-role E2E (needs a running API)
+├── check-demo-state.js       # audit transfers/properties/chain via the API
+├── dump-state.js             # raw state dump for debugging
+├── test-smtp.js              # OTP mail delivery probe
+└── dev-up.sh / revive.sh     # bootstrap helpers
 ```
 
 ---
 
-## 6. Authentication & RBAC
+## 7. Authentication, MFA & RBAC
 
 - `POST /api/auth/register` — citizen self-registration (server-side validation, duplicate-email handling, bcrypt cost 10).
-- `POST /api/auth/login` — returns `{ token, user }`; failed attempts are audited (`USER_LOGIN_FAILED`).
+- `POST /api/auth/login` — validates password, then issues an **MFA challenge** — no token is returned; failed attempts are audited.
+- `POST /api/auth/verify-otp` — 6-digit code from email (rate-limited); success issues the JWT.
+- `POST /api/auth/resend-otp` — re-issues a challenge code.
 - `GET /api/auth/me` — requires `Authorization: Bearer <jwt>`.
 
-The token carries only `{ sub, role }`; **every protected request reloads the user from MongoDB**, so role changes/disabled accounts take effect immediately. `requireRole('registrar')` guards all registrar endpoints. Citizens can never approve anything, change their role, or modify chain ownership; registrars themselves remain subject to smart-contract authorization (the operator account is the only account that can mutate the registry on-chain).
+The token carries only `{ sub, role }`; **every protected request reloads the user from MongoDB**, so role changes/disabled accounts take effect immediately. `requireRole(...)` guards each desk's endpoints (survey routes → surveyor only, verify-docs → clerk only, oversight/override → admin only). Citizens can never approve anything, change their role, or modify chain ownership; registrars themselves remain subject to smart-contract authorization (the operator account is the only account that can mutate the registry on-chain).
 
-**Demo accounts (seeded, allowlisted only - password login alone cannot sign in; a 6-digit email OTP is required):**
-
-| Role | Email | Password |
-| --- | --- | --- |
-| Citizen | `mandwadeom2616@gmail.com` | `LandLedger@123` |
-| Citizen | `shrutipethe111@gmail.com` | `LandLedger@123` |
-| Surveyor | `panpaliyaag@rknec.edu` | `LandLedger@123` |
-| Clerk | `tekdiwalnishant@gmail.com` | `LandLedger@123` |
-| Registrar | `omdummy101@gmail.com` | `LandLedger@123` |
-| Admin | `omdummy102@gmail.com` | `LandLedger@123` |
-| Citizen | `alphadummy103@gmail.com` | `LandLedger@123` |
-| Citizen | `alpha20051610@gmail.com` | `LandLedger@123` |
-
-The full account/role map lives in `land-ledger/docs/DEMO-GUIDE.md`.
+Demo accounts table: see [Live demo](#-live-demo). The full account/role map lives in `land-ledger/docs/DEMO-GUIDE.md`.
 
 ---
 
-## 7. MongoDB schema
+## 8. MongoDB schema
 
 Seven collections in MongoDB Atlas (UUID string `_id`s preserving every legacy reference, indexes mirroring the old schema):
 
-- **users** — unique email (case-insensitive index), role CHECK, wallet address.
+- **users** — unique email (case-insensitive index), role (`citizen | surveyor | clerk | registrar | admin`), wallet address.
 - **properties** — unique `property_id` (`PROP-2026-0001`) + `reference_number`, owner FK, status `PENDING_REVIEW | REGISTERED | REJECTED`.
 - **documents** — property FK (cascade), uploader FK, type, size, mime, storage path, `sha256_hash`, verification status `PENDING | VERIFIED | TAMPERED | HASH_MISMATCH | REJECTED`, verifier + timestamp.
-- **transfer_requests** — unique `transfer_reference` (`TRF-2026-0001`), seller/buyer FKs + wallets, status `PENDING | APPROVED | REJECTED | COMPLETED | FAILED`, risk level, approval/rejection reasons.
+- **transfer_requests** — unique `transfer_reference` (`TRF-2026-0001`), seller/buyer FKs + wallets, status `CONSENT_PENDING | PENDING | DOCS_VERIFIED | APPROVED | REJECTED | COMPLETED | FAILED`, risk level, consent records, approval/rejection reasons.
 - **fraud_checks** — transfer reference, `is_fraudulent`, `risk_level`, `reasons` + `checks_performed` subdocuments.
 - **blockchain_transactions** — property/transfer references, `transaction_hash`, `block_number`, network, contract, operation `PROPERTY_REGISTER | OWNERSHIP_TRANSFER`, from/to, status `PENDING | CONFIRMED | FAILED`, error message.
 - **audit_events** (+ **login_events**) — actor name/role/id, action, entity type/id, result, metadata subdocument; `login_events` adds sign-in security telemetry (IP, user agent).
 - **counters** — atomic sequence generator for business ids (PROP-2026-0025, TRF-2026-0004).
 
-References are plain string fields pointing at `_id` UUIDs (enforced at the service layer); unique indexes guarantee no duplicate emails, property ids, references or tx hashes. Bonus collections browsable in MongoDB Compass: `audit_events`, `login_events`, `counters`.
+References are plain string fields pointing at `_id` UUIDs (enforced at the service layer); unique indexes guarantee no duplicate emails, property ids, references or tx hashes.
 
 ---
 
-## 8. Document hashing
+## 9. Document hashing
 
 Upload flow: **React → Express (multer) → file storage → SHA-256 → MongoDB metadata/hash.**
 
-`POST /api/documents/:id/verify-integrity` re-reads the stored bytes, recomputes SHA-256 and compares with the stored fingerprint: match → `intact: true`; mismatch → document auto-flagged `TAMPERED` + audit entry. The hash proves file integrity relative to the stored fingerprint — **it is not by itself proof of legal authenticity**; registrar verification remains part of the workflow (and is blocked for tampered files).
+`POST /api/documents/:id/verify-integrity` re-reads the stored bytes, recomputes SHA-256 and compares with the stored fingerprint: match → `intact: true`; mismatch → document auto-flagged `TAMPERED` + audit entry. The clerk desk surfaces this as a one-click check. The hash proves file integrity relative to the stored fingerprint — **it is not by itself proof of legal authenticity**; clerk/registrar verification remains part of the workflow (and is blocked for tampered files).
 
 ---
 
-## 9. Fraud detection (rule-based, not AI)
+## 10. Fraud detection (rule-based, not AI)
 
 `backend/src/services/fraudService.js` runs deterministic checks:
 
@@ -185,13 +283,15 @@ Each check returns `PASS / WARN / FAIL` with human-readable detail. `FAIL ⇒ is
 
 ---
 
-## 10. Ownership transfer workflow
+## 11. Ownership transfer workflow
 
 ```
-Citizen creates request
+Citizen creates request (all parties listed)
   → backend validation → ownership verification → duplicate/conflict check
   → document verification → SHA-256 verification → fraud checks
-  → PENDING (registrar review)
+  → CONSENT_PENDING (consent board open; every party must decide)
+  → PENDING (clerk desk: document scrutiny + hash re-checks)
+  → DOCS_VERIFIED (registrar review)
 Registrar
   → APPROVE  → re-run fraud gate
               → smart-contract transferOwnership() via operator wallet
@@ -206,7 +306,7 @@ Blockchain failure → ownership unchanged, transfer FAILED, failed tx recorded,
 
 ---
 
-## 11. Smart contract
+## 12. Smart contract
 
 `blockchain/contracts/LandRegistry.sol` (Solidity 0.8.24):
 
@@ -229,14 +329,16 @@ The deploy writes `blockchain/deployments/local.json`; the backend reads `CONTRA
 
 ---
 
-## 12. REST API
+## 13. REST API
 
 All responses: `{ success, message, data }` or `{ success: false, message, errorCode }`.
 
 | Method & path | Access | Purpose |
 | --- | --- | --- |
 | POST `/api/auth/register` | public | Citizen registration |
-| POST `/api/auth/login` | public | Login (rate-limited) |
+| POST `/api/auth/login` | public | Password step → MFA challenge (rate-limited) |
+| POST `/api/auth/verify-otp` | challenge | OTP step → JWT (rate-limited) |
+| POST `/api/auth/resend-otp` | challenge | Re-issue OTP |
 | GET `/api/auth/me` | auth | Current session |
 | GET `/api/users/me` · PUT `/api/users/me` | auth | Profile read/update |
 | PUT `/api/users/me/password` | auth | Password change |
@@ -251,15 +353,25 @@ All responses: `{ success, message, data }` or `{ success: false, message, error
 | GET `/api/documents` | auth | Scoped document registry |
 | GET `/api/documents/:id` | auth* | Document detail |
 | POST `/api/documents/:id/verify-integrity` | auth* | Re-hash + compare |
-| POST `/api/documents/:id/verify` | registrar | Formal VERIFIED/REJECTED |
+| POST `/api/documents/:id/verify` | clerk/registrar | Formal VERIFIED/REJECTED |
 | GET `/api/documents/:id/download` | auth* | Authenticated download |
 | POST `/api/transfers` | owner | Create transfer (fraud-gated) |
 | GET `/api/transfers` | auth | Scoped list + filters |
 | GET `/api/transfers/:id` | party/registrar | Detail + fraud + chain + audit |
 | POST `/api/transfers/:id/approve` | registrar | Approve + settle on-chain |
 | POST `/api/transfers/:id/reject` | registrar | Reject with reason |
+| GET `/api/consents/pending` | party | My open consent decisions |
+| GET `/api/consents/transfer/:id` | party/registrar | Consent board for a transfer |
+| POST `/api/consents/:consentId/decision` | party | Approve/reject with optional note |
 | POST `/api/fraud/check` | owner/registrar | Pre-check engine run |
 | GET `/api/fraud/:transferId` | party/registrar | Latest stored fraud check |
+| GET `/api/workflow/queue` | surveyor/clerk/registrar/admin | Role-aware work queue |
+| POST `/api/workflow/properties/:id/survey` | surveyor | Field inspection record (pass/fail) |
+| POST `/api/workflow/properties/:id/verify-docs` | clerk | Property document scrutiny |
+| POST `/api/workflow/transfers/:id/verify-docs` | clerk | Transfer document scrutiny |
+| GET `/api/workflow/oversight` | admin | Cross-registry metrics + roster |
+| POST `/api/workflow/properties/:id/override-reject` | admin | Admin override (reason required) |
+| POST `/api/workflow/transfers/:id/override-reject` | admin | Admin override (reason required) |
 | GET `/api/blockchain/status` | auth | Network + contract health |
 | GET `/api/blockchain/transactions` | auth | Ledger records (scoped) |
 | GET `/api/blockchain/transactions/:id` | auth* | Transaction detail |
@@ -268,7 +380,7 @@ All responses: `{ success, message, data }` or `{ success: false, message, error
 | GET `/api/registrar/pending-transfers` | registrar | Transfer queue (risk-ordered) |
 | POST `/api/registrar/properties/:id/approve` | registrar | Approve + on-chain registration |
 | POST `/api/registrar/properties/:id/reject` | registrar | Reject with reason |
-| GET `/api/registrar/audit` · `/api/audit` | registrar | Audit log |
+| GET `/api/registrar/audit` · `/api/audit` | registrar/admin | Audit log |
 | GET `/health` | public | DB + blockchain probe |
 | GET `/metrics` | internal | Prometheus metrics |
 
@@ -276,15 +388,15 @@ All responses: `{ success, message, data }` or `{ success: false, message, error
 
 ---
 
-## 13. Frontend routes
+## 14. Frontend routes
 
-Public: `/`, `/login`, `/register` · Citizen: `/citizen`, `/citizen/properties`, `/citizen/properties/register`, `/citizen/properties/:id`, `/citizen/documents`, `/citizen/transfers`, `/citizen/transfers/new`, `/citizen/transfers/:id`, `/citizen/blockchain`, `/citizen/profile` · Registrar: `/registrar`, `/registrar/properties`, `/registrar/properties/:id`, `/registrar/documents`, `/registrar/transfers`, `/registrar/transfers/:id`, `/registrar/review`, `/registrar/ledger`, `/registrar/audit`, `/registrar/profile`.
+Public: `/`, `/login`, `/register` · Citizen: `/citizen`, `/citizen/properties`, `/citizen/properties/register`, `/citizen/properties/:id`, `/citizen/documents`, `/citizen/transfers`, `/citizen/transfers/new`, `/citizen/transfers/:id`, `/citizen/blockchain`, `/citizen/profile` · Surveyor: `/surveyor` (queue + property inspection) · Clerk: `/clerk` (verification desk) · Registrar: `/registrar`, `/registrar/properties`, `/registrar/properties/:id`, `/registrar/documents`, `/registrar/transfers`, `/registrar/transfers/:id`, `/registrar/review`, `/registrar/ledger`, `/registrar/audit`, `/registrar/profile` · Admin: `/admin` (oversight board, roster, metrics).
 
 All app routes are lazy-loaded, title-managed, and guarded (`ProtectedRoute` + role redirect). Every major workflow implements loading / empty / error / success / confirmation / disabled states.
 
 ---
 
-## 14. Environment variables
+## 15. Environment variables
 
 Copy `.env.example` → `.env` (root) and/or `backend/.env`. **Never commit real secrets.**
 
@@ -299,45 +411,46 @@ Copy `.env.example` → `.env` (root) and/or `backend/.env`. **Never commit real
 | `CONTRACT_ADDRESS` | Overrides the deployment artifact |
 | `MONGODB_URI` | MongoDB Atlas connection string (optional — empty disables MongoDB) |
 | `MONGODB_DB_NAME` | Atlas database name (default `land_ledger`) |
-| `MONGODB_SERVER_SELECTION_MS` | Atlas connect timeout (default 8000) |
-| `MONGODB_MAX_POOL_SIZE` | Atlas connection pool size (default 10) |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` | OTP email delivery |
+| `MFA_DEV_MODE` | Exposes `devCode` in the challenge response (sandbox/demo only) |
 | `SEED_*` | Seeded demo credentials |
 
 Generate a strong JWT secret: `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`.
 
 ---
 
-## 15. Local setup (bare metal)
+## 16. Local setup (bare metal)
 
 ```bash
 # 0. Prerequisites: Node 20+ and a MongoDB Atlas cluster (free M0 is fine)
 # 1. Install
-cd backend    && npm install
-cd frontend   && npm install
-cd blockchain && npm install
+cd land-ledger/backend    && npm install
+cd land-ledger/frontend   && npm install
+cd land-ledger/blockchain && npm install
 
 # 2. Environment
-cp .env.example backend/.env   # set MONGODB_URI (+ whitelist your IP in Atlas Network Access) + JWT_SECRET
+cp land-ledger/.env.example land-ledger/backend/.env   # set MONGODB_URI
+                                                       # (+ whitelist your IP in Atlas Network Access) + JWT_SECRET
 
 # 3. Database (creates collections + demo data in Atlas)
-cd backend && npm run seed        # add --force to wipe + reseed
+cd land-ledger/backend && npm run seed        # add --force to wipe + reseed
 
 # 4. Blockchain (two terminals)
-cd blockchain && npx hardhat node
-cd blockchain && npx hardhat run scripts/deploy.js --network localhost
+cd land-ledger/blockchain && npx hardhat node
+cd land-ledger/blockchain && npx hardhat run scripts/deploy.js --network localhost
 
 # 5. API (serves the built SPA too)
-cd backend && npm start          # http://localhost:3000
+cd land-ledger/backend && npm start          # http://localhost:3000
 
 # 6. Frontend dev server (hot reload, proxies /api → :3000)
-cd frontend && npm run dev       # http://localhost:5173
+cd land-ledger/frontend && npm run dev       # http://localhost:5173
 ```
 
-No local database server needed - MongoDB Atlas is cloud-hosted, so the site runs 24/7 from anywhere. Browse the data with MongoDB Compass using the same MONGODB_URI.
+No local database server needed — MongoDB Atlas is cloud-hosted, so the site runs 24/7 from anywhere. Browse the data with MongoDB Compass using the same MONGODB_URI.
 
 ---
 
-## 16. Docker
+## 17. Docker
 
 ```bash
 export MONGODB_URI="mongodb+srv://user:pass@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority"
@@ -353,19 +466,19 @@ Backend and frontend images are multi-stage builds with non-root runtime users a
 
 ---
 
-## 17. Kubernetes
+## 18. Kubernetes
 
-Manifests live in `k8s/` (apply order documented in `k8s/README.md`): namespace → configmap → secrets (**fill placeholders before applying**) → blockchain → backend (2 replicas, probes) → frontend (2 replicas) → ingress → metrics scrape annotations. The database is MongoDB Atlas (set `MONGODB_URI` in the secret). Images must be built, tagged and loaded into the cluster (see README there).
-
----
-
-## 18. Jenkins
-
-`Jenkinsfile` = declarative pipeline with real stages: Checkout → Install dependencies (backend/frontend/blockchain) → Lint → **Backend tests** → **Smart contract tests** → Frontend build → Docker builds → Image validation → (gated) Deployment. Test failures fail the pipeline.
+Manifests live in `land-ledger/k8s/` (apply order documented there): namespace → configmap → secrets (**fill placeholders before applying**) → blockchain → backend (2 replicas, probes) → frontend (2 replicas) → ingress → metrics scrape annotations. The database is MongoDB Atlas (set `MONGODB_URI` in the secret). Images must be built, tagged and loaded into the cluster.
 
 ---
 
-## 19. Prometheus & Grafana
+## 19. Jenkins
+
+`land-ledger/Jenkinsfile` = declarative pipeline with real stages: Checkout → Install dependencies (backend/frontend/blockchain) → Lint → **Backend tests** → **Smart contract tests** → Frontend build → Docker builds → Image validation → (gated) Deployment. Test failures fail the pipeline.
+
+---
+
+## 20. Prometheus & Grafana
 
 - Backend exposes `/metrics` via prom-client: `land_ledger_http_requests_total{method,route,status}`, `land_ledger_http_request_duration_seconds{route}`, in-flight gauge, default process metrics.
 - `monitoring/prometheus/prometheus.yml` scrapes `backend:3000` every 15s.
@@ -373,31 +486,35 @@ Manifests live in `k8s/` (apply order documented in `k8s/README.md`): namespace 
 
 ---
 
-## 20. Testing
+## 21. Running the test suites (evidence, reproducible)
 
 ```bash
-cd backend    && npm test        # 29 API tests (node:test + supertest)
-cd blockchain && npx hardhat test # 20 contract tests
-node scripts/e2e-demo-flow.js    # 31-step end-to-end demonstration
+# 1. Smart contract — 20 tests
+cd land-ledger/blockchain && npx hardhat test
+
+# 2. Backend API — 44 tests across 6 suites (auth, consent, documents,
+#    fraud, properties, transfers)
+cd land-ledger/backend && node --test --test-concurrency=1
+
+# 3. Workflow E2E — 56 checks against a running API (full 5-role pipeline
+#    incl. OTP sign-in, consent gate and on-chain settlement)
+cd land-ledger/backend && npm run seed -- --force   # pristine demo state
+cd land-ledger/backend && npm start                 # terminal 1 (port 3000)
+API=http://127.0.0.1:3000 node scripts/test-workflow.js   # repo root
 ```
 
-Backend suites cover auth (registration/duplicates/invalid password/protected route/RBAC), properties (creation/validation/detail/search/ownership protection), documents (upload/SHA-256/tamper detection/registrar verification/download), transfers (full happy path incl. real settlement, RBAC, non-owner, duplicate, self-transfer, unknown buyer, rejection reason), fraud engine (clean structure, seller mismatch, missing docs, cross-tenant denial). Chain-dependent tests degrade to explicit skips when Hardhat is unreachable.
-
----
-
-## 21. End-to-end demonstration flow
-
-`scripts/e2e-demo-flow.js` automates the complete spec flow: register citizens → login → create property → upload document (SHA-256) → registrar verifies document → approve property → **on-chain registration (real hash)** → citizen creates transfer → ownership/duplicate/document/hash/fraud checks → registrar approves → **on-chain ownership transfer (real hash + block)** → MongoDB updated → audit records → COMPLETED → buyer sees new ownership → ownership history shows the settlement → conflicting transfer attempt is **rejected**. Current status: **29/29 checks pass.**
+Backend suites cover auth (registration/duplicates/MFA challenge flow/protected routes/RBAC), consent (multi-party decisions, stage guards), documents (upload/SHA-256/tamper detection/verification/download), transfers (full happy path incl. real settlement, RBAC, non-owner, duplicate, self-transfer, unknown buyer, rejection reason), fraud engine (clean structure, seller mismatch, missing docs, cross-tenant denial). Chain-dependent tests degrade to explicit skips when Hardhat is unreachable.
 
 ---
 
 ## 22. Deployment notes
 
 1. Create a MongoDB Atlas cluster (free M0), whitelist your server IP, set `MONGODB_URI`; run `npm run seed` for demo data.
-2. Deploy the contract from a machine that can sign with the operator key; set `CONTRACT_ADDRESS`.
-3. Build the frontend (`npm run build`) and serve it (Express integrated mode or the nginx container).
-4. Run the API behind TLS; restrict `/metrics` to the monitoring network.
-5. Use Kubernetes manifests or Docker Compose as templates; inject secrets from your secret manager.
+2. Configure SMTP for OTP email (`SMTP_*` vars) — the demo mode `MFA_DEV_MODE=1` shows codes in the API response instead.
+3. Deploy the contract from a machine that can sign with the operator key; set `CONTRACT_ADDRESS`.
+4. Build the frontend (`npm run build`) and serve it (Express integrated mode or the nginx container).
+5. Run the API behind TLS; restrict `/metrics` to the monitoring network.
+6. Use Kubernetes manifests or Docker Compose as templates; inject secrets from your secret manager.
 
 ---
 
@@ -405,25 +522,28 @@ Backend suites cover auth (registration/duplicates/invalid password/protected ro
 
 | Symptom | Fix |
 | --- | --- |
-| Sidebar shows “Blockchain unavailable” | Hardhat node not running or contract not deployed → `./scripts/dev-up.sh`, or start node + `--network localhost` deploy, then restart the API |
+| Sidebar shows "Blockchain unavailable" | Hardhat node not running or contract not deployed → start node + `--network localhost` deploy, then restart the API |
 | `could not decode result data` on chain calls | Contract artifact points at an address without bytecode (fresh chain) → redeploy with `--network localhost` and restart the backend |
 | `Nonce too low` during rapid approvals | Handled internally via NonceManager; if you restarted the chain, restart the backend too |
 | Login 429 | Auth endpoints are rate-limited (20/min); wait a minute |
+| OTP email never arrives | Check SMTP config (`node scripts/test-smtp.js` probes delivery); in demo mode set `MFA_DEV_MODE=1` |
+| Transfer stuck in CONSENT_PENDING | That's the consent gate — every listed party must decide on the consent board |
 | Upload rejected | Check extension (pdf/png/jpg/jpeg/webp/doc/docx), MIME and 10MB limit |
-| `operator does not exist: text = uuid` style DB errors | Always use the released schema; migrations handle casting between business IDs and UUIDs |
-| Seed skipped | Data already present; use `node src/db/seed.js --force` (never in production) |
+| Seed skipped | Data already present; use `npm run seed -- --force` (never in production) |
 
 ---
 
 ## 24. Security checklist status
+
 - bcrypt password hashing (cost 10) ✓
+- Two-factor sign-in: password + 6-digit email OTP; no token before OTP ✓
 - JWT auth with server-side user reload ✓
-- Role middleware on every sensitive route ✓
-- Parameterized queries everywhere (no string-built SQL from user input) ✓
+- Role middleware on every sensitive route (5 roles) ✓
 - File validation: extension + MIME + size + UUID filenames ✓
-- Helmet security headers, CORS, rate limiting on auth ✓
+- Helmet security headers, CORS, rate limiting on auth + OTP ✓
 - No secrets in code — `.env` + `.env.example` only; operator key is a public Hardhat test key ✓
 - No passwords/keys/credentials in logs or audit metadata ✓
+- Multi-party consent enforced server-side before desk review ✓
 - Ownership changes only after on-chain confirmation ✓
 - No fabricated blockchain records, hashes, or fake functionality ✓
 
@@ -438,21 +558,14 @@ LAND LEDGER uses **two purpose-built data stores** (polyglot persistence):
 | **MongoDB Atlas** | Primary system of record | users, properties, documents, transfer_requests, fraud_checks, blockchain_transactions, audit_events, login_events, counters |
 | (Document files) | Disk storage | uploaded files live under `backend/uploads/`; metadata + SHA-256 in Atlas |
 
-Everything runs on MongoDB Atlas — even the free M0 tier. Registry collections were
-migrated 1:1 from the legacy PostgreSQL schema (UUID `_id`s, same field names, same API
-shapes), so the frontend required zero changes. The event stream (`audit_events`,
-`login_events`) is browsable in **MongoDB Compass**.
+Everything runs on MongoDB Atlas — even the free M0 tier. The event stream (`audit_events`, `login_events`) is browsable in **MongoDB Compass**.
 
 ### 25.1 What runs in Atlas
 
-- **`land_ledger.audit_events`** — every registry audit event (created, approved, rejected, verified, transfers, on-chain txs) written directly by the API. This is the primary audit store.
-- **`land_ledger.login_events`** — every sign-in attempt (success AND failure) with email,
-  role, reason, client IP and user agent. Spot credential-stuffing attempts here.
+- **`land_ledger.audit_events`** — every registry audit event (created, approved, rejected, verified, consents, transfers, on-chain txs) written directly by the API.
+- **`land_ledger.login_events`** — every sign-in attempt (success AND failure) with email, role, reason, client IP and user agent. Spot credential-stuffing attempts here.
 
-Observability: `/health` reports `mongodb: connected | disconnected`, and
-`/metrics` exposes `land_ledger_mongo_writes_total`, `land_ledger_mongo_write_failures_total`
-and `land_ledger_mongo_connected`. The registrar dashboard renders the live stream with an
-explicit source badge.
+Observability: `/health` reports `mongodb: connected | disconnected`, and `/metrics` exposes `land_ledger_mongo_writes_total`, `land_ledger_mongo_write_failures_total` and `land_ledger_mongo_connected`.
 
 ### 25.2 Configuration
 
@@ -464,29 +577,11 @@ MONGODB_DB_NAME=land_ledger
 ```
 
 - `MONGODB_URI` is REQUIRED (the app exits at boot in production without it).
-- **Network Access (the #1 gotcha):** Atlas blocks every IP by default. In the Atlas dashboard
-  go to *SECURITY → Network Access → ADD IP ADDRESS*. For a dynamic-IP dev machine use
-  `0.0.0.0/0` (allow anywhere — fine for M0 demos); for production restrict it to the exact
-  egress IP of the API server.
-- The API connects at boot, retries in the background forever, and **auto-attaches within
-  ~10–30 s once the IP is whitelisted — no restart needed**.
+- **Network Access (the #1 gotcha):** Atlas blocks every IP by default. In the Atlas dashboard go to *SECURITY → Network Access → ADD IP ADDRESS*. For a dynamic-IP dev machine use `0.0.0.0/0` (fine for M0 demos); for production restrict it to the exact egress IP of the API server.
+- The API connects at boot, retries in the background forever, and **auto-attaches within ~10–30 s once the IP is whitelisted — no restart needed**.
 
-### 25.3 Browse the data in MongoDB Compass (free)
-
-1. Download Compass: <https://www.mongodb.com/products/compass> (free, all platforms).
-2. Open Compass → paste the **same connection string** used in `MONGODB_URI`
-   (`mongodb+srv://user:password@cluster0.xxxxx.mongodb.net/`) → *Connect*.
-   (If your password contains special characters, use the URI provided by Atlas "Connect →
-   Compass" which URL-encodes it for you.)
-3. Open the `land_ledger` database → collections `audit_events` and `login_events`.
-   Useful sample queries (filter bar):
-   - Failed sign-ins: `{ "outcome": "FAILURE" }`
-   - Registry approvals: `{ "action": "PROPERTY_APPROVE" }`
-   - Last 24 h activity: `{ "created_at": { "$gte": ISODate(new Date(Date.now()-86400000).toISOString()) } }`
-
-### 25.4 Free-tier notes (M0)
+### 25.3 Free-tier notes (M0)
 
 - 512 MB storage, shared cluster — plenty for the event stream in demo/staging.
 - No serverless/backup snapshots on M0; upgrade to M10+ for backups in real production.
-- Never commit the real `MONGODB_URI`; it lives in `backend/.env` (git-ignored) and, for
-  Kubernetes, in `k8s/02-secrets.yaml` (REPLACE BEFORE APPLY).
+- Never commit the real `MONGODB_URI`; it lives in `backend/.env` (git-ignored) and, for Kubernetes, in `k8s/02-secrets.yaml` (REPLACE BEFORE APPLY).
