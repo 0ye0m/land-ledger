@@ -650,3 +650,21 @@ Work Log:
 
 Stage Summary:
 - Demo package now lives at land-ledger/demo/ (committed, 67 files, ~50MB) instead of gitignored download/; user gets it via project zip re-download; recording + 74-page walkthrough PDF + all screenshots in one folder
+
+---
+Task ID: 34
+Agent: Super Z (main)
+Task: User "run the workspace safely and successfully, dont remove any features" - full workspace revival + baseline verification after sandbox recycle
+
+Work Log:
+- Found sandbox recycled (uptime 3min, app down); verified ALL files survived incl. land-ledger/demo/ package (67 tracked files) and git history (75d9e95 intact)
+- Revived via land-ledger/scripts/revive.sh: app UP in ~3s - db + mongodb + blockchain all connected
+- Chain had reset to latestBlock=1 (in-memory hardhat) while Atlas Mongo kept data; also found pre-existing drift: TRF-2026-0004 was PENDING instead of CONSENT_PENDING
+- Booted dev instance on 3100 (MFA_DEV_MODE) and audited state via API
+- Test baselines ALL GREEN: blockchain 20/20 (hardhat test), backend 44/44 (node --test), workflow E2E 56/56 (API=3100) - includes consent gate, role walls, on-chain settlement with real tx hash, admin override
+- Re-seeded --force BEFORE and AFTER E2E (test consumes demo state by design); final state verified pristine: TRF-2026-0001 CONSENT_PENDING, 0002 PENDING (clerk desk), 0003 DOCS_VERIFIED (registrar desk), 0004 CONSENT_PENDING, 8 properties in seed statuses, latestBlock=8
+- Visual smoke test (agent-browser, 1440x900): landing hero renders, citizen dashboard renders with live seed data (pending actions, stats, recent transfers), dark mode toggle applies .dark class, transfers page renders consent/rail UI; zero console/page errors; SPA 404 fallback works (/dashboard -> Page not found)
+- Cleanup: dev 3100 killed, browser closed; main app healthy on 3000 (block 8); normalized 134 permission-bit-only file flips from recycle (git checkout), committed new chain deploy timestamp + state-check scripts (3deeb48)
+
+Stage Summary:
+- Workspace fully revived and verified with ZERO feature loss: all 3 test baselines green (120 checks total), demo state pristine for live consent demo, UI renders confirmed headlessly, demo package intact at land-ledger/demo/, working tree clean
